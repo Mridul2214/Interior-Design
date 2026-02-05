@@ -1,0 +1,221 @@
+/* Header Styles - Global */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2.5rem;
+    background-color: white;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 0;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    /* High z-index to stay on top */
+    width: 100%;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.welcome-text h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.welcome-text p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Notification Popup Styles */
+.notification-wrapper {
+    position: relative;
+}
+
+.btn-icon {
+    padding: 0.6rem;
+    color: var(--text-secondary);
+    border-radius: 50%;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon:hover,
+.btn-icon.active {
+    background-color: #f8fafc;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.notification-badge {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 10px;
+    height: 10px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.notification-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: transparent;
+    z-index: 90;
+    cursor: default;
+}
+
+.notification-popup {
+    position: absolute;
+    top: 140%;
+    right: 0;
+    width: 380px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e2e8f0;
+    z-index: 100;
+    overflow: hidden;
+    transform-origin: top right;
+    animation: popupIn 0.2s ease-out;
+}
+
+@keyframes popupIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    background: white;
+}
+
+.popup-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+}
+
+.popup-close {
+    color: var(--text-secondary);
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.popup-close:hover {
+    background: #f1f5f9;
+    color: var(--text-primary);
+}
+
+.popup-content {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateX(30px);
+    animation: slideInRight 0.4s ease-out forwards;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.notification-item:hover {
+    background-color: #f8fafc;
+}
+
+.notification-item.unread {
+    background-color: #f0f9ff;
+    border-left: 3px solid var(--primary-color);
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notif-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.notif-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.notif-time {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.notif-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+}
+
+.popup-footer {
+    padding: 0.75rem;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    background: #f8fafc;
+}
+
+.popup-footer button {
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.no-notif {
+    padding: 2.5rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}

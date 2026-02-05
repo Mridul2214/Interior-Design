@@ -1,0 +1,13 @@
+.layout-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    padding: 0;
+    /* Removed padding to allow full-width headers */
+    background-color: var(--bg-color);
+    min-height: 100vh;
+}
