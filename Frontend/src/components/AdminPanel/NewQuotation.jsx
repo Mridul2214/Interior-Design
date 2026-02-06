@@ -46,6 +46,9 @@ const NewQuotation = ({ isEdit }) => {
     const [showBillPreview, setShowBillPreview] = useState(false);
     const [pendingStatus, setPendingStatus] = useState('Pending');
     const [isSaving, setIsSaving] = useState(false);
+    const [clientSearchQuery, setClientSearchQuery] = useState('');
+    const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+    const [filteredClients, setFilteredClients] = useState([]);
 
     // Form States
     const [lineItems, setLineItems] = useState([]);
@@ -85,8 +88,9 @@ const NewQuotation = ({ isEdit }) => {
                     const quoteRes = await quotationAPI.getById(id);
                     if (quoteRes.success) {
                         const q = quoteRes.data;
+                        const clientData = q.client?._id || q.client;
                         setFormData({
-                            client: q.client?._id || q.client,
+                            client: clientData,
                             quoteNumber: q.quotationNumber,
                             date: new Date(q.createdAt).toISOString().split('T')[0],
                             validUntil: q.validUntil ? new Date(q.validUntil).toISOString().split('T')[0] : '',
@@ -103,6 +107,13 @@ const NewQuotation = ({ isEdit }) => {
                             notes: q.notes || '',
                             termsConditions: q.termsAndConditions || ''
                         });
+
+                        // Set client search query if clients are already loaded
+                        if (clientRes.success && clientRes.data.length > 0) {
+                            const selected = clientRes.data.find(c => c._id === clientData);
+                            if (selected) setClientSearchQuery(selected.name);
+                        }
+
                         setLineItems(q.items.map(item => ({
                             id: item._id || Math.random(),
                             name: item.itemName,
@@ -129,6 +140,13 @@ const NewQuotation = ({ isEdit }) => {
         };
         loadInitialData();
     }, [isEdit, id]);
+
+    // Cleanup suggestions when clicking outside
+    useEffect(() => {
+        const handleClickOutside = () => setShowClientSuggestions(false);
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
 
     const handlePreview = (e, status = 'Pending') => {
         if (e) e.preventDefault();
@@ -185,6 +203,30 @@ const NewQuotation = ({ isEdit }) => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleClientSearch = (query) => {
+        setClientSearchQuery(query);
+        if (!query.trim()) {
+            setFilteredClients([]);
+            setShowClientSuggestions(false);
+            setFormData(prev => ({ ...prev, client: '' }));
+            return;
+        }
+
+        const filtered = clients.filter(c =>
+            c.name.toLowerCase().includes(query.toLowerCase()) ||
+            (c.company && c.company.toLowerCase().includes(query.toLowerCase()))
+        ).slice(0, 5);
+
+        setFilteredClients(filtered);
+        setShowClientSuggestions(true);
+    };
+
+    const selectClient = (client) => {
+        setFormData(prev => ({ ...prev, client: client._id }));
+        setClientSearchQuery(client.name);
+        setShowClientSuggestions(false);
     };
 
     const updateLineItem = (id, field, value) => {
@@ -373,14 +415,34 @@ const NewQuotation = ({ isEdit }) => {
                             </div>
                         </div>
                         <div className="form-grid">
-                            <div className="form-group">
+                            <div className="form-group" style={{ position: 'relative' }}>
                                 <label>Client *</label>
-                                <select name="client" className="select-styled" value={formData.client} onChange={handleInputChange} required>
-                                    <option value="">Select Client</option>
-                                    {clients.map(c => (
-                                        <option key={c._id} value={c._id}>{c.name} - {c.company}</option>
-                                    ))}
-                                </select>
+                                <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+                                    <input
+                                        type="text"
+                                        className="input-styled"
+                                        placeholder="Type to search client..."
+                                        value={clientSearchQuery}
+                                        onChange={(e) => handleClientSearch(e.target.value)}
+                                        onFocus={() => clientSearchQuery.trim() && setShowClientSuggestions(true)}
+                                        required
+                                    />
+                                    {showClientSuggestions && filteredClients.length > 0 && (
+                                        <div className="product-search-dropdown" style={{ width: '100%', top: '100%', left: 0 }}>
+                                            {filteredClients.map(c => (
+                                                <div key={c._id} className="search-result-item" onClick={() => selectClient(c)}>
+                                                    <div className="res-info">
+                                                        <span className="res-name">{c.name}</span>
+                                                        <span className="res-cat">{c.company || 'Individual'}</span>
+                                                    </div>
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Select</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             <div className="form-group">
                                 <label>Document Type</label>

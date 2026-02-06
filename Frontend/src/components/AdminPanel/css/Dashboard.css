@@ -36,9 +36,12 @@
 
 /* Dashboard Content Container */
 .dashboard-content {
-    padding: 0 2.5rem 2.5rem 2.5rem;
+    padding: 2rem 2.5rem 2.5rem 2.5rem;
     max-width: 1600px;
     margin: 0 auto;
+    background: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+    min-height: calc(100vh - 80px);
 }
 
 /* Error Banner */
@@ -303,19 +306,34 @@
 }
 
 .stat-card {
-    background-color: white;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 1.5rem;
-    border-radius: var(--radius-md);
-    /* Smooth curve */
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-sm);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+    pointer-events: none;
 }
 
 .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: rgba(99, 102, 241, 0.1);
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.08);
+    border-color: rgba(255, 255, 255, 1);
 }
 
 .stat-header {
@@ -372,19 +390,22 @@
 }
 
 .revenue-card {
-    padding: 1.5rem;
-    /* Reduced padding */
-    border-radius: var(--radius-lg);
-    /* Larger curve */
+    padding: 2rem;
+    border-radius: 24px;
     color: white;
     display: flex;
     flex-direction: column;
     justify-content: center;
     position: relative;
     overflow: hidden;
-    box-shadow: var(--shadow-md);
-    min-height: 140px;
-    /* Reduced height */
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+    min-height: 160px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.revenue-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
 }
 
 /* Subtle texture overlay */
@@ -436,13 +457,14 @@
 
 /* Recent Quotations Empty State */
 .recent-quotes-card {
-    background-color: white;
-    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 28px;
     padding: 2.5rem;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.4);
     min-height: 500px;
-    /* Match height of 2 revenue cards + gap approx */
 }
 
 .card-title {
