@@ -47,6 +47,30 @@ const Clients = () => {
 
     useEffect(() => {
         fetchClients();
+
+        const processAIData = (data) => {
+            if (!data) return;
+            setFormData(prev => ({
+                ...prev,
+                ...data
+            }));
+            setShowNewClientModal(true);
+        };
+
+        const handleAIPopulate = (e) => processAIData(e.detail);
+
+        // Check for pending data from session (for after navigation)
+        const pending = sessionStorage.getItem('AI_PENDING_DATA');
+        if (pending) {
+            const { type, data } = JSON.parse(pending);
+            if (type === 'CLIENT') {
+                processAIData(data);
+                sessionStorage.removeItem('AI_PENDING_DATA'); // Clean up
+            }
+        }
+
+        window.addEventListener('AI_POPULATE_CLIENT', handleAIPopulate);
+        return () => window.removeEventListener('AI_POPULATE_CLIENT', handleAIPopulate);
     }, []);
 
     const fetchClients = async () => {

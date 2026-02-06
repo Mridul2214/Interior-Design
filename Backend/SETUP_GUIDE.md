@@ -93,13 +93,13 @@ node seed.js
 
 You'll see output like:
 ```
-✅ Super Admin created: admin@ryphira.com
+✅ Super Admin created: admin@interiordesign.com
 ✅ 3 additional users created
 
 📋 Login Credentials:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Super Admin:
-  Email: admin@ryphira.com
+  Email: admin@interiordesign.com
   Password: admin123
 ...
 ```

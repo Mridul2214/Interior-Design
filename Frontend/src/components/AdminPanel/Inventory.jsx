@@ -43,6 +43,30 @@ const Inventory = () => {
 
     useEffect(() => {
         fetchItems();
+
+        const processAIData = (data) => {
+            if (!data) return;
+            setFormData(prev => ({
+                ...prev,
+                ...data
+            }));
+            setShowItemModal(true);
+        };
+
+        const handleAIPopulate = (e) => processAIData(e.detail);
+
+        // Check for pending data from session (for after navigation)
+        const pending = sessionStorage.getItem('AI_PENDING_DATA');
+        if (pending) {
+            const { type, data } = JSON.parse(pending);
+            if (type === 'INVENTORY') {
+                processAIData(data);
+                sessionStorage.removeItem('AI_PENDING_DATA'); // Clean up
+            }
+        }
+
+        window.addEventListener('AI_POPULATE_INVENTORY', handleAIPopulate);
+        return () => window.removeEventListener('AI_POPULATE_INVENTORY', handleAIPopulate);
     }, []);
 
     const fetchItems = async () => {

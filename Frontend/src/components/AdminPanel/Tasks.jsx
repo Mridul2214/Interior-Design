@@ -40,6 +40,30 @@ const Tasks = () => {
     useEffect(() => {
         fetchTasks();
         fetchUsers();
+
+        const processAIData = (data) => {
+            if (!data) return;
+            setFormData(prev => ({
+                ...prev,
+                ...data
+            }));
+            setShowTaskModal(true);
+        };
+
+        const handleAIPopulate = (e) => processAIData(e.detail);
+
+        // Check for pending data from session (for after navigation)
+        const pending = sessionStorage.getItem('AI_PENDING_DATA');
+        if (pending) {
+            const { type, data } = JSON.parse(pending);
+            if (type === 'TASK') {
+                processAIData(data);
+                sessionStorage.removeItem('AI_PENDING_DATA'); // Clean up
+            }
+        }
+
+        window.addEventListener('AI_POPULATE_TASK', handleAIPopulate);
+        return () => window.removeEventListener('AI_POPULATE_TASK', handleAIPopulate);
     }, []);
 
     const fetchTasks = async () => {

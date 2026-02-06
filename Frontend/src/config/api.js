@@ -360,14 +360,14 @@ export const notificationAPI = {
 
 // AI APIs
 export const aiAPI = {
-    query: (prompt) => apiCall('/ai/query', {
+    query: (prompt, currentPath, pageState) => apiCall('/ai/query', {
         method: 'POST',
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify({ prompt, currentPath, pageState })
     }),
 
-    getSuggestion: (type, contextData) => apiCall('/ai/suggest', {
+    getSuggestion: (type, field, value) => apiCall('/ai/suggest', {
         method: 'POST',
-        body: JSON.stringify({ type, contextData })
+        body: JSON.stringify({ type, field, value })
     })
 };
 
