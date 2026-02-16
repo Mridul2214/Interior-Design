@@ -43,6 +43,7 @@ const Users = () => {
             if (response.success) setUsers(response.data);
         } catch (err) {
             setError(err.message);
+            alert('Failed to load team members');
         } finally {
             setLoading(false);
         }
@@ -60,7 +61,16 @@ const Users = () => {
         setShowModal(true);
     };
 
-    const handleSubmit = async () => {
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         // Validation: Password only required for new users
         if (!formData.fullName || !formData.email || (!editingUser && !formData.password)) {
             alert('Name, Email and Password are required');
@@ -74,25 +84,29 @@ const Users = () => {
                 : await userAPI.create(formData);
 
             if (response.success) {
+                alert(editingUser ? 'User updated successfully' : 'New user created successfully');
                 setShowModal(false);
                 fetchUsers();
                 setEditingUser(null);
                 setFormData({ fullName: '', email: '', phone: '', role: 'Designer', password: '' });
             }
         } catch (err) {
-            alert(`Error ${editingUser ? 'updating' : 'creating'} user: ` + err.message);
+            alert(err.message || `Error ${editingUser ? 'updating' : 'creating'} user`);
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Delete this user?')) return;
+        if (!window.confirm('Are you sure you want to delete this user?')) return;
         try {
-            await userAPI.delete(id);
-            setUsers(users.filter(u => u._id !== id));
+            const response = await userAPI.delete(id);
+            if (response.success) {
+                setUsers(users.filter(u => u._id !== id));
+                alert('User deleted successfully');
+            }
         } catch (err) {
-            alert('Error: ' + err.message);
+            alert('Failed to delete user');
         }
     };
 
@@ -110,6 +124,7 @@ const Users = () => {
         <div className="users-container">
             <div className="users-wrapper">
                 <div className="users-header">
+                    <h2>Account Management</h2>
                     <button className="btn-add-user" onClick={() => {
                         setEditingUser(null);
                         setFormData({ fullName: '', email: '', phone: '', role: 'Designer', password: '' });
@@ -132,15 +147,13 @@ const Users = () => {
                     </div>
                 </div>
 
-                {error && <div className="error-banner">{error}</div>}
-
-                <div className="users-table-card">
-                    {loading ? (
-                        <div className="loading-state">
-                            <Loader className="spinner" size={40} />
-                            <p>Loading team members...</p>
-                        </div>
-                    ) : (
+                {loading ? (
+                    <div className="loading-state">
+                        <Loader className="spinner" size={40} />
+                        <p>Loading team members...</p>
+                    </div>
+                ) : (
+                    <div className="users-table-card">
                         <table className="users-table">
                             <thead>
                                 <tr>
@@ -207,49 +220,55 @@ const Users = () => {
                                 ))}
                             </tbody>
                         </table>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {showModal && (
                 <div className="modal-overlay">
-                    <div className="modal-content-user">
+                    <div className="modal-content-user" data-lenis-prevent>
                         <div className="modal-header">
                             <h3>{editingUser ? 'Edit Team Member' : 'Add Team Member'}</h3>
                             <button className="modal-close" onClick={() => setShowModal(false)}><X size={20} /></button>
                         </div>
-                        <div className="modal-body">
+                        <form onSubmit={handleSubmit}>
                             <div className="form-group">
                                 <label>Full Name *</label>
                                 <input
+                                    name="fullName"
                                     className="user-input"
                                     value={formData.fullName}
-                                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                    onChange={handleInputChange}
+                                    required
                                 />
                             </div>
                             <div className="form-group">
                                 <label>Email Address *</label>
                                 <input
+                                    name="email"
                                     type="email"
                                     className="user-input"
                                     value={formData.email}
-                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    onChange={handleInputChange}
+                                    required
                                 />
                             </div>
                             <div className="form-group">
                                 <label>Phone Number</label>
                                 <input
+                                    name="phone"
                                     className="user-input"
                                     value={formData.phone}
-                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    onChange={handleInputChange}
                                 />
                             </div>
                             <div className="form-group">
                                 <label>Role</label>
                                 <select
+                                    name="role"
                                     className="user-input"
                                     value={formData.role}
-                                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                    onChange={handleInputChange}
                                 >
                                     <option value="Admin">Admin</option>
                                     <option value="Designer">Designer</option>
@@ -260,23 +279,25 @@ const Users = () => {
                             <div className="form-group">
                                 <label>Password {editingUser ? '(Leave blank to keep current)' : '*'}</label>
                                 <input
+                                    name="password"
                                     type="password"
                                     className="user-input"
                                     value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    onChange={handleInputChange}
+                                    required={!editingUser}
                                 />
                             </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button className="btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
-                            <button className="btn-save" onClick={handleSubmit} disabled={submitting}>
-                                {submitting ? (editingUser ? 'Updating...' : 'Creating...') : (editingUser ? 'Update Account' : 'Create Account')}
-                            </button>
-                        </div>
+                            <div className="modal-footer" style={{ marginTop: '2rem' }}>
+                                <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button type="submit" className="btn-save" disabled={submitting}>
+                                    {submitting ? <Loader className="spinner" size={16} /> : (editingUser ? 'Update Account' : 'Create Account')}
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                </div>
+                </div >
             )}
-        </div>
+        </div >
     );
 };
 

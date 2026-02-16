@@ -89,7 +89,7 @@
 }
 
 .form-group label {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-secondary);
 }
@@ -105,7 +105,7 @@
     padding: 0.75rem 1rem;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    font-size: 0.95rem;
+    font-size: 1rem;
     color: var(--text-primary);
     background-color: #ffffff;
     transition: all 0.2s;
@@ -441,6 +441,25 @@
 .btn-send-quote:hover {
     transform: translateY(-3px) scale(1.02);
     box-shadow: 0 8px 20px rgba(79, 70, 229, 0.5);
+}
+
+/* Review Modal Card */
+.premium-receipt-card {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.premium-receipt-card::-webkit-scrollbar {
+    width: 6px;
+}
+
+.premium-receipt-card::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.premium-receipt-card::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 20px;
 }
 
 /* Product Search Dropdown */

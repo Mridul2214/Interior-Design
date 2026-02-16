@@ -15,19 +15,12 @@ const InventorySchema = new mongoose.Schema({
         required: [true, 'Please select a section'],
         trim: true
     },
-    finish: {
-        type: String,
-        trim: true
-    },
-    material: {
-        type: String,
-        trim: true
-    },
+
     unit: {
         type: String,
         required: true,
-        enum: ['SCM', 'sheets', 'sqft', 'pieces', 'meters', 'liters', 'kg'],
-        default: 'SCM'
+        // enum: ['SCM', 'sheets', 'sqft', 'pieces', 'meters', 'liters', 'kg'], // Relaxing enum for now
+        default: 'Numbers'
     },
     size: {
         type: String,
@@ -38,10 +31,7 @@ const InventorySchema = new mongoose.Schema({
         required: [true, 'Please provide price'],
         min: 0
     },
-    offerPrice: {
-        type: Number,
-        min: 0
-    },
+
     stock: {
         type: Number,
         required: true,

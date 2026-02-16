@@ -383,7 +383,7 @@
 }
 
 .form-field label {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -396,7 +396,7 @@
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    font-size: 0.85rem;
+    font-size: 1rem;
     color: var(--text-primary);
     background: #ffffff;
 }

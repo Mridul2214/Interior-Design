@@ -13,9 +13,11 @@ import {
     Edit3,
     CheckCircle2,
     Trash2,
-    Loader
+    Loader,
+    Sparkles
 } from 'lucide-react';
 import { purchaseOrderAPI, inventoryAPI } from '../../config/api';
+import AISuggestButton from '../common/AISuggestButton';
 import './css/PurchaseOrders.css';
 
 const PurchaseOrders = () => {
@@ -273,7 +275,7 @@ const PurchaseOrders = () => {
 
             {showCreateModal && (
                 <div className="modal-overlay">
-                    <div className="modal-content-wide">
+                    <div className="modal-content-wide" data-lenis-prevent>
                         <div className="modal-header">
                             <h3>Create Purchase Order</h3>
                             <button className="modal-close" onClick={() => setShowCreateModal(false)}><X size={24} /></button>
@@ -301,7 +303,16 @@ const PurchaseOrders = () => {
                                 </div>
                             </div>
                             <div className="form-field" style={{ marginBottom: '1rem' }}>
-                                <label>Delivery Address</label>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <label>Delivery Address</label>
+                                    <AISuggestButton
+                                        type="PurchaseOrder"
+                                        field="deliveryAddress"
+                                        value={formData.deliveryAddress}
+                                        context={{ supplier: formData.supplier }}
+                                        onSuggest={(v) => setFormData({ ...formData, deliveryAddress: v })}
+                                    />
+                                </div>
                                 <textarea
                                     className="po-input"
                                     value={formData.deliveryAddress}

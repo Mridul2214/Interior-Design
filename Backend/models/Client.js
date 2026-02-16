@@ -45,51 +45,7 @@ const ClientSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
-    clientGST: {
-        type: String,
-        trim: true,
-        uppercase: true
-    },
-    pan: {
-        type: String,
-        trim: true,
-        uppercase: true
-    },
-    clientManager: {
-        type: String,
-        trim: true
-    },
-    clientManagerContact: {
-        type: String,
-        trim: true
-    },
-    clientManagerEmail: {
-        type: String,
-        trim: true,
-        lowercase: true
-    },
-    interiorDesigner: {
-        type: String,
-        trim: true
-    },
-    interiorDesignerContact: {
-        type: String,
-        trim: true
-    },
-    interiorDesignerEmail: {
-        type: String,
-        trim: true,
-        lowercase: true
-    },
-    customerServiceContact: {
-        type: String,
-        trim: true
-    },
-    customerServiceEmail: {
-        type: String,
-        trim: true,
-        lowercase: true
-    },
+
     status: {
         type: String,
         enum: ['Active', 'Inactive', 'Archived'],
@@ -109,6 +65,6 @@ const ClientSchema = new mongoose.Schema({
 });
 
 // Index for faster searches
-ClientSchema.index({ name: 'text', email: 'text', clientGST: 'text' });
+ClientSchema.index({ name: 'text', email: 'text' });
 
 module.exports = mongoose.model('Client', ClientSchema);

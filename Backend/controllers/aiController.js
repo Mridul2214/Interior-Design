@@ -61,8 +61,10 @@ exports.queryAI = async (req, res) => {
             - DO NOT wrap the JSON in markdown code blocks or "json_action" fields.
         `;
 
-        // 3. Initialize Model - Using gemini-2.0-flash-lite for potentially better quota availability
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+        // 3. Initialize Model - Using gemini-1.5-flash with full model path
+        const model = genAI.getGenerativeModel({
+            model: "models/gemini-1.5-flash"
+        });
 
         // Combined Contextual Prompt
         const combinedPrompt = `
@@ -99,7 +101,11 @@ ${prompt}
 exports.getSuggestion = async (req, res) => {
     try {
         const { type, field, value } = req.body;
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+
+        // Use gemini-1.5-flash - newer model with better availability
+        const model = genAI.getGenerativeModel({
+            model: "models/gemini-1.5-flash"
+        });
 
         const prompt = `Give a 10-word professional interior design suggestion for the field "${field}" when the value is "${value}". Type: ${type}.`;
 
@@ -111,6 +117,10 @@ exports.getSuggestion = async (req, res) => {
             suggestion: response.text().trim()
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error('AI Suggestion Error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'AI suggestion failed'
+        });
     }
 };

@@ -13,11 +13,13 @@ import {
     Shield,
     Receipt,
     LogOut,
-    User
+    User,
+    Briefcase,
+    Menu
 } from 'lucide-react';
 import './css/Sidebar.css';
 
-const Sidebar = ({ user, onLogout }) => {
+const Sidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
     const menuItems = [
         { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
         { name: 'Quotations', icon: FileText, path: '/quotations' },
@@ -25,6 +27,7 @@ const Sidebar = ({ user, onLogout }) => {
         { name: 'Purchase Orders', icon: ShoppingCart, path: '/purchase-orders' },
         { name: 'PO Inventory', icon: Package, path: '/po-inventory' },
         { name: 'Clients', icon: Users, path: '/clients' },
+        { name: 'Staff', icon: Briefcase, path: '/staff' },
         { name: 'Tasks', icon: CheckSquare, path: '/tasks' },
         { name: 'Reports', icon: BarChart, path: '/reports' },
         { name: 'Invoice', icon: Receipt, path: '/invoice' },
@@ -33,10 +36,15 @@ const Sidebar = ({ user, onLogout }) => {
     ];
 
     return (
-        <div className="sidebar-container">
+        <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`} data-lenis-prevent>
             <div className="sidebar-header">
-                <h1 className="brand-title">Interior Design</h1>
-                <p className="brand-subtitle">Admin Panel</p>
+                <div className="brand-wrapper">
+                    <h1 className="brand-title">Interior Design</h1>
+                    <p className="brand-subtitle">Admin Panel</p>
+                </div>
+                <button className="btn-toggle-sidebar" onClick={toggleSidebar}>
+                    <Menu size={20} />
+                </button>
             </div>
 
             {user && (

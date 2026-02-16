@@ -23,10 +23,24 @@ const TaskSchema = new mongoose.Schema({
     },
     assignedTo: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'Staff',  // Changed from 'User' to 'Staff'
+        required: [true, 'Please assign this task to a staff member']
+    },
+    client: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Client'
+    },
+    quotation: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Quotation'
     },
     dueDate: {
-        type: Date
+        type: Date,
+        required: [true, 'Please provide a due date']
+    },
+    estimatedDuration: {
+        type: String,
+        trim: true  // e.g., "5 days", "2 weeks"
     },
     team: {
         type: mongoose.Schema.Types.ObjectId,
@@ -75,6 +89,10 @@ const TaskSchema = new mongoose.Schema({
     completedAt: {
         type: Date
     },
+    isOnTime: {
+        type: Boolean,
+        default: null  // null = not completed yet, true = completed on time, false = completed late
+    },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -89,6 +107,11 @@ TaskSchema.pre('save', function (next) {
     if (this.isModified('status') && this.status === 'Completed' && !this.completedAt) {
         this.completedAt = new Date();
         this.progress = 100;
+
+        // Check if completed on time
+        if (this.dueDate) {
+            this.isOnTime = this.completedAt <= this.dueDate;
+        }
     }
     next();
 });

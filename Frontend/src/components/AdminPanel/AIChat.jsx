@@ -26,7 +26,7 @@ const AIChat = () => {
     const [messages, setMessages] = useState([
         {
             role: 'bot',
-            content: "Hello! I'm **Antigravity AI**, your creative partner. I can help you draft quotations, manage inventory, or analyze your business. \n\nWhat are we building today?",
+            content: "Hello! I'm your creative partner. I can help you draft quotations, manage inventory, or analyze your business. \n\nWhat are we building today?",
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
     ]);

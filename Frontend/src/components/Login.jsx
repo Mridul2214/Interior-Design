@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Lock, Eye, EyeOff, CheckSquare, Square } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { authAPI } from '../config/api';
 import './css/Login.css';
 
@@ -52,101 +52,106 @@ const Login = ({ onLoginSuccess }) => {
     };
 
     return (
-        <div className="login-container">
-            <div className="login-card">
-                <div className="login-left">
-                    <div className="sphere-orb orb-large"></div>
-                    <div className="sphere-orb orb-small"></div>
-                    <div className="sphere-orb orb-bottom"></div>
-                    <div className="left-content">
-                        <h2>WELCOME</h2>
-                        <h3>YOUR MODERN PANEL</h3>
-                        <p>Experience the next generation of interior design management with our unified administrative tools.</p>
+        <div className="login-page">
+            <div className="login-wrapper">
+
+                {/* Left Side: Editorial Content */}
+                <div className="content-side">
+                    <h1>The Future <br /> of Interior.</h1>
+                    <p>Curating exceptional spaces where architecture meets emotion. Access your private portfolio and start designing your next masterpiece.</p>
+
+                    <div className="stat-row">
+                        <div className="stat-item">
+                            <b>12k+</b>
+                            <span>Projects</span>
+                        </div>
+                        <div className="stat-item">
+                            <b>45</b>
+                            <span>Awards</span>
+                        </div>
+                        <div className="stat-item">
+                            <b>18</b>
+                            <span>Countries</span>
+                        </div>
                     </div>
                 </div>
 
-                <div className="login-right">
-                    <div className="sphere-orb orb-extra"></div>
-                    <div className="login-header">
-                        <h1>Sign in</h1>
-                        <p>Welcome back! Please enter your details.</p>
+                {/* Right Side: Floating Login Form */}
+                <div className="login-form-container">
+                    <div className="logo-container">
+                        <div className="logo-icon">
+                            <span></span><span></span><span></span>
+                            <span></span><span></span><span></span>
+                            <span></span><span></span><span></span>
+                        </div>
+                        <div className="logo-text">INTERIOR TECH</div>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="login-form">
-                        <div className="input-group">
-                            <div className="input-icon-box">
-                                <User size={20} />
-                            </div>
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder="User Name / Email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <div className="input-icon-box">
-                                <Lock size={20} />
-                            </div>
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                name="password"
-                                placeholder="Password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                            />
-                            <button
-                                type="button"
-                                className="show-password-btn"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? "HIDE" : "SHOW"}
-                            </button>
-                        </div>
-
-                        <div className="form-options">
-                            <label className="checkbox-container" onClick={() => setRememberMe(!rememberMe)}>
-                                {rememberMe ? <CheckSquare size={18} color="#004683" /> : <Square size={18} />}
-                                <span>Remember me</span>
-                            </label>
-                            <a href="#" className="forgot-link">Forgot Password?</a>
-                        </div>
-
+                    <form onSubmit={handleSubmit}>
                         {error && (
-                            <div className="error-banner-small">
+                            <div className="error-message">
                                 {error}
                             </div>
                         )}
 
-                        <button
-                            type="submit"
-                            className="btn-signin-primary"
-                            disabled={loading}
-                        >
-                            {loading ? "Signing in..." : "Sign in"}
-                        </button>
+                        <div className="input-group">
+                            <input
+                                type="email"
+                                name="email"
+                                placeholder="EMAIL ADDRESS"
+                                value={formData.email}
+                                onChange={handleChange}
+                                required
+                                className="modern-input"
+                            />
+                        </div>
 
-                        <div className="divider">
-                            <span>Or</span>
+                        <div className="input-group">
+                            <div className="input-container">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    placeholder="PASSWORD"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    className="modern-input"
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-password-btn"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                <a href="#" className="sub-link">FORGOT PASSWORD?</a>
+                            </div>
                         </div>
 
                         <button
-                            type="button"
-                            className="btn-signin-secondary"
-                            onClick={fillDefaultCredentials}
+                            type="submit"
+                            className="btn-login-dark"
+                            disabled={loading}
                         >
-                            Sign in with Guest Access
+                            {loading ? "SIGNING IN..." : "SIGN IN"}
                         </button>
-
-                        <p className="signup-footer">
-                            Don't have an account? <a href="#">Sign Up</a>
-                        </p>
                     </form>
+
+                    <div className="signup-text">
+                        DON'T HAVE AN ACCOUNT? <a href="#" className="signup-link">JOIN US</a>
+                    </div>
+
+                    <button
+                        type="button"
+                        className="guest-access-btn"
+                        onClick={fillDefaultCredentials}
+                    >
+                        Guest Access
+                    </button>
                 </div>
+
             </div>
         </div>
     );

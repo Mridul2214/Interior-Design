@@ -95,6 +95,9 @@ const QuotationSchema = new mongoose.Schema({
         default: 0,
         min: 0
     },
+    offerPrice: {
+        type: Number
+    },
     totalAmount: {
         type: Number,
         required: true,
@@ -145,8 +148,15 @@ QuotationSchema.pre('save', async function (next) {
 // Calculate totals before saving
 QuotationSchema.pre('save', function (next) {
     this.subtotal = this.items.reduce((sum, item) => sum + item.amount, 0);
-    this.taxAmount = (this.subtotal * this.taxRate) / 100;
-    this.totalAmount = this.subtotal + this.taxAmount - this.discount;
+
+    // Discount is a percentage
+    const discountAmount = (this.subtotal * (this.discount || 0)) / 100;
+    this.offerPrice = this.subtotal - discountAmount;
+
+    // Tax is applied on the Offer Price (discounted amount)
+    this.taxAmount = (this.offerPrice * (this.taxRate || 0)) / 100;
+
+    this.totalAmount = this.offerPrice + this.taxAmount;
     next();
 });
 

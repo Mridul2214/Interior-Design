@@ -1,0 +1,206 @@
+.custom-select-container {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.custom-select-label .required {
+    color: #ef4444;
+}
+
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 45px;
+}
+
+.custom-select-trigger:hover {
+    background: white;
+    border-color: #cbd5e1;
+}
+
+.custom-select-trigger.open {
+    background: white;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.custom-select-trigger.error {
+    border-color: #ef4444;
+}
+
+.custom-select-container.disabled .custom-select-trigger {
+    cursor: not-allowed;
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+
+.trigger-content {
+    flex: 1;
+    overflow: hidden;
+}
+
+.selected-value {
+    color: #1e293b;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.placeholder {
+    color: #94a3b8;
+    font-size: 0.95rem;
+}
+
+.trigger-icons {
+    color: #94a3b8;
+    margin-left: 0.75rem;
+}
+
+.custom-select-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    overflow: hidden;
+    animation: dropdownSlideIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes dropdownSlideIn {
+    from {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.select-search-container {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.select-search-container .search-icon {
+    position: absolute;
+    left: 1.25rem;
+    color: #94a3b8;
+}
+
+.select-search-input {
+    width: 100%;
+    padding: 0.5rem 0.5rem 0.5rem 2.25rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    outline: none;
+    background: #f8fafc;
+}
+
+.select-search-input:focus {
+    border-color: #3b82f6;
+    background: white;
+}
+
+.options-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem;
+    max-height: 250px;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.options-list::-webkit-scrollbar {
+    display: none;
+}
+
+.option-item {
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 2px solid transparent;
+}
+
+.option-item:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+    padding-left: 0.85rem;
+    border-left-color: #3b82f6;
+    transform: translateX(4px);
+}
+
+.option-item.selected {
+    background: #eff6ff;
+    color: #2563eb;
+    font-weight: 600;
+    border-left-color: #2563eb;
+}
+
+.selected-indicator {
+    width: 6px;
+    height: 6px;
+    background: #2563eb;
+    border-radius: 50%;
+}
+
+.no-options {
+    padding: 1.5rem;
+    color: #94a3b8;
+    text-align: center;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* Inline Variant Styles */
+.custom-select-container.inline {
+    width: 130px;
+}
+
+.custom-select-container.inline .custom-select-trigger {
+    padding: 0.4rem 0.75rem;
+    min-height: 32px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.custom-select-container.inline .selected-value {
+    font-size: 0.75rem;
+}
+
+.custom-select-container.inline .custom-select-dropdown {
+    width: 160px;
+    top: calc(100% + 0.25rem);
+}

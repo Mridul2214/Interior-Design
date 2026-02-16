@@ -47,8 +47,8 @@ const Header = () => {
             </div>
 
             <div className="header-actions">
-                {/* Dashboard & Quotations Specific Action: New Quotation Button */}
-                {(location.pathname === '/' || location.pathname === '/quotations') && (
+                {/* Dashboard Specific Action: New Quotation Button */}
+                {(location.pathname === '/') && (
                     <Link to="/quotations/new" style={{ textDecoration: 'none' }}>
                         <button className="btn-primary">
                             <Plus size={20} />
@@ -57,12 +57,6 @@ const Header = () => {
                     </Link>
                 )}
 
-                {location.pathname === '/inventory' && (
-                    <button className="btn-primary" onClick={() => window.dispatchEvent(new CustomEvent('open-inventory-modal'))}>
-                        <Plus size={20} />
-                        <span>Add Item</span>
-                    </button>
-                )}
 
                 {location.pathname === '/po-inventory' && (
                     <button className="btn-primary" onClick={() => window.dispatchEvent(new CustomEvent('open-po-inventory-modal'))}>

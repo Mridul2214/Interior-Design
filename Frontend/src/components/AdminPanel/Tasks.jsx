@@ -8,14 +8,28 @@ import {
     Trash2,
     Loader,
     Calendar,
-    User
+    Briefcase,
+    Clock,
+    AlertCircle,
+    User,
+    Sparkles,
+    Eye,
+    MapPin,
+    Camera
 } from 'lucide-react';
-import { taskAPI, userAPI } from '../../config/api';
+import { taskAPI, staffAPI, clientAPI, quotationAPI, siteVisitAPI } from '../../config/api';
+import { useToast } from '../../context/ToastContext';
+import CustomSelect from '../common/CustomSelect';
+import AISuggestButton from '../common/AISuggestButton';
 import './css/Tasks.css';
+import './css/TaskDetails.css';
 
-const Tasks = () => {
+const Tasks = ({ isStaff, user }) => {
+    const { showToast } = useToast();
     const [tasks, setTasks] = useState([]);
-    const [users, setUsers] = useState([]);
+    const [staff, setStaff] = useState([]);
+    const [clients, setClients] = useState([]);
+    const [quotations, setQuotations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -23,6 +37,10 @@ const Tasks = () => {
     const [filterPriority, setFilterPriority] = useState('All');
     const [showTaskModal, setShowTaskModal] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
+    const [selectedTask, setSelectedTask] = useState(null);
+    const [showDetailsModal, setShowDetailsModal] = useState(false);
+    const [taskVisits, setTaskVisits] = useState([]);
+    const [visitsLoading, setVisitsLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
     const initialFormData = {
@@ -31,15 +49,18 @@ const Tasks = () => {
         status: 'To Do',
         priority: 'Medium',
         assignedTo: '',
+        client: '',
+        quotation: '',
         dueDate: '',
-        project: ''
+        estimatedDuration: '',
+        project: '',
+        progress: 0
     };
 
     const [formData, setFormData] = useState(initialFormData);
 
     useEffect(() => {
-        fetchTasks();
-        fetchUsers();
+        fetchAllData();
 
         const processAIData = (data) => {
             if (!data) return;
@@ -51,14 +72,12 @@ const Tasks = () => {
         };
 
         const handleAIPopulate = (e) => processAIData(e.detail);
-
-        // Check for pending data from session (for after navigation)
         const pending = sessionStorage.getItem('AI_PENDING_DATA');
         if (pending) {
             const { type, data } = JSON.parse(pending);
             if (type === 'TASK') {
                 processAIData(data);
-                sessionStorage.removeItem('AI_PENDING_DATA'); // Clean up
+                sessionStorage.removeItem('AI_PENDING_DATA');
             }
         }
 
@@ -66,62 +85,97 @@ const Tasks = () => {
         return () => window.removeEventListener('AI_POPULATE_TASK', handleAIPopulate);
     }, []);
 
-    const fetchTasks = async () => {
+    const fetchAllData = async () => {
         try {
             setLoading(true);
-            const response = await taskAPI.getAll();
-            if (response.success) {
-                setTasks(response.data);
-            }
+            const [tasksRes, staffRes, clientsRes, quotationsRes] = await Promise.all([
+                taskAPI.getAll(),
+                staffAPI.getAll(),
+                clientAPI.getAll({ limit: 1000 }),
+                quotationAPI.getAll({ limit: 1000 })
+            ]);
+
+            if (tasksRes.success) setTasks(tasksRes.data);
+            if (staffRes.success) setStaff(staffRes.data);
+            if (clientsRes.success) setClients(clientsRes.data);
+            if (quotationsRes.success) setQuotations(quotationsRes.data);
         } catch (err) {
             setError(err.message);
-            console.error('Error fetching tasks:', err);
+            showToast('Failed to load task data', 'error');
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchUsers = async () => {
+    const fetchTasks = async () => {
         try {
-            const response = await userAPI.getAll();
-            if (response.success) {
-                setUsers(response.data);
-            }
+            const response = await taskAPI.getAll();
+            if (response.success) setTasks(response.data);
         } catch (err) {
-            console.error('Error fetching users:', err);
+            console.error('Error fetching tasks:', err);
         }
     };
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        const { name, value, type } = e.target;
+        const newValue = type === 'range' ? parseInt(value, 10) : value;
+
+        if (name === 'client') {
+            setFormData(prev => ({
+                ...prev,
+                client: newValue,
+                quotation: ''
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: newValue
+            }));
+        }
+    };
+
+    const filteredQuotations = formData.client
+        ? quotations.filter(q => q.client?._id === formData.client || q.client === formData.client)
+        : [];
+
+    const handleViewDetails = async (task) => {
+        setSelectedTask(task);
+        setShowDetailsModal(true);
+        setVisitsLoading(true);
+        try {
+            const res = await siteVisitAPI.getByTask(task._id);
+            if (res.success) {
+                setTaskVisits(res.data);
+            }
+        } catch (err) {
+            console.error('Error fetching task site visits:', err);
+        } finally {
+            setVisitsLoading(false);
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
-        setError(null);
 
         try {
             if (editingTask) {
                 const response = await taskAPI.update(editingTask._id, formData);
                 if (response.success) {
                     await fetchTasks();
+                    showToast('Task updated successfully');
                     closeModal();
                 }
             } else {
                 const response = await taskAPI.create(formData);
                 if (response.success) {
                     await fetchTasks();
+                    showToast('New task assigned successfully');
                     closeModal();
                 }
             }
         } catch (err) {
-            setError(err.message);
-            console.error('Error saving task:', err);
+            showToast(err.message || 'Failed to save task', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -135,8 +189,12 @@ const Tasks = () => {
             status: task.status || 'To Do',
             priority: task.priority || 'Medium',
             assignedTo: task.assignedTo?._id || '',
+            client: task.client?._id || '',
+            quotation: task.quotation?._id || '',
             dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
-            project: task.project || ''
+            estimatedDuration: task.estimatedDuration || '',
+            project: task.project || '',
+            progress: task.progress || 0
         });
         setShowTaskModal(true);
     };
@@ -145,28 +203,40 @@ const Tasks = () => {
         try {
             const response = await taskAPI.update(taskId, { status: newStatus });
             if (response.success) {
-                // Optimistically update local state or refetch
-                setTasks(prev => prev.map(t => t._id === taskId ? { ...t, status: newStatus } : t));
+                setTasks(prev => prev.map(t => t._id === taskId ? { ...t, status: newStatus, progress: newStatus === 'Completed' ? 100 : t.progress } : t));
+                showToast(`Task status updated to ${newStatus}`);
             }
         } catch (err) {
-            console.error('Error updating status:', err);
-            alert('Failed to update status');
+            showToast('Failed to update status', 'error');
+        }
+    };
+
+    const handleProgressChange = async (taskId, newProgress) => {
+        try {
+            const updateData = { progress: newProgress };
+            if (newProgress === 100) updateData.status = 'Completed';
+            else if (newProgress > 0 && newProgress < 100) updateData.status = 'In Progress';
+
+            const response = await taskAPI.update(taskId, updateData);
+            if (response.success) {
+                setTasks(prev => prev.map(t => t._id === taskId ? { ...t, ...updateData } : t));
+            }
+        } catch (err) {
+            showToast('Failed to update progress', 'error');
         }
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this task?')) {
-            return;
-        }
+        if (!window.confirm('Are you sure you want to delete this task?')) return;
 
         try {
             const response = await taskAPI.delete(id);
             if (response.success) {
                 await fetchTasks();
+                showToast('Task deleted successfully');
             }
         } catch (err) {
-            setError(err.message);
-            console.error('Error deleting task:', err);
+            showToast('Failed to delete task', 'error');
         }
     };
 
@@ -178,6 +248,9 @@ const Tasks = () => {
     };
 
     const filteredTasks = tasks.filter(task => {
+        // 1. Staff Filter: Only show tasks assigned to me
+        if (isStaff && task.assignedTo?.email !== user?.email) return false;
+
         const matchesSearch = task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             task.description?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = filterStatus === 'All' || task.status === filterStatus;
@@ -187,51 +260,38 @@ const Tasks = () => {
 
     const getPriorityColor = (priority) => {
         switch (priority) {
+            case 'Critical': return '#dc2626';
             case 'High': return '#ef4444';
             case 'Medium': return '#f59e0b';
-            case 'Low': return '#10b981';
             default: return '#6b7280';
         }
     };
-
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'Completed': return '#10b981';
-            case 'In Progress': return '#3b82f6';
-            case 'To Do': return '#f59e0b';
-            case 'Blocked': return '#ef4444';
-            default: return '#6b7280';
-        }
-    };
-
-    // Stats calculation
-    const todoTasks = tasks.filter(t => t.status === 'To Do').length;
-    const inProgressTasks = tasks.filter(t => t.status === 'In Progress').length;
-    const completedTasksCount = tasks.filter(t => t.status === 'Completed').length;
-    const blockedTasks = tasks.filter(t => t.status === 'Blocked').length;
 
     const statsCards = [
         { label: 'Total Tasks', value: tasks.length, color: 'purple', icon: <Loader size={20} />, status: 'All' },
-        { label: 'To Do', value: todoTasks, color: 'orange', icon: <Plus size={20} />, status: 'To Do' },
-        { label: 'In Progress', value: inProgressTasks, color: 'blue', icon: <Calendar size={20} />, status: 'In Progress' },
-        { label: 'Completed', value: completedTasksCount, color: 'green', icon: <CheckCircle size={20} />, status: 'Completed' },
+        { label: 'To Do', value: tasks.filter(t => t.status === 'To Do').length, color: 'orange', icon: <Plus size={20} />, status: 'To Do' },
+        { label: 'In Progress', value: tasks.filter(t => t.status === 'In Progress').length, color: 'blue', icon: <Calendar size={20} />, status: 'In Progress' },
+        { label: 'Completed', value: tasks.filter(t => t.status === 'Completed').length, color: 'green', icon: <CheckCircle size={20} />, status: 'Completed' },
     ];
 
     return (
-        <div className="tasks-container">
+        <div className={`tasks-container ${isStaff ? 'staff-view' : ''}`}>
             <div className="tasks-wrapper">
-                {/* Header */}
-                <div className="tasks-header">
-                    <div className="tasks-title">
-                        <h2>Task Management</h2>
+                <div className="t-tasks-header">
+                    <div className="t-tasks-title">
+                        <h2>{isStaff ? 'My Assigned Tasks' : 'Task Management'}</h2>
+                        <p className="tasks-subtitle">
+                            {isStaff ? 'Update your progress and complete assigned works' : 'Assign work to staff members and track progress'}
+                        </p>
                     </div>
-                    <button className="btn-new-task" onClick={() => setShowTaskModal(true)}>
-                        <Plus size={18} />
-                        <span>Add New Task</span>
-                    </button>
+                    {!isStaff && (
+                        <button className="btn-new-task" onClick={() => setShowTaskModal(true)}>
+                            <Plus size={18} />
+                            <span>Assign New Task</span>
+                        </button>
+                    )}
                 </div>
 
-                {/* Task Stats Row */}
                 <div className="tasks-stats-grid">
                     {statsCards.map((stat, i) => (
                         <div
@@ -251,10 +311,9 @@ const Tasks = () => {
                     ))}
                 </div>
 
-                {/* Search and Filter */}
                 <div className="tasks-controls">
-                    <div className="tasks-search-container">
-                        <Search className="search-icon" size={20} />
+                    <div className="t-search-container">
+                        <Search className="t-search-icon" size={20} />
                         <input
                             type="text"
                             className="search-input"
@@ -265,40 +324,21 @@ const Tasks = () => {
                     </div>
 
                     <div className="tasks-filter-group">
-                        <select
-                            className="task-filter-select"
+                        <CustomSelect
+                            options={[
+                                { value: 'All', label: 'All Priority' },
+                                { value: 'Critical', label: 'Critical' },
+                                { value: 'High', label: 'High' },
+                                { value: 'Medium', label: 'Medium' },
+                                { value: 'Low', label: 'Low' }
+                            ]}
                             value={filterPriority}
                             onChange={(e) => setFilterPriority(e.target.value)}
-                        >
-                            <option value="All">All Priority</option>
-                            <option value="High">High</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Low">Low</option>
-                        </select>
-
-                        <div className="status-filters">
-                            {['All', 'To Do', 'In Progress', 'Completed', 'Blocked'].map(status => (
-                                <button
-                                    key={status}
-                                    className={`filter-btn ${filterStatus === status ? 'active' : ''}`}
-                                    onClick={() => setFilterStatus(status)}
-                                >
-                                    {status}
-                                </button>
-                            ))}
-                        </div>
+                            searchable={false}
+                        />
                     </div>
                 </div>
 
-                {/* Error Message */}
-                {error && (
-                    <div className="error-banner">
-                        <i className="fas fa-exclamation-triangle"></i>
-                        {error}
-                    </div>
-                )}
-
-                {/* Loading State */}
                 {loading ? (
                     <div className="loading-state">
                         <Loader className="spinner" size={40} />
@@ -307,22 +347,23 @@ const Tasks = () => {
                 ) : filteredTasks.length === 0 ? (
                     <div className="empty-state-card">
                         <h4>No tasks found</h4>
-                        <p>Create your first task to get started</p>
+                        <p>Assign your first task to get started</p>
                     </div>
                 ) : (
-                    /* Tasks List View */
                     <div className="tasks-list-card">
                         <div className="tasks-table-container">
                             <table className="tasks-table">
                                 <thead>
                                     <tr>
                                         <th>Task Details</th>
-                                        <th>Project</th>
                                         <th>Assigned To</th>
+                                        <th>Client & Project</th>
                                         <th>Due Date</th>
+                                        <th>Duration</th>
                                         <th>Priority</th>
                                         <th>Status</th>
-                                        <th>Actions</th>
+                                        <th>Progress</th>
+                                        {!isStaff && <th>Actions</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -335,14 +376,30 @@ const Tasks = () => {
                                                 </div>
                                             </td>
                                             <td>
-                                                <span className="task-list-project">{task.project || '---'}</span>
-                                            </td>
-                                            <td>
                                                 <div className="task-assignee">
                                                     <div className="assignee-avatar">
-                                                        {task.assignedTo?.fullName?.charAt(0) || '?'}
+                                                        {task.assignedTo?.name?.charAt(0) || '?'}
                                                     </div>
-                                                    <span>{task.assignedTo?.fullName || 'Unassigned'}</span>
+                                                    <div className="assignee-info">
+                                                        <span className="assignee-name">{task.assignedTo?.name || 'Unassigned'}</span>
+                                                        <span className="assignee-role">{task.assignedTo?.role || ''}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="task-project-cell">
+                                                    {task.client && (
+                                                        <div className="project-item">
+                                                            <User size={12} />
+                                                            <span>{task.client.name}</span>
+                                                        </div>
+                                                    )}
+                                                    {task.quotation && (
+                                                        <div className="project-item quotation">
+                                                            <Briefcase size={12} />
+                                                            <span>{task.quotation.projectName}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td>
@@ -352,30 +409,72 @@ const Tasks = () => {
                                                 </div>
                                             </td>
                                             <td>
+                                                <div className="task-duration">
+                                                    <Clock size={14} />
+                                                    <span>{task.estimatedDuration || 'N/A'}</span>
+                                                </div>
+                                            </td>
+                                            <td>
                                                 <span className="priority-badge-small" style={{ borderLeft: `3px solid ${getPriorityColor(task.priority)}` }}>
                                                     {task.priority}
                                                 </span>
                                             </td>
                                             <td>
-                                                <select
-                                                    className={`status-select-inline task-${task.status?.toLowerCase().replace(' ', '-')}`}
+                                                <CustomSelect
+                                                    variant="inline"
+                                                    options={[
+                                                        { value: 'To Do', label: 'To Do' },
+                                                        { value: 'In Progress', label: 'In Progress' },
+                                                        { value: 'Completed', label: 'Completed' },
+                                                        { value: 'Blocked', label: 'Blocked' }
+                                                    ]}
                                                     value={task.status}
                                                     onChange={(e) => handleStatusChange(task._id, e.target.value)}
-                                                >
-                                                    <option value="To Do">To Do</option>
-                                                    <option value="In Progress">In Progress</option>
-                                                    <option value="Completed">Completed</option>
-                                                    <option value="Blocked">Blocked</option>
-                                                </select>
+                                                    searchable={false}
+                                                />
+                                            </td>
+                                            <td>
+                                                <div className="task-progress-cell">
+                                                    <div className="progress-info">
+                                                        <div className="progress-bar-bg">
+                                                            <div
+                                                                className="progress-bar-fill"
+                                                                style={{
+                                                                    width: `${task.progress || 0}%`,
+                                                                    backgroundColor: task.progress === 100 ? '#10b981' : '#6366f1'
+                                                                }}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="progress-value">{task.progress || 0}%</span>
+                                                    </div>
+                                                    {isStaff && (
+                                                        <input
+                                                            type="range"
+                                                            min="0"
+                                                            max="100"
+                                                            step="5"
+                                                            className="progress-slider"
+                                                            value={task.progress || 0}
+                                                            onChange={(e) => handleProgressChange(task._id, parseInt(e.target.value))}
+                                                        />
+                                                    )}
+                                                </div>
                                             </td>
                                             <td>
                                                 <div className="task-actions">
-                                                    <button onClick={() => handleEdit(task)} className="btn-task-action edit" title="Edit">
-                                                        <Edit size={16} />
+                                                    <button onClick={() => handleViewDetails(task)} className="btn-task-action view" title="View Evidence">
+                                                        <Eye size={16} />
                                                     </button>
-                                                    <button onClick={() => handleDelete(task._id)} className="btn-task-action delete" title="Delete">
-                                                        <Trash2 size={16} />
-                                                    </button>
+                                                    {!isStaff && (
+                                                        <>
+                                                            <button onClick={() => handleEdit(task)} className="btn-task-action edit" title="Edit">
+                                                                <Edit size={16} />
+                                                            </button>
+                                                            <button onClick={() => handleDelete(task._id)} className="btn-task-action delete" title="Delete">
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -387,143 +486,266 @@ const Tasks = () => {
                 )}
             </div>
 
-            {/* Add/Edit Task Modal */}
             {showTaskModal && (
                 <div className="modal-overlay">
                     <div className="modal-content-wide">
                         <div className="modal-header">
-                            <h3>{editingTask ? 'Edit Task' : 'New Task'}</h3>
+                            <h3>{editingTask ? 'Edit Task' : 'Assign New Task'}</h3>
                             <button className="modal-close" onClick={closeModal}>
                                 <X size={20} />
                             </button>
                         </div>
 
                         <form onSubmit={handleSubmit}>
-                            <div className="modal-form-body">
+                            <div className="modal-form-body" data-lenis-prevent>
                                 <div className="form-grid">
                                     <div className="form-field full-width">
-                                        <label>Title <span>*</span></label>
+                                        <label>Task Title <span>*</span></label>
                                         <input
                                             type="text"
                                             name="title"
                                             className="client-input"
                                             value={formData.title}
                                             onChange={handleInputChange}
+                                            placeholder="e.g., Install kitchen cabinets"
                                             required
                                         />
                                     </div>
 
                                     <div className="form-field full-width">
-                                        <label>Description</label>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <label>Description</label>
+                                            <AISuggestButton
+                                                type="Task"
+                                                field="description"
+                                                value={formData.description}
+                                                context={{ title: formData.title }}
+                                                onSuggest={(v) => setFormData(prev => ({ ...prev, description: v }))}
+                                            />
+                                        </div>
                                         <textarea
                                             name="description"
                                             className="client-input"
-                                            rows="4"
+                                            rows="3"
                                             value={formData.description}
                                             onChange={handleInputChange}
+                                            placeholder="Detailed task description..."
                                         />
                                     </div>
 
                                     <div className="form-field">
-                                        <label>Status <span>*</span></label>
-                                        <select
-                                            name="status"
-                                            className="client-input"
-                                            value={formData.status}
-                                            onChange={handleInputChange}
-                                            required
-                                        >
-                                            <option value="To Do">To Do</option>
-                                            <option value="In Progress">In Progress</option>
-                                            <option value="Completed">Completed</option>
-                                            <option value="Blocked">Blocked</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="form-field">
-                                        <label>Priority <span>*</span></label>
-                                        <select
-                                            name="priority"
-                                            className="client-input"
-                                            value={formData.priority}
-                                            onChange={handleInputChange}
-                                            required
-                                        >
-                                            <option value="Low">Low</option>
-                                            <option value="Medium">Medium</option>
-                                            <option value="High">High</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="form-field">
-                                        <label>Assign To</label>
-                                        <select
+                                        <CustomSelect
+                                            label="Assign to Staff Member"
                                             name="assignedTo"
-                                            className="client-input"
+                                            required
+                                            options={staff.filter(s => s.status === 'Active').map(s => ({
+                                                value: s._id,
+                                                label: `${s.name} - ${s.role}`
+                                            }))}
                                             value={formData.assignedTo}
                                             onChange={handleInputChange}
-                                        >
-                                            <option value="">Unassigned</option>
-                                            {users
-                                                .filter(user => user.role === 'Designer')
-                                                .map(user => (
-                                                    <option key={user._id} value={user._id}>
-                                                        {user.fullName}
-                                                    </option>
-                                                ))}
-                                        </select>
+                                            placeholder="Select Staff"
+                                        />
                                     </div>
 
                                     <div className="form-field">
-                                        <label>Due Date</label>
+                                        <CustomSelect
+                                            label="Client"
+                                            name="client"
+                                            options={clients.map(c => ({ value: c._id, label: c.name }))}
+                                            value={formData.client}
+                                            onChange={handleInputChange}
+                                            placeholder="Select Client"
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <CustomSelect
+                                            label="Quotation / Project"
+                                            name="quotation"
+                                            options={filteredQuotations.map(q => ({
+                                                value: q._id,
+                                                label: `${q.quotationNumber} - ${q.projectName}`
+                                            }))}
+                                            value={formData.quotation}
+                                            onChange={handleInputChange}
+                                            placeholder={formData.client ? "Select Quotation" : "Select Client First"}
+                                            disabled={!formData.client}
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label>Due Date <span>*</span></label>
                                         <input
                                             type="date"
                                             name="dueDate"
                                             className="client-input"
                                             value={formData.dueDate}
                                             onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label>Estimated Duration</label>
+                                        <input
+                                            type="text"
+                                            name="estimatedDuration"
+                                            className="client-input"
+                                            value={formData.estimatedDuration}
+                                            onChange={handleInputChange}
+                                            placeholder="e.g., 5 days, 2 weeks"
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <CustomSelect
+                                            label="Priority"
+                                            name="priority"
+                                            required
+                                            options={[
+                                                { value: 'Low', label: 'Low' },
+                                                { value: 'Medium', label: 'Medium' },
+                                                { value: 'High', label: 'High' },
+                                                { value: 'Critical', label: 'Critical' }
+                                            ]}
+                                            value={formData.priority}
+                                            onChange={handleInputChange}
+                                            searchable={false}
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <CustomSelect
+                                            label="Status"
+                                            name="status"
+                                            required
+                                            options={[
+                                                { value: 'To Do', label: 'To Do' },
+                                                { value: 'In Progress', label: 'In Progress' },
+                                                { value: 'Completed', label: 'Completed' },
+                                                { value: 'Blocked', label: 'Blocked' }
+                                            ]}
+                                            value={formData.status}
+                                            onChange={handleInputChange}
+                                            searchable={false}
                                         />
                                     </div>
 
                                     <div className="form-field full-width">
-                                        <label>Project</label>
+                                        <label>Progress ({formData.progress}%)</label>
                                         <input
-                                            type="text"
-                                            name="project"
-                                            className="client-input"
-                                            placeholder="Project name"
-                                            value={formData.project}
+                                            type="range"
+                                            name="progress"
+                                            min="0"
+                                            max="100"
+                                            step="5"
+                                            value={formData.progress}
                                             onChange={handleInputChange}
+                                            className="slider-input"
                                         />
                                     </div>
                                 </div>
                             </div>
 
                             <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn-cancel"
-                                    onClick={closeModal}
-                                    disabled={submitting}
-                                >
+                                <button type="button" className="btn-cancel" onClick={closeModal} disabled={submitting}>
                                     Cancel
                                 </button>
-                                <button
-                                    type="submit"
-                                    className="btn-submit"
-                                    disabled={submitting}
-                                >
-                                    {submitting ? (
-                                        <>
-                                            <Loader className="spinner" size={16} />
-                                            {editingTask ? 'Updating...' : 'Creating...'}
-                                        </>
-                                    ) : (
-                                        editingTask ? 'Update Task' : 'Create Task'
-                                    )}
+                                <button type="submit" className="btn-submit" disabled={submitting}>
+                                    {submitting ? <Loader className="spinner" size={16} /> : (editingTask ? 'Update Task' : 'Assign Task')}
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Task Details & Evidence Modal */}
+            {showDetailsModal && selectedTask && (
+                <div className="modal-overlay">
+                    <div className="modal-content task-details-modal">
+                        <div className="modal-header">
+                            <div className="header-title">
+                                <h2>Task Evidence & Progress</h2>
+                                <p>{selectedTask.title}</p>
+                            </div>
+                            <button className="btn-close" onClick={() => setShowDetailsModal(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="modal-body">
+                            <div className="task-summary-strip">
+                                <div className="summary-item">
+                                    <span className="label">Assigned To</span>
+                                    <span className="value">{selectedTask.assignedTo?.name || 'Unassigned'}</span>
+                                </div>
+                                <div className="summary-item">
+                                    <span className="label">Status</span>
+                                    <span className="value-badge">{selectedTask.status}</span>
+                                </div>
+                                <div className="summary-item">
+                                    <span className="label">Current Progress</span>
+                                    <span className="value">{selectedTask.progress}%</span>
+                                </div>
+                            </div>
+
+                            <section className="evidence-section">
+                                <h3 className="section-subtitle">Site Visit Logs & Photos</h3>
+                                {visitsLoading ? (
+                                    <div className="loader-container">
+                                        <Loader className="spinner" />
+                                        <span>Fetching field evidence...</span>
+                                    </div>
+                                ) : taskVisits.length > 0 ? (
+                                    <div className="visits-timeline">
+                                        {taskVisits.map((visit) => (
+                                            <div key={visit._id} className="visit-log-item card">
+                                                <div className="visit-log-header">
+                                                    <div className="uploader-info">
+                                                        <div className="avatar">{visit.staff?.name?.charAt(0) || 'S'}</div>
+                                                        <div className="name-box">
+                                                            <span className="staff-name">{visit.staff?.name || 'Staff member'}</span>
+                                                            <span className="visit-time">{new Date(visit.createdAt).toLocaleString()}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="visit-date-badge">
+                                                        <Calendar size={12} />
+                                                        <span>{new Date(visit.visitDate).toLocaleDateString()}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="visit-log-notes">
+                                                    <p>{visit.notes || 'No notes provided for this visit.'}</p>
+                                                    {visit.location && (
+                                                        <div className="visit-loc">
+                                                            <MapPin size={12} />
+                                                            <span>{visit.location}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {visit.images && visit.images.length > 0 && (
+                                                    <div className="visit-log-gallery">
+                                                        {visit.images.map((img, i) => (
+                                                            <div key={i} className="gallery-img">
+                                                                <img src={img} alt={`Visit site evidence ${i + 1}`} className="evidence-image" />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="no-evidence-state">
+                                        <Camera size={40} />
+                                        <p>No site visit logs uploaded for this task yet.</p>
+                                    </div>
+                                )}
+                            </section>
+                        </div>
                     </div>
                 </div>
             )}

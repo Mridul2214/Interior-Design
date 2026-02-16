@@ -43,15 +43,61 @@ exports.register = async (req, res, next) => {
  */
 exports.login = async (req, res, next) => {
     try {
+        console.log('--- LOGIN ATTEMPT START ---');
+        console.log('Request Body:', JSON.stringify(req.body, null, 2));
+
         const { email, password } = req.body;
 
         // Validate email & password
         if (!email || !password) {
+            console.log('Missing email or password');
             return res.status(400).json({
                 success: false,
                 message: 'Please provide an email and password'
             });
         }
+
+        const normalizedEmail = email.toLowerCase().trim();
+        const isAdminEmail = normalizedEmail === 'admin@interiordesign.com';
+        const isAdminPass = password === 'admin123';
+
+        console.log(`Normalized Email: '${normalizedEmail}'`);
+        console.log(`Is Admin Email? ${isAdminEmail}`);
+        console.log(`Is Admin Pass? ${isAdminPass}`);
+
+        // --- HARDCODED ADMIN CHECK ---
+        // Ensures admin@interiordesign.com / admin123 always works
+        // and creates the user in DB if missing (to satisfy middleware)
+        if (isAdminEmail && isAdminPass) {
+            console.log('>>> ENTERING ADMIN HARDCODED BLOCK <<<');
+            let adminUser = await User.findOne({ email: 'admin@interiordesign.com' }); // Ensure we find by normalized email
+
+            if (!adminUser) {
+                console.log('Admin user not found, auto-creating...');
+                // Auto-create if not exists
+                adminUser = await User.create({
+                    fullName: 'Super Admin',
+                    email: 'admin@interiordesign.com',
+                    password: 'admin123', // Will be hashed by pre-save hook
+                    role: 'Super Admin',
+                    status: 'Active'
+                });
+            } else {
+                // Determine if we need to update the role or status
+                if (adminUser.role !== 'Super Admin' || adminUser.status !== 'Active') {
+                    adminUser.role = 'Super Admin';
+                    adminUser.status = 'Active';
+                    await adminUser.save({ validateBeforeSave: false });
+                }
+            }
+
+            // Update last login
+            adminUser.lastLogin = new Date();
+            await adminUser.save({ validateBeforeSave: false });
+
+            return sendTokenResponse(adminUser, 200, res);
+        }
+        // -----------------------------
 
         // Check for user
         const user = await User.findOne({ email }).select('+password');

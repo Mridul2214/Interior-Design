@@ -7,7 +7,7 @@
 
 .tasks-wrapper {
     max-width: 1400px;
-    margin: 0 auto;
+    margin: 0;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -36,6 +36,12 @@
     font-size: 0.9rem;
     color: var(--text-secondary);
     margin: 0.25rem 0 0 0;
+}
+
+.tasks-subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0.5rem 0 0 0;
 }
 
 .tasks-actions {
@@ -314,12 +320,14 @@
     background: white;
     border-radius: 16px;
     border: 1px solid var(--border-color);
-    overflow: hidden;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
 }
 
 .tasks-table-container {
     overflow-x: auto;
+    min-height: 400px;
+    /* Ensure space for dropdowns */
 }
 
 .tasks-table {
@@ -393,25 +401,65 @@
     align-items: center;
     gap: 0.75rem;
     font-size: 0.85rem;
-    font-weight: 600;
 }
 
 .assignee-avatar {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     background: #e2e8f0;
     color: #475569;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 700;
     border: 2px solid white;
     box-shadow: 0 0 0 1px #e2e8f0;
+    flex-shrink: 0;
 }
 
-.task-date {
+.assignee-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.assignee-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.assignee-role {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.task-project-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.project-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.project-item.quotation {
+    color: #3b82f6;
+    font-weight: 500;
+}
+
+.no-data {
+    color: #cbd5e1;
+    font-size: 0.85rem;
+}
+
+.task-duration {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -611,6 +659,7 @@
         opacity: 0;
     }
 
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -647,14 +696,16 @@
     color: var(--text-primary);
 }
 
-.modal-body {
+.modal-body,
+.modal-form-body {
     padding: 1.5rem 2rem;
     max-height: 75vh;
     overflow-y: auto;
     scrollbar-width: none;
 }
 
-.modal-body::-webkit-scrollbar {
+.modal-body::-webkit-scrollbar,
+.modal-form-body::-webkit-scrollbar {
     display: none;
 }
 
@@ -808,4 +859,77 @@
 
 .btn-modal-create:hover {
     background: #1d4ed8;
+}
+
+/* Progress Cell Styling */
+.task-progress-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 140px;
+}
+
+.progress-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.progress-bar-bg {
+    flex: 1;
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 99px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s;
+}
+
+.progress-value {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    min-width: 32px;
+}
+
+.progress-slider {
+    width: 100%;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 99px;
+    appearance: none;
+    outline: none;
+    cursor: pointer;
+}
+
+.progress-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #ffffff;
+    border: 2px solid #6366f1;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+
+.progress-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    background: #6366f1;
+}
+
+.progress-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: #ffffff;
+    border: 2px solid #6366f1;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

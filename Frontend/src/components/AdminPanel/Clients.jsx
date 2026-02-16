@@ -5,21 +5,27 @@ import {
     X,
     Edit,
     Trash2,
-    Loader
+    Loader,
+    User,
+    Mail,
+    Phone,
+    MapPin,
+    Hash,
+    Users
 } from 'lucide-react';
 import { clientAPI } from '../../config/api';
 import './css/Clients.css';
 
-const Clients = () => {
+const Clients = ({ isStaff }) => {
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTab] = useState('All');
     const [showNewClientModal, setShowNewClientModal] = useState(false);
     const [editingClient, setEditingClient] = useState(null);
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
 
-    // Initial form state
     const initialFormData = {
         name: '',
         email: '',
@@ -30,16 +36,6 @@ const Clients = () => {
         billingPincode: '',
         contact1: '',
         contact2: '',
-        clientGST: '',
-        clientManager: '',
-        clientManagerContact: '',
-        clientManagerEmail: '',
-        interiorDesigner: '',
-        interiorDesignerContact: '',
-        interiorDesignerEmail: '',
-        customerServiceContact: '',
-        customerServiceEmail: '',
-        pan: '',
         status: 'Active'
     };
 
@@ -47,42 +43,17 @@ const Clients = () => {
 
     useEffect(() => {
         fetchClients();
-
-        const processAIData = (data) => {
-            if (!data) return;
-            setFormData(prev => ({
-                ...prev,
-                ...data
-            }));
-            setShowNewClientModal(true);
-        };
-
-        const handleAIPopulate = (e) => processAIData(e.detail);
-
-        // Check for pending data from session (for after navigation)
-        const pending = sessionStorage.getItem('AI_PENDING_DATA');
-        if (pending) {
-            const { type, data } = JSON.parse(pending);
-            if (type === 'CLIENT') {
-                processAIData(data);
-                sessionStorage.removeItem('AI_PENDING_DATA'); // Clean up
-            }
-        }
-
-        window.addEventListener('AI_POPULATE_CLIENT', handleAIPopulate);
-        return () => window.removeEventListener('AI_POPULATE_CLIENT', handleAIPopulate);
     }, []);
 
     const fetchClients = async () => {
         try {
             setLoading(true);
-            const response = await clientAPI.getAll({ search: searchTerm });
+            const response = await clientAPI.getAll();
             if (response.success) {
                 setClients(response.data);
             }
         } catch (err) {
             setError(err.message);
-            console.error('Error fetching clients:', err);
         } finally {
             setLoading(false);
         }
@@ -90,27 +61,20 @@ const Clients = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
-        setError(null);
-
         try {
             if (editingClient) {
-                // Update existing client
                 const response = await clientAPI.update(editingClient._id, formData);
                 if (response.success) {
                     await fetchClients();
                     closeModal();
                 }
             } else {
-                // Create new client
                 const response = await clientAPI.create(formData);
                 if (response.success) {
                     await fetchClients();
@@ -118,8 +82,7 @@ const Clients = () => {
                 }
             }
         } catch (err) {
-            setError(err.message);
-            console.error('Error saving client:', err);
+            alert(err.message || 'Failed to save client');
         } finally {
             setSubmitting(false);
         }
@@ -137,34 +100,20 @@ const Clients = () => {
             billingPincode: client.billingPincode || '',
             contact1: client.contact1 || '',
             contact2: client.contact2 || '',
-            clientGST: client.clientGST || '',
-            clientManager: client.clientManager || '',
-            clientManagerContact: client.clientManagerContact || '',
-            clientManagerEmail: client.clientManagerEmail || '',
-            interiorDesigner: client.interiorDesigner || '',
-            interiorDesignerContact: client.interiorDesignerContact || '',
-            interiorDesignerEmail: client.interiorDesignerEmail || '',
-            customerServiceContact: client.customerServiceContact || '',
-            customerServiceEmail: client.customerServiceEmail || '',
-            pan: client.pan || '',
             status: client.status || 'Active'
         });
         setShowNewClientModal(true);
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this client?')) {
-            return;
-        }
-
+        if (!window.confirm('Are you sure you want to delete this client?')) return;
         try {
             const response = await clientAPI.delete(id);
             if (response.success) {
                 await fetchClients();
             }
         } catch (err) {
-            setError(err.message);
-            console.error('Error deleting client:', err);
+            alert('Failed to delete client');
         }
     };
 
@@ -172,437 +121,208 @@ const Clients = () => {
         setShowNewClientModal(false);
         setEditingClient(null);
         setFormData(initialFormData);
-        setError(null);
     };
 
-    const filteredClients = clients.filter(client =>
-        client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.phone?.includes(searchTerm) ||
-        client.clientGST?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const SEVEN_DAYS_AGO = new Date();
+    SEVEN_DAYS_AGO.setDate(SEVEN_DAYS_AGO.getDate() - 7);
+
+    const filteredClients = clients.filter(client => {
+        const matchesSearch = (
+            client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            client.phone?.includes(searchTerm)
+        );
+
+        const matchesTab = (
+            activeTab === 'All' ||
+            (activeTab === 'New' && new Date(client.createdAt) >= SEVEN_DAYS_AGO) ||
+            (activeTab === 'Staff Added' && client.createdBy?.role === 'Staff')
+        );
+
+        return matchesSearch && matchesTab;
+    });
 
     return (
-        <div className="clients-container">
+        <div className={`clients-container ${isStaff ? 'staff-view' : ''}`}>
             <div className="clients-wrapper">
+                <div className="c-clients-header">
+                    <div className="c-header-left">
+                        <h2>Clients</h2>
+                        <div className="c-tabs-list">
+                            {['All', 'New', 'Staff Added'].map(tab => (
+                                <button
+                                    key={tab}
+                                    className={`c-tab-item ${activeTab === tab ? 'active' : ''}`}
+                                    onClick={() => setActiveTab(tab)}
+                                >
+                                    {tab === 'New' ? 'New (Recent)' : tab}
+                                    <span className="c-tab-badge">
+                                        {tab === 'All' ? clients.length :
+                                            tab === 'New' ? clients.filter(c => new Date(c.createdAt) >= SEVEN_DAYS_AGO).length :
+                                                clients.filter(c => c.createdBy?.role === 'Staff').length}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
 
-                {/* Header Section */}
-                <div className="clients-header">
+                <div className="clients-controls-row">
+                    <div className="c-search-container">
+                        <Search className="c-search-icon" size={20} />
+                        <input
+                            type="text"
+                            className="c-search-input"
+                            placeholder="Search clients..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                     <button className="btn-new-client" onClick={() => setShowNewClientModal(true)}>
                         <Plus size={18} />
                         <span>Add New Client</span>
                     </button>
                 </div>
 
-                {/* Search Bar */}
-                <div className="clients-search-container">
-                    <Search className="search-icon" size={20} />
-                    <input
-                        type="text"
-                        className="search-input"
-                        placeholder="Search clients by name, email, phone, or GST..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                    <div className="error-banner">
-                        <i className="fas fa-exclamation-triangle"></i>
-                        {error}
-                    </div>
-                )}
-
-                {/* Loading State */}
                 {loading ? (
-                    <div className="loading-state">
-                        <Loader className="spinner" size={40} />
+                    <div className="c-loading-state">
+                        <Loader className="c-spinner" size={40} />
                         <p>Loading clients...</p>
                     </div>
                 ) : filteredClients.length === 0 ? (
-                    /* Empty State */
-                    <div className="empty-state-card">
-                        <h4>No clients yet</h4>
-                        <p>Add your first client to get started</p>
+                    <div className="c-empty-state-card">
+                        <Users size={48} />
+                        <h4>No clients found</h4>
+                        <p>Try matching your search or filters to different criteria.</p>
                     </div>
                 ) : (
-                    /* Clients Table */
-                    <div className="clients-table-container">
-                        <table className="clients-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>GST</th>
-                                    <th>Manager</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredClients.map((client) => (
-                                    <tr key={client._id}>
-                                        <td>{client.name}</td>
-                                        <td>{client.email}</td>
-                                        <td>{client.phone}</td>
-                                        <td>{client.clientGST || '-'}</td>
-                                        <td>{client.clientManager || '-'}</td>
-                                        <td>
-                                            <span className={`status-badge ${client.status?.toLowerCase()}`}>
-                                                {client.status}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div className="action-buttons">
-                                                <button
-                                                    className="btn-icon-edit"
-                                                    onClick={() => handleEdit(client)}
-                                                    title="Edit"
-                                                >
-                                                    <Edit size={16} />
-                                                </button>
-                                                <button
-                                                    className="btn-icon-delete"
-                                                    onClick={() => handleDelete(client._id)}
-                                                    title="Delete"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
+                    <div className="c-list-card">
+                        <div className="c-table-container">
+                            <table className="c-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Contact Info</th>
+                                        <th>Site Address</th>
+                                        <th>Status</th>
+                                        <th>Added By</th>
+                                        <th>Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {filteredClients.map((client) => (
+                                        <tr key={client._id}>
+                                            <td className="client-name-cell">
+                                                <div className="client-profile">
+                                                    <div className="client-avatar">{client.name.charAt(0)}</div>
+                                                    <span>{client.name}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="client-contact-info">
+                                                    <div className="contact-item">
+                                                        <Mail size={12} />
+                                                        <span>{client.email}</span>
+                                                    </div>
+                                                    <div className="contact-item">
+                                                        <Phone size={12} />
+                                                        <span>{client.phone}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="client-site-addr">
+                                                    <MapPin size={12} />
+                                                    <span>{client.siteAddress || 'N/A'}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span className={`c-status-badge ${client.status?.toLowerCase()}`}>
+                                                    {client.status}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div className="added-by-info">
+                                                    <span className="added-by-name">{client.createdBy?.fullName || 'Admin'}</span>
+                                                    <span className={`added-by-role ${client.createdBy?.role?.toLowerCase()}`}>
+                                                        {client.createdBy?.role || 'Admin'}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="c-action-buttons">
+                                                    <button className="btn-icon-edit" onClick={() => handleEdit(client)} title="Edit">
+                                                        <Edit size={16} />
+                                                    </button>
+                                                    {!isStaff && (
+                                                        <button className="btn-icon-delete" onClick={() => handleDelete(client._id)} title="Delete">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
-
             </div>
 
-            {/* New/Edit Client Modal */}
             {showNewClientModal && (
                 <div className="modal-overlay">
                     <div className="modal-content-wide">
                         <div className="modal-header">
                             <h3>{editingClient ? 'Edit Client' : 'New Client'}</h3>
-                            <button className="modal-close" onClick={closeModal}>
-                                <X size={20} />
-                            </button>
+                            <button className="modal-close" onClick={closeModal}><X size={20} /></button>
                         </div>
-
                         <form onSubmit={handleSubmit}>
-                            <div className="modal-form-body">
-                                {/* Basic Information */}
-                                <div className="form-section">
-                                    <h4>Basic Information</h4>
-                                    <div className="form-grid">
-                                        <div className="form-field">
-                                            <label>Name <span>*</span></label>
-                                            <input
-                                                type="text"
-                                                name="name"
-                                                className="client-input"
-                                                placeholder="Client name"
-                                                value={formData.name}
-                                                onChange={handleInputChange}
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="form-field">
-                                            <label>Email <span>*</span></label>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                className="client-input"
-                                                placeholder="email@example.com"
-                                                value={formData.email}
-                                                onChange={handleInputChange}
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="form-field">
-                                            <label>Phone <span>*</span></label>
-                                            <input
-                                                type="tel"
-                                                name="phone"
-                                                className="client-input"
-                                                placeholder="+91 98765 43210"
-                                                value={formData.phone}
-                                                onChange={handleInputChange}
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="form-field">
-                                            <label>Status</label>
-                                            <select
-                                                name="status"
-                                                className="client-input"
-                                                value={formData.status}
-                                                onChange={handleInputChange}
-                                            >
-                                                <option value="Active">Active</option>
-                                                <option value="Inactive">Inactive</option>
-                                            </select>
-                                        </div>
+                            <div className="c-form-section">
+                                <h4>Basic Information</h4>
+                                <div className="c-form-grid">
+                                    <div className="form-field">
+                                        <label>Name <span>*</span></label>
+                                        <input type="text" name="name" className="c-client-input" value={formData.name} onChange={handleInputChange} required />
                                     </div>
-                                </div>
-
-                                {/* Address Information */}
-                                <div className="form-section">
-                                    <h4>Address Information</h4>
-                                    <div className="form-grid">
-                                        <div className="form-field full-width">
-                                            <label>Address</label>
-                                            <input
-                                                type="text"
-                                                name="address"
-                                                className="client-input"
-                                                placeholder="Street address"
-                                                value={formData.address}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-
-                                        <div className="form-field full-width">
-                                            <label>Site Address</label>
-                                            <input
-                                                type="text"
-                                                name="siteAddress"
-                                                className="client-input"
-                                                placeholder="Site address"
-                                                value={formData.siteAddress}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-
-                                        <div className="form-field">
-                                            <label>Billing Address</label>
-                                            <input
-                                                type="text"
-                                                name="billingAddress"
-                                                className="client-input"
-                                                placeholder="Billing address"
-                                                value={formData.billingAddress}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-
-                                        <div className="form-field">
-                                            <label>Billing Pincode</label>
-                                            <input
-                                                type="text"
-                                                name="billingPincode"
-                                                className="client-input"
-                                                placeholder="Pincode"
-                                                value={formData.billingPincode}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
+                                    <div className="form-field">
+                                        <label>Email <span>*</span></label>
+                                        <input type="email" name="email" className="c-client-input" value={formData.email} onChange={handleInputChange} required />
                                     </div>
-                                </div>
-
-                                {/* Contact Information */}
-                                <div className="form-section">
-                                    <h4>Additional Contacts</h4>
-                                    <div className="form-grid">
-                                        <div className="form-field">
-                                            <label>Contact 1</label>
-                                            <input
-                                                type="text"
-                                                name="contact1"
-                                                className="client-input"
-                                                placeholder="Contact number"
-                                                value={formData.contact1}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-
-                                        <div className="form-field">
-                                            <label>Contact 2</label>
-                                            <input
-                                                type="text"
-                                                name="contact2"
-                                                className="client-input"
-                                                placeholder="Contact number"
-                                                value={formData.contact2}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
+                                    <div className="form-field">
+                                        <label>Phone <span>*</span></label>
+                                        <input type="tel" name="phone" className="c-client-input" value={formData.phone} onChange={handleInputChange} required />
                                     </div>
-                                </div>
-
-                                {/* Business Information */}
-                                <div className="form-section">
-                                    <h4>Business Information</h4>
-                                    <div className="form-grid">
-                                        <div className="form-field">
-                                            <label>GST Number</label>
-                                            <input
-                                                type="text"
-                                                name="clientGST"
-                                                className="client-input"
-                                                placeholder="GST number"
-                                                value={formData.clientGST}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-
-                                        <div className="form-field">
-                                            <label>PAN Number</label>
-                                            <input
-                                                type="text"
-                                                name="pan"
-                                                className="client-input"
-                                                placeholder="PAN number"
-                                                value={formData.pan}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
+                                    <div className="form-field">
+                                        <label>Alternative Contact</label>
+                                        <input type="tel" name="contact1" className="c-client-input" value={formData.contact1} onChange={handleInputChange} placeholder="Secondary number" />
                                     </div>
-                                </div>
-
-                                {/* Client Manager */}
-                                <div className="form-section">
-                                    <h4>Client Manager</h4>
-                                    <div className="form-grid">
-                                        <div className="form-field">
-                                            <label>Manager Name</label>
-                                            <input
-                                                type="text"
-                                                name="clientManager"
-                                                className="client-input"
-                                                placeholder="Manager name"
-                                                value={formData.clientManager}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-
-                                        <div className="form-field">
-                                            <label>Manager Contact</label>
-                                            <input
-                                                type="text"
-                                                name="clientManagerContact"
-                                                className="client-input"
-                                                placeholder="Manager contact"
-                                                value={formData.clientManagerContact}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-
-                                        <div className="form-field">
-                                            <label>Manager Email</label>
-                                            <input
-                                                type="email"
-                                                name="clientManagerEmail"
-                                                className="client-input"
-                                                placeholder="Manager email"
-                                                value={formData.clientManagerEmail}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
+                                    <div className="form-field">
+                                        <label>WhatsApp Number</label>
+                                        <input type="tel" name="contact2" className="c-client-input" value={formData.contact2} onChange={handleInputChange} placeholder="Primary WhatsApp" />
                                     </div>
-                                </div>
-
-                                {/* Interior Designer */}
-                                <div className="form-section">
-                                    <h4>Interior Designer</h4>
-                                    <div className="form-grid">
-                                        <div className="form-field">
-                                            <label>Designer Name</label>
-                                            <input
-                                                type="text"
-                                                name="interiorDesigner"
-                                                className="client-input"
-                                                placeholder="Designer name"
-                                                value={formData.interiorDesigner}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-
-                                        <div className="form-field">
-                                            <label>Designer Contact</label>
-                                            <input
-                                                type="text"
-                                                name="interiorDesignerContact"
-                                                className="client-input"
-                                                placeholder="Designer contact"
-                                                value={formData.interiorDesignerContact}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-
-                                        <div className="form-field">
-                                            <label>Designer Email</label>
-                                            <input
-                                                type="email"
-                                                name="interiorDesignerEmail"
-                                                className="client-input"
-                                                placeholder="Designer email"
-                                                value={formData.interiorDesignerEmail}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Customer Service */}
-                                <div className="form-section">
-                                    <h4>Customer Service</h4>
-                                    <div className="form-grid">
-                                        <div className="form-field">
-                                            <label>Service Contact</label>
-                                            <input
-                                                type="text"
-                                                name="customerServiceContact"
-                                                className="client-input"
-                                                placeholder="Service contact"
-                                                value={formData.customerServiceContact}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-
-                                        <div className="form-field">
-                                            <label>Service Email</label>
-                                            <input
-                                                type="email"
-                                                name="customerServiceEmail"
-                                                className="client-input"
-                                                placeholder="Service email"
-                                                value={formData.customerServiceEmail}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
+                                    <div className="form-field">
+                                        <label>Status</label>
+                                        <select name="status" className="c-client-input" value={formData.status} onChange={handleInputChange}>
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
-
+                            <div className="c-form-section">
+                                <h4>Site Information</h4>
+                                <div className="c-form-grid">
+                                    <div className="form-field full-width">
+                                        <label>Site Address</label>
+                                        <input type="text" name="siteAddress" className="c-client-input" value={formData.siteAddress} onChange={handleInputChange} />
+                                    </div>
+                                </div>
+                            </div>
                             <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn-cancel"
-                                    onClick={closeModal}
-                                    disabled={submitting}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="btn-submit"
-                                    disabled={submitting}
-                                >
-                                    {submitting ? (
-                                        <>
-                                            <Loader className="spinner" size={16} />
-                                            {editingClient ? 'Updating...' : 'Creating...'}
-                                        </>
-                                    ) : (
-                                        editingClient ? 'Update Client' : 'Create Client'
-                                    )}
+                                <button type="button" className="btn-cancel" onClick={closeModal}>Cancel</button>
+                                <button type="submit" className="btn-submit" disabled={submitting}>
+                                    {submitting ? <Loader className="spinner" size={16} /> : (editingClient ? 'Update' : 'Create')}
                                 </button>
                             </div>
                         </form>

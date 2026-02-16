@@ -1,3 +1,4 @@
+/* Sidebar Container */
 .sidebar-container {
     width: var(--sidebar-width);
     height: 100vh;
@@ -10,20 +11,44 @@
     flex-direction: column;
     z-index: 50;
     box-shadow: var(--shadow-sidebar);
-    /* Right-side floating shadow */
-    border-right: 1px solid var(--border-color);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    will-change: width;
+    user-select: none;
 }
 
+.sidebar-container.collapsed {
+    width: 80px;
+}
+
+/* Header & Logo */
 .sidebar-header {
     padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    min-height: 85px;
+}
+
+.brand-wrapper {
+    transition: opacity 0.2s, width 0.2s;
+    width: 100%;
+    opacity: 1;
+    overflow: hidden;
+}
+
+.sidebar-container.collapsed .brand-wrapper {
+    opacity: 0;
+    width: 0;
 }
 
 .brand-title {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    margin: 0;
+    font-family: inherit;
     font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 0.25rem;
-    letter-spacing: -0.02em;
 }
 
 .brand-subtitle {
@@ -31,7 +56,32 @@
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    font-family: 'Lato', sans-serif;
+    font-family: inherit;
+    font-weight: 500;
+}
+
+.btn-toggle-sidebar {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.sidebar-container.collapsed .btn-toggle-sidebar {
+    margin: 0 auto;
+    width: 100%;
+}
+
+.btn-toggle-sidebar:hover {
+    background: #f1f5f9;
+    color: var(--text-primary);
 }
 
 .sidebar-user {
@@ -43,6 +93,16 @@
     align-items: center;
     gap: 12px;
     border: 1px solid rgba(102, 126, 234, 0.2);
+    min-height: 74px;
+    transition: all 0.3s;
+    overflow: hidden;
+}
+
+.sidebar-container.collapsed .sidebar-user {
+    padding: 0.75rem;
+    margin: 0 0.5rem 1rem;
+    justify-content: center;
+    gap: 0;
 }
 
 .user-avatar {
@@ -60,6 +120,14 @@
 .user-info {
     flex: 1;
     min-width: 0;
+    transition: opacity 0.2s;
+    opacity: 1;
+}
+
+.sidebar-container.collapsed .user-info {
+    opacity: 0;
+    width: 0;
+    display: none;
 }
 
 .user-name {
@@ -82,16 +150,17 @@
     flex: 1;
     padding: 0 1rem;
     overflow-y: auto;
-    /* Hide scrollbar */
-    scrollbar-width: none;
+    transition: padding 0.3s;
 }
 
-.sidebar-nav::-webkit-scrollbar {
-    display: none;
+.sidebar-container.collapsed .sidebar-nav {
+    padding: 0 0.5rem;
 }
 
 .nav-list {
     list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .nav-item {
@@ -107,6 +176,12 @@
     font-weight: 500;
     transition: all 0.2s ease;
     border: 1px solid transparent;
+    overflow: hidden;
+}
+
+.sidebar-container.collapsed .nav-link {
+    justify-content: center;
+    padding: 0.75rem;
 }
 
 .nav-link:hover {
@@ -118,18 +193,39 @@
     background-color: var(--primary-color);
     color: white;
     box-shadow: 0 4px 6px -1px rgba(67, 56, 202, 0.4);
-    /* Colored shadow for active item */
     border-color: var(--primary-color);
 }
 
 .nav-icon {
     margin-right: 0.75rem;
+    transition: margin 0.2s;
+    flex-shrink: 0;
+}
+
+.sidebar-container.collapsed .nav-icon {
+    margin-right: 0;
+}
+
+.nav-link span:not(.nav-icon) {
+    transition: opacity 0.2s, max-width 0.2s;
+    opacity: 1;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar-container.collapsed .nav-link span:not(.nav-icon) {
+    opacity: 0;
+    max-width: 0;
+    margin-left: 0;
 }
 
 .sidebar-footer {
     padding: 1.5rem;
     border-top: 1px solid var(--border-color);
     background-color: #f9fafb;
+    display: flex;
+    justify-content: center;
 }
 
 .btn-logout {
@@ -144,6 +240,16 @@
     border: 1px solid transparent;
     cursor: pointer;
     transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.sidebar-container.collapsed .btn-logout {
+    justify-content: center;
+    padding: 0.75rem;
+}
+
+.sidebar-container.collapsed .btn-logout span {
+    display: none;
 }
 
 .btn-logout:hover {
@@ -153,4 +259,8 @@
 
 .btn-logout .nav-icon {
     color: #ef4444;
+}
+
+.sidebar-container.collapsed .btn-logout .nav-icon {
+    margin-right: 0;
 }

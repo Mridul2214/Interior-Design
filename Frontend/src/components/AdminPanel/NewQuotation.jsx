@@ -34,7 +34,7 @@ import {
 import { quotationAPI, clientAPI, inventoryAPI, uploadAPI, aiAPI } from '../../config/api';
 import './css/NewQuotation.css';
 
-const NewQuotation = ({ isEdit }) => {
+const NewQuotation = ({ isEdit, isStaff }) => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [clients, setClients] = useState([]);
@@ -61,6 +61,8 @@ const NewQuotation = ({ isEdit }) => {
     const [lineItems, setLineItems] = useState([]);
     const [taxRate, setTaxRate] = useState(18);
     const [includeTax, setIncludeTax] = useState(true);
+    const [discount, setDiscount] = useState(0);
+    const [includeDiscount, setIncludeDiscount] = useState(false);
 
     const [formData, setFormData] = useState({
         client: '',
@@ -136,6 +138,10 @@ const NewQuotation = ({ isEdit }) => {
                             image: item.image || null
                         })));
                         if (q.taxRate) setTaxRate(q.taxRate);
+                        if (q.discount) {
+                            setDiscount(q.discount);
+                            setIncludeDiscount(true);
+                        }
                     }
                 }
             } catch (err) {
@@ -229,6 +235,10 @@ const NewQuotation = ({ isEdit }) => {
                 quotationNumber: formData.quoteNumber,
                 status: pendingStatus,
                 taxRate,
+                discount: includeDiscount ? discount : 0,
+                offerPrice, // Ensure this variable is in scope or recalculated here. 
+                // Better to recalculate safely:
+                // offerPrice: (lineItems.reduce((s, i) => s + (i.amount||0), 0) * (1 - (includeDiscount ? discount : 0)/100)),
                 items: lineItems.map(item => ({
                     itemName: item.name,
                     description: item.description,
@@ -252,7 +262,7 @@ const NewQuotation = ({ isEdit }) => {
             }
 
             if (response.success) {
-                navigate('/quotations');
+                navigate(isStaff ? '/staff/quotations' : '/quotations');
             }
         } catch (err) {
             setError(err.message);
@@ -420,8 +430,15 @@ const NewQuotation = ({ isEdit }) => {
     };
 
     const subtotal = lineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
-    const taxAmount = includeTax ? (subtotal * taxRate) / 100 : 0;
-    const total = subtotal + taxAmount;
+
+    // Discount Calculation
+    const discountAmount = includeDiscount ? (subtotal * discount) / 100 : 0;
+    const offerPrice = subtotal - discountAmount;
+
+    // Tax Calculation (on Offer Price)
+    const taxAmount = includeTax ? (offerPrice * taxRate) / 100 : 0;
+
+    const total = offerPrice + taxAmount;
     const depositAmount = (total * formData.depositPercent) / 100;
 
     const createNewItem = () => ({
@@ -513,7 +530,7 @@ const NewQuotation = ({ isEdit }) => {
                 <div className="back-navigation" style={{ marginBottom: '1.5rem' }}>
                     <button
                         type="button"
-                        onClick={() => navigate('/quotations')}
+                        onClick={() => navigate(isStaff ? '/staff/quotations' : '/quotations')}
                         style={{
                             background: '#ffffff',
                             border: '1px solid #e2e8f0',
@@ -874,8 +891,36 @@ const NewQuotation = ({ isEdit }) => {
                     <div className="totals-summary-card">
                         <div className="summary-row">
                             <span>Subtotal</span>
+                            <span>Subtotal</span>
                             <span>₹{subtotal.toLocaleString()}</span>
                         </div>
+
+                        {/* Discount Row */}
+                        <div className="summary-row">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <input type="checkbox" checked={includeDiscount} onChange={(e) => setIncludeDiscount(e.target.checked)} style={{ width: '18px', height: '18px' }} />
+                                <span>Discount</span>
+                                {includeDiscount && (
+                                    <div style={{ display: 'flex', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '2px 8px', marginLeft: '4px' }}>
+                                        <input
+                                            type="number"
+                                            value={discount}
+                                            onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                                            style={{ width: '40px', border: 'none', background: 'transparent', outline: 'none', fontWeight: 700, fontSize: '0.9rem', textAlign: 'right' }}
+                                        />
+                                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b' }}>%</span>
+                                    </div>
+                                )}
+                            </div>
+                            <span className="tax-val" style={{ color: '#ef4444' }}>- ₹{discountAmount.toLocaleString()}</span>
+                        </div>
+
+                        {/* Offer Price Row */}
+                        <div className="summary-row" style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '0.5rem', marginTop: '0.25rem' }}>
+                            <span style={{ fontWeight: 600, color: '#475569' }}>Offer Price</span>
+                            <span style={{ fontWeight: 700, color: '#1e293b' }}>₹{offerPrice.toLocaleString()}</span>
+                        </div>
+
                         <div className="summary-row">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                 <input type="checkbox" checked={includeTax} onChange={(e) => setIncludeTax(e.target.checked)} style={{ width: '18px', height: '18px' }} />
@@ -937,13 +982,13 @@ const NewQuotation = ({ isEdit }) => {
                         zIndex: 4000,
                         animation: 'fadeIn 0.3s ease-out'
                     }}>
-                        <div className="premium-receipt-card no-scroller" style={{
+                        <div className="premium-receipt-card" data-lenis-prevent style={{
                             background: 'rgba(255, 255, 255, 0.95)',
                             padding: '1.5rem',
                             borderRadius: '24px',
                             maxWidth: '450px',
                             width: '95%',
-                            maxHeight: '92vh',
+                            maxHeight: '88vh',
                             overflowY: 'auto',
                             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
                             position: 'relative',
@@ -988,7 +1033,7 @@ const NewQuotation = ({ isEdit }) => {
 
                             <div style={{ marginBottom: '1.25rem' }}>
                                 <h3 style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '0.75rem', paddingBottom: '0.4rem', borderBottom: '1px solid #e2e8f0' }}>Itemized Summary</h3>
-                                <div className="no-scroller" style={{ maxHeight: '150px', overflowY: 'auto', paddingRight: '5px' }}>
+                                <div style={{ maxHeight: '200px', overflowY: 'auto', paddingRight: '5px' }}>
                                     {lineItems.map((item, idx) => (
                                         <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
                                             <div>
@@ -1005,6 +1050,16 @@ const NewQuotation = ({ isEdit }) => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.85rem', color: '#475569' }}>
                                     <span>Subtotal</span>
                                     <span>₹{subtotal.toLocaleString()}</span>
+                                </div>
+                                {includeDiscount && (
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.85rem', color: '#ef4444' }}>
+                                        <span>Discount ({discount}%)</span>
+                                        <span>- ₹{discountAmount.toLocaleString()}</span>
+                                    </div>
+                                )}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.85rem', color: '#475569', fontWeight: 600 }}>
+                                    <span>Offer Price</span>
+                                    <span>₹{offerPrice.toLocaleString()}</span>
                                 </div>
                                 {includeTax && (
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.85rem', color: '#475569' }}>
@@ -1056,6 +1111,7 @@ const NewQuotation = ({ isEdit }) => {
                                     {isSaving ? <Loader size={18} className="spinner" /> : <SaveAll size={18} />}
                                     Confirm & Save Quotation
                                 </button>
+                                <div style={{ height: '10px' }}></div>
                             </div>
                         </div>
                     </div>
@@ -1064,7 +1120,7 @@ const NewQuotation = ({ isEdit }) => {
             {/* Quick Add Client Modal */}
             {showQuickAddModal && (
                 <div className="modal-overlay" style={{ zIndex: 9999 }}>
-                    <div className="modal-content" style={{ maxWidth: '450px', padding: '2rem' }}>
+                    <div className="modal-content" style={{ maxWidth: '450px', padding: '2rem' }} data-lenis-prevent>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                             <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>Quick Add New Client</h3>
                             <button onClick={() => setShowQuickAddModal(false)} className="btn-icon-delete"><X size={20} /></button>

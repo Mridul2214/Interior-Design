@@ -22,6 +22,20 @@ exports.getQuotations = async (req, res) => {
         if (status) query.status = status;
         if (client) query.client = client;
 
+        // Automatically filter for staff users
+        if (req.user.role === 'Staff') {
+            const Staff = require('../models/Staff');
+            const Task = require('../models/Task');
+            const staffMember = await Staff.findOne({ email: req.user.email });
+            if (staffMember) {
+                const assignedTasks = await Task.find({ assignedTo: staffMember._id }).select('quotation');
+                const quoteIds = [...new Set(assignedTasks.map(t => t.quotation).filter(q => q))];
+                query._id = { $in: quoteIds };
+            } else {
+                return res.status(200).json({ success: true, count: 0, data: [] });
+            }
+        }
+
         const skip = (page - 1) * limit;
 
         const quotations = await Quotation.find(query)
@@ -120,10 +134,12 @@ exports.updateQuotation = async (req, res) => {
             });
         }
 
-        quotation = await Quotation.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true
+        // Update fields
+        Object.keys(req.body).forEach(key => {
+            quotation[key] = req.body[key];
         });
+
+        await quotation.save();
 
         res.status(200).json({
             success: true,

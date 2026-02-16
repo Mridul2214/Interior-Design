@@ -6,9 +6,20 @@ import AIChat from './AIChat';
 import './css/Layout.css';
 
 const Layout = ({ user, onLogout }) => {
+    const [isCollapsed, setIsCollapsed] = React.useState(false);
+
+    const toggleSidebar = () => {
+        setIsCollapsed(!isCollapsed);
+    };
+
     return (
-        <div className="layout-container">
-            <Sidebar user={user} onLogout={onLogout} />
+        <div className={`layout-container ${isCollapsed ? 'sidebar-collapsed' : ''}`}>
+            <Sidebar
+                user={user}
+                onLogout={onLogout}
+                isCollapsed={isCollapsed}
+                toggleSidebar={toggleSidebar}
+            />
             <main className="main-content">
                 <Header user={user} />
                 <Outlet />

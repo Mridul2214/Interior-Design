@@ -262,7 +262,7 @@ const Invoice = () => {
 
             {showCreateModal && (
                 <div className="modal-overlay">
-                    <div className="modal-content-invoice">
+                    <div className="modal-content-invoice" data-lenis-prevent>
                         <div className="modal-header">
                             <h3>Create New Invoice</h3>
                             <button className="modal-close" onClick={() => setShowCreateModal(false)}><X size={20} /></button>

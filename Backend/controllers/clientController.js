@@ -22,16 +22,29 @@ exports.getClients = async (req, res, next) => {
             ];
         }
 
-        // Filter by status
         if (status) {
             query.status = status;
+        }
+
+        // Automatically filter for staff users
+        if (req.user.role === 'Staff') {
+            const Staff = require('../models/Staff');
+            const Task = require('../models/Task');
+            const staffMember = await Staff.findOne({ email: req.user.email });
+            if (staffMember) {
+                const assignedTasks = await Task.find({ assignedTo: staffMember._id }).select('client');
+                const clientIds = [...new Set(assignedTasks.map(t => t.client).filter(c => c))];
+                query._id = { $in: clientIds };
+            } else {
+                return res.status(200).json({ success: true, count: 0, data: [] });
+            }
         }
 
         // Pagination
         const skip = (page - 1) * limit;
 
         const clients = await Client.find(query)
-            .populate('createdBy', 'fullName email')
+            .populate('createdBy', 'fullName email role')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));

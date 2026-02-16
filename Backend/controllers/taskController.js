@@ -2,7 +2,7 @@ const Task = require('../models/Task');
 
 exports.getTasks = async (req, res) => {
     try {
-        const { search, status, priority, assignedTo, page = 1, limit = 20 } = req.query;
+        const { search, status, priority, assignedTo, page = 1, limit = 1000 } = req.query;
         let query = {};
 
         if (search) {
@@ -15,9 +15,23 @@ exports.getTasks = async (req, res) => {
         if (priority) query.priority = priority;
         if (assignedTo) query.assignedTo = assignedTo;
 
+        // Automatically filter for staff users
+        if (req.user.role === 'Staff') {
+            const Staff = require('../models/Staff');
+            const staffMember = await Staff.findOne({ email: req.user.email });
+            if (staffMember) {
+                query.assignedTo = staffMember._id;
+            } else {
+                // If staff not found, return empty (or error)
+                return res.status(200).json({ success: true, count: 0, data: [] });
+            }
+        }
+
         const skip = (page - 1) * limit;
         const tasks = await Task.find(query)
-            .populate('assignedTo', 'fullName email')
+            .populate('assignedTo', 'name role email phone')
+            .populate('client', 'name email phone')
+            .populate('quotation', 'quotationNumber projectName totalAmount')
             .populate('team', 'name')
             .populate('createdBy', 'fullName')
             .sort({ createdAt: -1 })
@@ -42,7 +56,9 @@ exports.getTasks = async (req, res) => {
 exports.getTask = async (req, res) => {
     try {
         const task = await Task.findById(req.params.id)
-            .populate('assignedTo', 'fullName email')
+            .populate('assignedTo', 'name role email phone')
+            .populate('client', 'name email phone')
+            .populate('quotation', 'quotationNumber projectName totalAmount')
             .populate('team', 'name')
             .populate('createdBy', 'fullName');
         if (!task) {
@@ -58,7 +74,14 @@ exports.createTask = async (req, res) => {
     try {
         req.body.createdBy = req.user.id;
         const task = await Task.create(req.body);
-        res.status(201).json({ success: true, data: task });
+
+        // Populate before returning
+        const populatedTask = await Task.findById(task._id)
+            .populate('assignedTo', 'name role email phone')
+            .populate('client', 'name email phone')
+            .populate('quotation', 'quotationNumber projectName totalAmount');
+
+        res.status(201).json({ success: true, data: populatedTask });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -73,7 +96,11 @@ exports.updateTask = async (req, res) => {
         task = await Task.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
             runValidators: true
-        });
+        })
+            .populate('assignedTo', 'name role email phone')
+            .populate('client', 'name email phone')
+            .populate('quotation', 'quotationNumber projectName totalAmount');
+
         res.status(200).json({ success: true, data: task });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

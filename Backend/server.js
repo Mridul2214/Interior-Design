@@ -27,8 +27,11 @@ const invoiceRoutes = require('./routes/invoiceRoutes');
 const userRoutes = require('./routes/userRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+
 const aiRoutes = require('./routes/aiRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const staffRoutes = require('./routes/staffRoutes');
+const siteVisitRoutes = require('./routes/siteVisitRoutes');
 
 // Import error handler
 const errorHandler = require('./middleware/errorHandler');
@@ -68,7 +71,7 @@ app.use('/uploads', express.static('uploads'));
 app.get('/health', (req, res) => {
     res.status(200).json({
         success: true,
-        message: 'Server is running',
+        message: 'Server is running [UPDATED]',
         timestamp: new Date().toISOString()
     });
 });
@@ -86,8 +89,11 @@ app.use('/api/invoices', invoiceRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
+
 app.use('/api/ai', aiRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/staff', staffRoutes);
+app.use('/api/site-visits', siteVisitRoutes);
 
 // 404 handler
 app.use((req, res) => {

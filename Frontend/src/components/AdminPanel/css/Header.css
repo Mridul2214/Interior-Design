@@ -120,7 +120,7 @@
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
-    font-family: 'Playfair Display', serif;
+    font-family: inherit;
 }
 
 .popup-close {

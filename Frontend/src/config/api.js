@@ -209,6 +209,36 @@ export const poInventoryAPI = {
     })
 };
 
+// Staff APIs
+export const staffAPI = {
+    getAll: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiCall(`/staff?${query}`);
+    },
+
+    getById: (id) => apiCall(`/staff/${id}`),
+
+    create: (data) => apiCall('/staff', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    update: (id, data) => apiCall(`/staff/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+
+    delete: (id) => apiCall(`/staff/${id}`, {
+        method: 'DELETE'
+    }),
+
+    getStats: () => apiCall('/staff/stats'),
+
+    getAnalytics: (id) => apiCall(`/staff/${id}/analytics`),
+
+    getAnalyticsOverview: () => apiCall('/staff/analytics/overview')
+};
+
 // Task APIs
 export const taskAPI = {
     getAll: (params = {}) => {
@@ -228,11 +258,28 @@ export const taskAPI = {
         body: JSON.stringify(data)
     }),
 
+    updateProgress: (id, data) => apiCall(`/tasks/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+
     delete: (id) => apiCall(`/tasks/${id}`, {
         method: 'DELETE'
     }),
 
     getStats: () => apiCall('/tasks/stats')
+};
+
+export const siteVisitAPI = {
+    getAll: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiCall(`/site-visits?${query}`);
+    },
+    getByTask: (taskId) => apiCall(`/site-visits/task/${taskId}`),
+    create: (data) => apiCall('/site-visits', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    })
 };
 
 // Team APIs
@@ -401,5 +448,7 @@ export default {
     users: userAPI,
     reports: reportAPI,
     notifications: notificationAPI,
-    ai: aiAPI
+
+    ai: aiAPI,
+    staff: staffAPI
 };
