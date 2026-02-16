@@ -96,11 +96,35 @@ const SiteVisit = () => {
         try {
             // Upload images first
             const uploadedUrls = [];
-            for (const img of images) {
-                const formData = new FormData();
-                formData.append('image', img.file);
-                const res = await uploadAPI.image(formData);
-                if (res.success) uploadedUrls.push(res.url);
+            for (let i = 0; i < images.length; i++) {
+                const img = images[i];
+                try {
+                    const formData = new FormData();
+                    formData.append('image', img.file);
+                    console.log(`Uploading image ${i + 1}/${images.length}:`, img.file.name);
+                    
+                    const res = await uploadAPI.image(formData);
+                    console.log('Upload response:', res);
+                    
+                    if (res.success && res.url) {
+                        uploadedUrls.push(res.url);
+                        showToast(`Image ${i + 1} uploaded successfully`, 'success');
+                    } else {
+                        console.error('Upload failed or missing URL:', res);
+                        showToast(`Image ${i + 1} upload failed: ${res.message || 'Unknown error'}`, 'error');
+                    }
+                } catch (uploadError) {
+                    console.error(`Error uploading image ${i + 1}:`, uploadError);
+                    showToast(`Image ${i + 1} upload error: ${uploadError.message}`, 'error');
+                }
+            }
+
+            console.log('Final uploaded URLs:', uploadedUrls);
+
+            if (uploadedUrls.length === 0) {
+                showToast('No images were uploaded successfully', 'error');
+                setUploading(false);
+                return;
             }
 
             // Save the visit details and uploaded URLs

@@ -50,7 +50,8 @@ router.post('/', protect, upload.single('image'), (req, res) => {
 
     res.status(200).json({
         success: true,
-        data: filePath
+        data: filePath,
+        url: filePath
     });
 });
 

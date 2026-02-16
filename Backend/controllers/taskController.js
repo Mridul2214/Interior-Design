@@ -72,6 +72,26 @@ exports.getTask = async (req, res) => {
 
 exports.createTask = async (req, res) => {
     try {
+        // Validate quotation is approved if provided
+        if (req.body.quotation) {
+            const Quotation = require('../models/Quotation');
+            const quotation = await Quotation.findById(req.body.quotation);
+            
+            if (!quotation) {
+                return res.status(404).json({ 
+                    success: false, 
+                    message: 'Quotation not found' 
+                });
+            }
+            
+            if (quotation.status !== 'Approved') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Only approved quotations can be assigned to tasks. Please wait for client approval.' 
+                });
+            }
+        }
+
         req.body.createdBy = req.user.id;
         const task = await Task.create(req.body);
 
@@ -93,6 +113,27 @@ exports.updateTask = async (req, res) => {
         if (!task) {
             return res.status(404).json({ success: false, message: 'Task not found' });
         }
+
+        // Validate quotation is approved if being updated
+        if (req.body.quotation && req.body.quotation !== task.quotation?.toString()) {
+            const Quotation = require('../models/Quotation');
+            const quotation = await Quotation.findById(req.body.quotation);
+            
+            if (!quotation) {
+                return res.status(404).json({ 
+                    success: false, 
+                    message: 'Quotation not found' 
+                });
+            }
+            
+            if (quotation.status !== 'Approved') {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Only approved quotations can be assigned to tasks. Please wait for client approval.' 
+                });
+            }
+        }
+
         task = await Task.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
             runValidators: true

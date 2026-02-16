@@ -1,8 +1,7 @@
 .staff-layout {
     display: flex;
-    height: 100vh;
+    min-height: 100vh;
     background-color: #f8fafc;
-    overflow: hidden;
 }
 
 .staff-main-content {
@@ -11,9 +10,7 @@
     padding-top: 60px;
     /* Space for mobile header */
     transition: all 0.4s;
-    height: 100vh;
-    overflow-y: auto;
-    overflow-x: hidden;
+    min-height: 100vh;
     position: relative;
     scroll-behavior: smooth;
 }

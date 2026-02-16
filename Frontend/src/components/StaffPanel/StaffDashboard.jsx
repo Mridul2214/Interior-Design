@@ -11,7 +11,7 @@ import {
     Calendar
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { taskAPI, siteVisitAPI } from '../../config/api';
+import { taskAPI, siteVisitAPI, BASE_IMAGE_URL } from '../../config/api';
 import './css/StaffDashboard.css';
 
 const StaffDashboard = ({ user }) => {
@@ -183,7 +183,10 @@ const StaffDashboard = ({ user }) => {
                             <div key={visit._id} className="visit-preview-card">
                                 <div className="visit-images">
                                     {visit.images && visit.images.length > 0 ? (
-                                        <img src={visit.images[0]} alt="Site" />
+                                        <>
+                                            <img src={`${BASE_IMAGE_URL}${visit.images[0]}`} alt="Site" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
+                                            <div style={{ display: 'none', color: 'red', fontSize: '10px' }}>Failed: {`${BASE_IMAGE_URL}${visit.images[0]}`}</div>
+                                        </>
                                     ) : (
                                         <div className="no-image-placeholder">No Image</div>
                                     )}

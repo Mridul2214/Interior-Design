@@ -17,7 +17,7 @@ import {
     MapPin,
     Camera
 } from 'lucide-react';
-import { taskAPI, staffAPI, clientAPI, quotationAPI, siteVisitAPI } from '../../config/api';
+import { taskAPI, staffAPI, clientAPI, quotationAPI, siteVisitAPI, BASE_IMAGE_URL } from '../../config/api';
 import { useToast } from '../../context/ToastContext';
 import CustomSelect from '../common/CustomSelect';
 import AISuggestButton from '../common/AISuggestButton';
@@ -135,7 +135,10 @@ const Tasks = ({ isStaff, user }) => {
     };
 
     const filteredQuotations = formData.client
-        ? quotations.filter(q => q.client?._id === formData.client || q.client === formData.client)
+        ? quotations.filter(q => 
+            (q.client?._id === formData.client || q.client === formData.client) && 
+            q.status === 'Approved'
+          )
         : [];
 
     const handleViewDetails = async (task) => {
@@ -561,7 +564,7 @@ const Tasks = ({ isStaff, user }) => {
 
                                     <div className="form-field">
                                         <CustomSelect
-                                            label="Quotation / Project"
+                                            label="Quotation / Project (Approved Only)"
                                             name="quotation"
                                             options={filteredQuotations.map(q => ({
                                                 value: q._id,
@@ -569,7 +572,7 @@ const Tasks = ({ isStaff, user }) => {
                                             }))}
                                             value={formData.quotation}
                                             onChange={handleInputChange}
-                                            placeholder={formData.client ? "Select Quotation" : "Select Client First"}
+                                            placeholder={formData.client ? (filteredQuotations.length > 0 ? "Select Approved Quotation" : "No Approved Quotations") : "Select Client First"}
                                             disabled={!formData.client}
                                         />
                                     </div>
@@ -730,7 +733,7 @@ const Tasks = ({ isStaff, user }) => {
                                                     <div className="visit-log-gallery">
                                                         {visit.images.map((img, i) => (
                                                             <div key={i} className="gallery-img">
-                                                                <img src={img} alt={`Visit site evidence ${i + 1}`} className="evidence-image" />
+                                                                <img src={`${BASE_IMAGE_URL}${img}`} alt={`Visit site evidence ${i + 1}`} className="evidence-image" />
                                                             </div>
                                                         ))}
                                                     </div>

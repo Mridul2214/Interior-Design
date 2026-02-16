@@ -5,15 +5,15 @@
 
 .main-content {
     margin-left: var(--sidebar-width);
-    flex: 1;
+    width: calc(100% - var(--sidebar-width));
     padding: 0;
-    /* Removed padding to allow full-width headers */
     background-color: var(--bg-color);
     min-height: 100vh;
-    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: margin-left;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: margin-left, width;
 }
 
 .layout-container.sidebar-collapsed .main-content {
     margin-left: 80px;
+    width: calc(100% - 80px);
 }

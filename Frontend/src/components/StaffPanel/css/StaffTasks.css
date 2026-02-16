@@ -1,6 +1,6 @@
-/* Staff-Specific Tasks Styling */
 .st-tasks-container {
     width: 100%;
+    padding: 0;
     animation: st-fadeIn 0.5s ease-out;
 }
 
