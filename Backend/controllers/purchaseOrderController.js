@@ -1,4 +1,5 @@
 const PurchaseOrder = require('../models/PurchaseOrder');
+const { createNotification } = require('../utils/notificationHelper');
 
 exports.getPurchaseOrders = async (req, res) => {
     try {
@@ -52,6 +53,17 @@ exports.createPurchaseOrder = async (req, res) => {
     try {
         req.body.createdBy = req.user.id;
         const po = await PurchaseOrder.create(req.body);
+
+        // Send notification
+        await createNotification({
+            title: '🛒 New Purchase Order',
+            description: `PO #${po.poNumber} for "${po.supplier}" worth ₹${po.totalAmount?.toLocaleString('en-IN') || 0} has been created.`,
+            type: 'PO',
+            relatedModel: 'PurchaseOrder',
+            relatedId: po._id,
+            createdBy: req.user.id
+        });
+
         res.status(201).json({ success: true, data: po });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -97,6 +109,17 @@ exports.approvePurchaseOrder = async (req, res) => {
         po.approvedBy = req.user.id;
         po.approvedAt = new Date();
         await po.save();
+
+        // Send notification
+        await createNotification({
+            title: '✅ Purchase Order Approved',
+            description: `PO #${po.poNumber} has been approved.`,
+            type: 'PO',
+            relatedModel: 'PurchaseOrder',
+            relatedId: po._id,
+            createdBy: req.user.id
+        });
+
         res.status(200).json({ success: true, data: po });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -112,6 +135,17 @@ exports.markAsReceived = async (req, res) => {
         po.status = 'Received';
         po.actualDeliveryDate = new Date();
         await po.save();
+
+        // Send notification
+        await createNotification({
+            title: '📥 Purchase Order Received',
+            description: `PO #${po.poNumber} from "${po.supplier}" has been received. Items can be added to inventory.`,
+            type: 'PO',
+            relatedModel: 'PurchaseOrder',
+            relatedId: po._id,
+            createdBy: req.user.id
+        });
+
         res.status(200).json({ success: true, data: po });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

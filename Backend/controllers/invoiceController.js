@@ -1,4 +1,5 @@
 const Invoice = require('../models/Invoice');
+const { createNotification } = require('../utils/notificationHelper');
 
 exports.getInvoices = async (req, res) => {
     try {
@@ -54,6 +55,17 @@ exports.createInvoice = async (req, res) => {
     try {
         req.body.createdBy = req.user.id;
         const invoice = await Invoice.create(req.body);
+
+        // Send notification
+        await createNotification({
+            title: '🧾 New Invoice Created',
+            description: `Invoice #${invoice.invoiceNumber || 'N/A'} for ₹${invoice.grandTotal?.toLocaleString('en-IN') || 0} has been created.`,
+            type: 'Invoice',
+            relatedModel: 'Invoice',
+            relatedId: invoice._id,
+            createdBy: req.user.id
+        });
+
         res.status(201).json({ success: true, data: invoice });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -103,6 +115,16 @@ exports.recordPayment = async (req, res) => {
         invoice.paymentDate = paymentDate || new Date();
 
         await invoice.save();
+
+        // Send notification
+        await createNotification({
+            title: '💰 Payment Recorded',
+            description: `Payment of ₹${amount?.toLocaleString('en-IN') || 0} recorded for Invoice #${invoice.invoiceNumber || 'N/A'}. Status: ${invoice.status}.`,
+            type: 'Invoice',
+            relatedModel: 'Invoice',
+            relatedId: invoice._id,
+            createdBy: req.user.id
+        });
 
         res.status(200).json({ success: true, data: invoice });
     } catch (error) {

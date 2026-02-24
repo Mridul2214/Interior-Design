@@ -5,9 +5,10 @@ import { reportAPI, purchaseOrderAPI } from '../../config/api';
 import './css/Dashboard.css';
 
 const AnalyticsCard = ({ title, value, icon: Icon, color, bgColor, loading, details = [] }) => {
-    const chartData = loading || details.length === 0
-        ? [{ name: 'Total', value: 1, color: '#e2e8f0' }]
-        : details.map(d => ({ name: d.label, value: typeof d.value === 'number' ? d.value : 1, color: d.color }));
+    const hasData = details.some(d => typeof d.value === 'number' && d.value > 0);
+    const chartData = loading || details.length === 0 || !hasData
+        ? [{ name: 'Empty', value: 1, color: '#f1f5f9' }]
+        : details.map(d => ({ name: d.label, value: typeof d.value === 'number' ? d.value : 0, color: d.color }));
 
     return (
         <div className="analytics-card centered">
@@ -90,20 +91,14 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const [dashboardRes, poRes] = await Promise.all([
+            const [dashboardRes, poStatsRes] = await Promise.all([
                 reportAPI.getDashboard(),
-                purchaseOrderAPI.getAll()
+                purchaseOrderAPI.getStats()
             ]);
 
             if (dashboardRes.success) setStats(dashboardRes.data);
-            if (poRes.success) {
-                const pos = poRes.data;
-                setPoStats({
-                    total: pos.length,
-                    pending: pos.filter(p => p.status === 'Pending').length,
-                    ordered: pos.filter(p => p.status === 'Ordered').length,
-                    received: pos.filter(p => p.status === 'Received').length
-                });
+            if (poStatsRes.success) {
+                setPoStats(poStatsRes.data);
             }
         } catch (err) {
             setError(err.message);
@@ -150,6 +145,7 @@ const Dashboard = () => {
                         bgColor="#ede9fe"
                         loading={loading}
                         details={[
+                            { label: 'In Stock', value: stats?.inventory?.inStock || 0, color: '#10b981' },
                             { label: 'Low Stock', value: stats?.inventory?.lowStock || 0, color: '#f59e0b' },
                             { label: 'Out of Stock', value: stats?.inventory?.outOfStock || 0, color: '#ef4444' }
                         ]}

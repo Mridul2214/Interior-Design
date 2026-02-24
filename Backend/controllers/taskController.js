@@ -1,4 +1,5 @@
 const Task = require('../models/Task');
+const { createNotification, notifyStaffUser } = require('../utils/notificationHelper');
 
 exports.getTasks = async (req, res) => {
     try {
@@ -76,18 +77,18 @@ exports.createTask = async (req, res) => {
         if (req.body.quotation) {
             const Quotation = require('../models/Quotation');
             const quotation = await Quotation.findById(req.body.quotation);
-            
+
             if (!quotation) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: 'Quotation not found' 
+                return res.status(404).json({
+                    success: false,
+                    message: 'Quotation not found'
                 });
             }
-            
+
             if (quotation.status !== 'Approved') {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Only approved quotations can be assigned to tasks. Please wait for client approval.' 
+                return res.status(400).json({
+                    success: false,
+                    message: 'Only approved quotations can be assigned to tasks. Please wait for client approval.'
                 });
             }
         }
@@ -102,6 +103,28 @@ exports.createTask = async (req, res) => {
             .populate('quotation', 'quotationNumber projectName totalAmount');
 
         res.status(201).json({ success: true, data: populatedTask });
+
+        // Send notifications (after response to avoid delay)
+        createNotification({
+            title: '📌 New Task Created',
+            description: `Task "${populatedTask.title}" assigned to ${populatedTask.assignedTo?.name || 'staff'}. Due: ${new Date(populatedTask.dueDate).toLocaleDateString('en-IN')}.`,
+            type: 'Task',
+            relatedModel: 'Task',
+            relatedId: populatedTask._id,
+            createdBy: req.user.id
+        });
+
+        // Notify the assigned staff member
+        if (populatedTask.assignedTo?.email) {
+            notifyStaffUser(populatedTask.assignedTo.email, {
+                title: '🛠️ New Task Assigned to You',
+                description: `You have been assigned "${populatedTask.title}". Priority: ${populatedTask.priority}. Due: ${new Date(populatedTask.dueDate).toLocaleDateString('en-IN')}.`,
+                type: 'Task',
+                relatedModel: 'Task',
+                relatedId: populatedTask._id,
+                createdBy: req.user.id
+            });
+        }
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -114,22 +137,25 @@ exports.updateTask = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Task not found' });
         }
 
+        const oldStatus = task.status;
+        const oldAssignedTo = task.assignedTo?.toString();
+
         // Validate quotation is approved if being updated
         if (req.body.quotation && req.body.quotation !== task.quotation?.toString()) {
             const Quotation = require('../models/Quotation');
             const quotation = await Quotation.findById(req.body.quotation);
-            
+
             if (!quotation) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: 'Quotation not found' 
+                return res.status(404).json({
+                    success: false,
+                    message: 'Quotation not found'
                 });
             }
-            
+
             if (quotation.status !== 'Approved') {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Only approved quotations can be assigned to tasks. Please wait for client approval.' 
+                return res.status(400).json({
+                    success: false,
+                    message: 'Only approved quotations can be assigned to tasks. Please wait for client approval.'
                 });
             }
         }
@@ -143,6 +169,43 @@ exports.updateTask = async (req, res) => {
             .populate('quotation', 'quotationNumber projectName totalAmount');
 
         res.status(200).json({ success: true, data: task });
+
+        // Send notifications after response (non-blocking)
+        if (req.body.status && req.body.status !== oldStatus) {
+            // Notify admins about status change
+            createNotification({
+                title: `🔄 Task Status: ${req.body.status}`,
+                description: `Task "${task.title}" status changed from "${oldStatus}" to "${req.body.status}". Assigned to: ${task.assignedTo?.name || 'Unassigned'}`,
+                type: req.body.status === 'Completed' ? 'Success' : 'Task',
+                relatedModel: 'Task',
+                relatedId: task._id,
+                createdBy: req.user.id
+            });
+
+            // Notify the staff member about their task status change
+            if (task.assignedTo?.email) {
+                notifyStaffUser(task.assignedTo.email, {
+                    title: `🔄 Your Task Updated`,
+                    description: `Task "${task.title}" status changed to "${req.body.status}".`,
+                    type: req.body.status === 'Completed' ? 'Success' : 'Task',
+                    relatedModel: 'Task',
+                    relatedId: task._id,
+                    createdBy: req.user.id
+                });
+            }
+        }
+
+        // If task was reassigned, notify the new staff member
+        if (req.body.assignedTo && req.body.assignedTo !== oldAssignedTo && task.assignedTo?.email) {
+            notifyStaffUser(task.assignedTo.email, {
+                title: '🛠️ Task Reassigned to You',
+                description: `You have been assigned "${task.title}". Priority: ${task.priority}. Due: ${new Date(task.dueDate).toLocaleDateString('en-IN')}.`,
+                type: 'Task',
+                relatedModel: 'Task',
+                relatedId: task._id,
+                createdBy: req.user.id
+            });
+        }
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

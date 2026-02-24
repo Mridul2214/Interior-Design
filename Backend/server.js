@@ -121,6 +121,8 @@ const connectDB = async () => {
 // Start server
 const PORT = process.env.PORT || 5000;
 
+const { checkTaskDeadlines } = require('./utils/notificationHelper');
+
 const startServer = async () => {
     await connectDB();
 
@@ -128,8 +130,14 @@ const startServer = async () => {
         console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
         console.log(`📍 API available at http://localhost:${PORT}/api`);
     });
-};
 
+    // Run task deadline check on startup and every hour
+    setTimeout(() => {
+        checkTaskDeadlines();
+        setInterval(checkTaskDeadlines, 60 * 60 * 1000); // Every hour
+        console.log('📬 Task deadline checker started (runs every hour)');
+    }, 5000); // Wait 5 seconds after startup
+};
 startServer();
 
 // Handle unhandled promise rejections

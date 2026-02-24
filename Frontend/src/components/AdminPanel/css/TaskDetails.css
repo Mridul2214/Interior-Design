@@ -1,17 +1,76 @@
 /* Task Details Modal & Evidence */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 2rem;
+}
+
 .modal-content.task-details-modal {
     width: 800px;
     max-width: 95vw;
+    max-height: 85vh; /* Limit the modal container height */
+    display: flex;
+    flex-direction: column;
     background: white;
     border-radius: 24px !important;
     box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.25);
     padding: 0 !important;
+    overflow: hidden; /* Important: container should not scroll */
+    position: relative;
 }
 
 .task-details-modal .modal-header {
+    flex: 0 0 auto; /* Header stays fixed at top */
     padding: 1.5rem 2rem;
     background: #ffffff;
     border-bottom: 1px solid #f1f5f9;
+}
+
+.task-details-modal .modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto !important;
+    padding: 2rem;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin !important; /* For Firefox */
+    scrollbar-color: #cbd5e1 #f1f5f9 !important; /* For Firefox */
+}
+
+/* Chrome, Edge, and Safari */
+.task-details-modal .modal-body::-webkit-scrollbar {
+    width: 8px !important;
+    display: block !important;
+}
+
+.task-details-modal .modal-body::-webkit-scrollbar-track {
+    background: #f1f5f9 !important;
+    border-radius: 4px !important;
+}
+
+.task-details-modal .modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1 !important;
+    border-radius: 4px !important;
+    border: 2px solid #f1f5f9 !important;
+}
+
+.task-details-modal .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8 !important;
+}
+
+.visits-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
 }
 
 .task-summary-strip {

@@ -33,6 +33,8 @@ exports.getDashboardStats = async (req, res) => {
         const inProgressTasks = await Task.countDocuments({ status: 'In Progress' });
 
         // Inventory alerts
+        const totalInventory = await Inventory.countDocuments();
+        const inStockItems = await Inventory.countDocuments({ status: 'In Stock' });
         const lowStockItems = await Inventory.countDocuments({ status: 'Low Stock' });
         const outOfStockItems = await Inventory.countDocuments({ status: 'Out of Stock' });
 
@@ -63,6 +65,8 @@ exports.getDashboardStats = async (req, res) => {
                     inProgress: inProgressTasks
                 },
                 inventory: {
+                    totalCount: totalInventory,
+                    inStock: inStockItems,
                     lowStock: lowStockItems,
                     outOfStock: outOfStockItems
                 },

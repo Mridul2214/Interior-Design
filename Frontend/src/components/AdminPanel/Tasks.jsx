@@ -145,6 +145,7 @@ const Tasks = ({ isStaff, user }) => {
         setSelectedTask(task);
         setShowDetailsModal(true);
         setVisitsLoading(true);
+        document.body.style.overflow = 'hidden';
         try {
             const res = await siteVisitAPI.getByTask(task._id);
             if (res.success) {
@@ -245,9 +246,11 @@ const Tasks = ({ isStaff, user }) => {
 
     const closeModal = () => {
         setShowTaskModal(false);
+        setShowDetailsModal(false);
         setEditingTask(null);
         setFormData(initialFormData);
         setError(null);
+        document.body.style.overflow = 'unset';
     };
 
     const filteredTasks = tasks.filter(task => {

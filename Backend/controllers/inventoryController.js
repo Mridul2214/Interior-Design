@@ -1,4 +1,5 @@
 const Inventory = require('../models/Inventory');
+const { createNotification } = require('../utils/notificationHelper');
 
 exports.getInventoryItems = async (req, res) => {
     try {
@@ -54,6 +55,17 @@ exports.createInventoryItem = async (req, res) => {
     try {
         req.body.createdBy = req.user.id;
         const item = await Inventory.create(req.body);
+
+        // Send notification
+        await createNotification({
+            title: '📦 New Inventory Item',
+            description: `"${item.itemName}" has been added to inventory (${item.section}). Stock: ${item.stock} ${item.unit}`,
+            type: 'Inventory',
+            relatedModel: 'Inventory',
+            relatedId: item._id,
+            createdBy: req.user.id
+        });
+
         res.status(201).json({ success: true, data: item });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -70,6 +82,28 @@ exports.updateInventoryItem = async (req, res) => {
             new: true,
             runValidators: true
         });
+
+        // Notify if stock is low or out
+        if (item.status === 'Low Stock') {
+            await createNotification({
+                title: '⚠️ Low Stock Alert',
+                description: `"${item.itemName}" stock is running low (${item.stock} ${item.unit} remaining).`,
+                type: 'Warning',
+                relatedModel: 'Inventory',
+                relatedId: item._id,
+                createdBy: req.user.id
+            });
+        } else if (item.status === 'Out of Stock') {
+            await createNotification({
+                title: '🚨 Out of Stock',
+                description: `"${item.itemName}" is now out of stock! Please reorder immediately.`,
+                type: 'Error',
+                relatedModel: 'Inventory',
+                relatedId: item._id,
+                createdBy: req.user.id
+            });
+        }
+
         res.status(200).json({ success: true, data: item });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

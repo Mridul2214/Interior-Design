@@ -1,4 +1,5 @@
 const Client = require('../models/Client');
+const { createNotification } = require('../utils/notificationHelper');
 
 /**
  * @desc    Get all clients
@@ -107,6 +108,16 @@ exports.createClient = async (req, res, next) => {
         req.body.createdBy = req.user.id;
 
         const client = await Client.create(req.body);
+
+        // Send notification
+        await createNotification({
+            title: '👤 New Client Added',
+            description: `New client "${client.name}" has been added to the system.`,
+            type: 'Info',
+            relatedModel: 'Client',
+            relatedId: client._id,
+            createdBy: req.user.id
+        });
 
         res.status(201).json({
             success: true,

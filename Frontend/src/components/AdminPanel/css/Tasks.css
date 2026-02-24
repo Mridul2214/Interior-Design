@@ -20,14 +20,14 @@
 }
 
 /* Header Section */
-.tasks-header {
+.tasks-header, .t-tasks-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 1.5rem;
 }
 
-.tasks-title {
+.tasks-title, .t-tasks-title {
     flex: 1;
 }
 
@@ -77,7 +77,7 @@
     background: #2563eb;
     color: white;
     border: none;
-    padding: 0.6rem 1.2rem;
+    padding: 0.75rem 1.2rem;
     border-radius: 10px;
     font-weight: 600;
     display: flex;
@@ -85,6 +85,8 @@
     gap: 0.5rem;
     cursor: pointer;
     transition: all 0.2s;
+    margin-top: 0.5rem;
+    white-space: nowrap;
 }
 
 .btn-new-task:hover {
@@ -707,12 +709,6 @@
     padding: 1.5rem 2rem;
     max-height: 75vh;
     overflow-y: auto;
-    scrollbar-width: none;
-}
-
-.modal-body::-webkit-scrollbar,
-.modal-form-body::-webkit-scrollbar {
-    display: none;
 }
 
 .form-grid {

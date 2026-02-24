@@ -1,5 +1,6 @@
 const Quotation = require('../models/Quotation');
 const Invoice = require('../models/Invoice');
+const { createNotification } = require('../utils/notificationHelper');
 
 /**
  * @desc    Get all quotations
@@ -105,6 +106,16 @@ exports.createQuotation = async (req, res) => {
         req.body.createdBy = req.user.id;
 
         const quotation = await Quotation.create(req.body);
+
+        // Send notification to admins
+        await createNotification({
+            title: '📝 New Quotation Created',
+            description: `Quotation "${quotation.projectName || quotation.quotationNumber}" worth ₹${quotation.totalAmount?.toLocaleString('en-IN') || 0} has been created.`,
+            type: 'Quote',
+            relatedModel: 'Quotation',
+            relatedId: quotation._id,
+            createdBy: req.user.id
+        });
 
         res.status(201).json({
             success: true,
@@ -231,6 +242,16 @@ exports.approveQuotation = async (req, res) => {
             createdBy: req.user.id,
             notes: quotation.notes,
             termsAndConditions: quotation.termsAndConditions
+        });
+
+        // Notify about quotation approval
+        await createNotification({
+            title: '✅ Quotation Approved',
+            description: `Quotation "${quotation.projectName || quotation.quotationNumber}" has been approved. Invoice generated automatically.`,
+            type: 'Quote',
+            relatedModel: 'Quotation',
+            relatedId: quotation._id,
+            createdBy: req.user.id
         });
 
         res.status(200).json({
