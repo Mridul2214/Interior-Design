@@ -16,10 +16,16 @@
 }
 
 .content-container {
-    padding: 1.5rem;
+    padding: 0 1.5rem 1.5rem 1.5rem;
     max-width: 1200px;
     margin: 0 auto;
     animation: fadeIn 0.4s ease-out;
+}
+
+.staff-header-container {
+    padding: 1.5rem 1.5rem 0 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 @keyframes fadeIn {
@@ -41,8 +47,12 @@
         padding-top: 0;
     }
 
+    .staff-header-container {
+        padding: 2.5rem 2.5rem 0 2.5rem;
+    }
+
     .content-container {
-        padding: 2.5rem;
+        padding: 0 2.5rem 2.5rem 2.5rem;
     }
 }
 

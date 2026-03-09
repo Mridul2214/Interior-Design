@@ -134,6 +134,19 @@
     color: #64748b;
 }
 
+.staff-id-badge {
+    display: inline-block;
+    padding: 0.3rem 0.65rem;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
+    border: 1px solid #c7d2fe;
+}
+
 .role-cell {
     display: flex;
     align-items: center;

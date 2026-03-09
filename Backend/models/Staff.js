@@ -1,10 +1,17 @@
 const mongoose = require('mongoose');
 
 const StaffSchema = new mongoose.Schema({
+    staffId: {
+        type: String,
+        unique: true,
+        trim: true
+    },
     name: {
         type: String,
         required: [true, 'Please provide a name'],
-        trim: true
+        trim: true,
+        minlength: [2, 'Name must be at least 2 characters'],
+        maxlength: [100, 'Name cannot exceed 100 characters']
     },
     email: {
         type: String,
@@ -18,12 +25,19 @@ const StaffSchema = new mongoose.Schema({
     phone: {
         type: String,
         required: [true, 'Please provide a phone number'],
-        trim: true
+        trim: true,
+        validate: {
+            validator: function (v) {
+                return /^[0-9]{10}$/.test(v);
+            },
+            message: 'Phone number must be exactly 10 digits'
+        }
     },
     role: {
         type: String,
         required: [true, 'Please provide a role'],
-        trim: true
+        trim: true,
+        minlength: [2, 'Role must be at least 2 characters']
     },
     joiningDate: {
         type: Date,
@@ -43,7 +57,23 @@ const StaffSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// Auto-generate staffId before saving (e.g., STF-0001)
+StaffSchema.pre('save', async function (next) {
+    if (!this.staffId) {
+        const lastStaff = await mongoose.model('Staff')
+            .findOne({}, {}, { sort: { createdAt: -1 } });
+
+        let nextNum = 1;
+        if (lastStaff && lastStaff.staffId) {
+            const match = lastStaff.staffId.match(/STF-(\d+)/);
+            if (match) nextNum = parseInt(match[1]) + 1;
+        }
+        this.staffId = `STF-${String(nextNum).padStart(4, '0')}`;
+    }
+    next();
+});
+
 // Index for easier searching
-StaffSchema.index({ name: 'text', role: 'text', phone: 'text' });
+StaffSchema.index({ name: 'text', role: 'text', phone: 'text', staffId: 'text' });
 
 module.exports = mongoose.model('Staff', StaffSchema);

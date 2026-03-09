@@ -68,6 +68,12 @@ const Staff = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        // For phone: only allow digits, max 10
+        if (name === 'phone') {
+            const digits = value.replace(/\D/g, '').slice(0, 10);
+            setFormData(prev => ({ ...prev, phone: digits }));
+            return;
+        }
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -77,9 +83,32 @@ const Staff = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!editingStaff && formData.password !== formData.confirmPassword) {
-            showToast('Passwords do not match', 'error');
+        // Frontend Validation
+        if (!formData.name || formData.name.trim().length < 2) {
+            showToast('Name must be at least 2 characters', 'error');
             return;
+        }
+        if (!formData.phone || !/^[0-9]{10}$/.test(formData.phone)) {
+            showToast('Phone number must be exactly 10 digits', 'error');
+            return;
+        }
+        if (!formData.role || formData.role.trim().length < 2) {
+            showToast('Role must be at least 2 characters', 'error');
+            return;
+        }
+        if (formData.email && !/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(formData.email)) {
+            showToast('Please provide a valid email address', 'error');
+            return;
+        }
+        if (!editingStaff) {
+            if (!formData.password || formData.password.length < 6) {
+                showToast('Password must be at least 6 characters', 'error');
+                return;
+            }
+            if (formData.password !== formData.confirmPassword) {
+                showToast('Passwords do not match', 'error');
+                return;
+            }
         }
 
         setSubmitting(true);
@@ -96,7 +125,7 @@ const Staff = () => {
                 const response = await staffAPI.create(formData);
                 if (response.success) {
                     await fetchStaff();
-                    showToast('New staff member added successfully');
+                    showToast(`New staff member added! Staff ID: ${response.data.staffId}`, 'success');
                     closeModal();
                 }
             }
@@ -161,7 +190,8 @@ const Staff = () => {
         staff.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         staff.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         staff.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        staff.phone?.includes(searchTerm)
+        staff.phone?.includes(searchTerm) ||
+        staff.staffId?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -180,7 +210,7 @@ const Staff = () => {
                     <input
                         type="text"
                         className="search-input"
-                        placeholder="Search staff by name, role, email, or phone..."
+                        placeholder="Search by name, role, email, phone, or staff ID..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -201,6 +231,7 @@ const Staff = () => {
                         <table className="staff-table">
                             <thead>
                                 <tr>
+                                    <th>Staff ID</th>
                                     <th>Staff Member</th>
                                     <th>Role</th>
                                     <th>Contact</th>
@@ -212,6 +243,9 @@ const Staff = () => {
                             <tbody>
                                 {filteredStaff.map((staff) => (
                                     <tr key={staff._id}>
+                                        <td>
+                                            <span className="staff-id-badge">{staff.staffId || '—'}</span>
+                                        </td>
                                         <td>
                                             <div className="staff-info-cell">
                                                 <div className="staff-avatar">
@@ -324,14 +358,17 @@ const Staff = () => {
                                     </div>
 
                                     <div className="form-group">
-                                        <label>Phone Number *</label>
+                                        <label>Phone Number * <small style={{ color: '#9ca3af', fontWeight: 400 }}>(10 digits)</small></label>
                                         <input
                                             type="tel"
                                             name="phone"
                                             value={formData.phone}
                                             onChange={handleInputChange}
-                                            placeholder="Enter phone number"
+                                            placeholder="Enter 10-digit phone number"
                                             required
+                                            maxLength={10}
+                                            pattern="[0-9]{10}"
+                                            title="Phone number must be exactly 10 digits"
                                         />
                                     </div>
 
@@ -350,14 +387,15 @@ const Staff = () => {
                                     {!editingStaff && (
                                         <>
                                             <div className="form-group">
-                                                <label>Login Password *</label>
+                                                <label>Login Password * <small style={{ color: '#9ca3af', fontWeight: 400 }}>(min 6 chars)</small></label>
                                                 <input
                                                     type="password"
                                                     name="password"
                                                     value={formData.password}
                                                     onChange={handleInputChange}
-                                                    placeholder="Set login password"
+                                                    placeholder="Set login password (min 6 characters)"
                                                     required
+                                                    minLength={6}
                                                 />
                                             </div>
 

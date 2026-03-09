@@ -5,20 +5,19 @@ import './css/Login.css';
 
 const Login = ({ onLoginSuccess }) => {
     const [formData, setFormData] = useState({
-        email: '',
+        identifier: '',
         password: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
 
     const handleChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
         });
-        setError(''); // Clear error when user types
+        setError('');
     };
 
     const handleSubmit = async (e) => {
@@ -27,14 +26,21 @@ const Login = ({ onLoginSuccess }) => {
         setError('');
 
         try {
-            const response = await authAPI.login(formData);
+            const identifier = formData.identifier.trim();
+            const payload = { password: formData.password };
+
+            // Auto-detect: if it matches STF-XXXX pattern, use staffId; otherwise use email
+            if (/^STF-\d+$/i.test(identifier)) {
+                payload.staffId = identifier.toUpperCase();
+            } else {
+                payload.email = identifier;
+            }
+
+            const response = await authAPI.login(payload);
 
             if (response.success) {
-                // Store token and user data
                 localStorage.setItem('token', response.token);
                 localStorage.setItem('user', JSON.stringify(response.data));
-
-                // Call success callback
                 onLoginSuccess(response.data);
             }
         } catch (err) {
@@ -46,7 +52,7 @@ const Login = ({ onLoginSuccess }) => {
 
     const fillDefaultCredentials = () => {
         setFormData({
-            email: 'admin@interiordesign.com',
+            identifier: 'admin@interiordesign.com',
             password: 'admin123'
         });
     };
@@ -96,10 +102,10 @@ const Login = ({ onLoginSuccess }) => {
 
                         <div className="input-group">
                             <input
-                                type="email"
-                                name="email"
-                                placeholder="EMAIL ADDRESS"
-                                value={formData.email}
+                                type="text"
+                                name="identifier"
+                                placeholder="EMAIL OR ID"
+                                value={formData.identifier}
                                 onChange={handleChange}
                                 required
                                 className="modern-input"

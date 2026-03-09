@@ -30,7 +30,7 @@ const StaffSidebar = ({ user, onLogout, isOpen, toggleSidebar }) => {
                     {isOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
                 <div className="mobile-brand">Interior Design Staff</div>
-                <div className="mobile-user-icon">
+                <div className="mobile-user-icon" style={{ visibility: 'hidden' }}>
                     <User size={20} />
                 </div>
             </div>

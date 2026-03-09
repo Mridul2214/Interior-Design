@@ -122,6 +122,22 @@ const connectDB = async () => {
 const PORT = process.env.PORT || 5000;
 
 const { checkTaskDeadlines } = require('./utils/notificationHelper');
+const Staff = require('./models/Staff');
+
+const migrateStaffIds = async () => {
+    try {
+        const staffWithoutId = await Staff.find({ $or: [{ staffId: null }, { staffId: { $exists: false } }, { staffId: '' }] });
+        if (staffWithoutId.length > 0) {
+            console.log(`🔄 Migrating ${staffWithoutId.length} staff members without IDs...`);
+            for (const staff of staffWithoutId) {
+                await staff.save(); // pre-save hook will auto-generate staffId
+            }
+            console.log('✅ Staff ID migration complete');
+        }
+    } catch (err) {
+        console.error('⚠️ Staff ID migration error:', err.message);
+    }
+};
 
 const startServer = async () => {
     await connectDB();
@@ -130,6 +146,9 @@ const startServer = async () => {
         console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
         console.log(`📍 API available at http://localhost:${PORT}/api`);
     });
+
+    // Migrate existing staff IDs
+    await migrateStaffIds();
 
     // Run task deadline check on startup and every hour
     setTimeout(() => {

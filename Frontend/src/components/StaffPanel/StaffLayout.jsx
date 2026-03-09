@@ -34,8 +34,10 @@ const StaffLayout = ({ user, onLogout }) => {
             />
 
             <main className="staff-main-content">
-                <div className="content-container">
+                <div className="staff-header-container">
                     <StaffHeader title={title} subtitle={subtitle} />
+                </div>
+                <div className="content-container">
                     <Outlet />
                 </div>
             </main>

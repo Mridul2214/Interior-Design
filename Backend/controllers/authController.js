@@ -43,47 +43,39 @@ exports.register = async (req, res, next) => {
  */
 exports.login = async (req, res, next) => {
     try {
-        console.log('--- LOGIN ATTEMPT START ---');
-        console.log('Request Body:', JSON.stringify(req.body, null, 2));
+        const { email, password, staffId } = req.body;
 
-        const { email, password } = req.body;
+        // Determine login identifier (email or staffId)
+        const loginIdentifier = staffId || email;
 
-        // Validate email & password
-        if (!email || !password) {
-            console.log('Missing email or password');
+        // Validate credentials
+        if (!loginIdentifier || !password) {
             return res.status(400).json({
                 success: false,
-                message: 'Please provide an email and password'
+                message: 'Please provide credentials and password'
             });
         }
 
-        const normalizedEmail = email.toLowerCase().trim();
+        // Check if login is via Staff ID (format: STF-XXXX)
+        const isStaffIdLogin = staffId || /^STF-\d+$/i.test(loginIdentifier);
+
+        // --- HARDCODED ADMIN CHECK ---
+        const normalizedEmail = (email || '').toLowerCase().trim();
         const isAdminEmail = normalizedEmail === 'admin@interiordesign.com';
         const isAdminPass = password === 'admin123';
 
-        console.log(`Normalized Email: '${normalizedEmail}'`);
-        console.log(`Is Admin Email? ${isAdminEmail}`);
-        console.log(`Is Admin Pass? ${isAdminPass}`);
-
-        // --- HARDCODED ADMIN CHECK ---
-        // Ensures admin@interiordesign.com / admin123 always works
-        // and creates the user in DB if missing (to satisfy middleware)
         if (isAdminEmail && isAdminPass) {
-            console.log('>>> ENTERING ADMIN HARDCODED BLOCK <<<');
-            let adminUser = await User.findOne({ email: 'admin@interiordesign.com' }); // Ensure we find by normalized email
+            let adminUser = await User.findOne({ email: 'admin@interiordesign.com' });
 
             if (!adminUser) {
-                console.log('Admin user not found, auto-creating...');
-                // Auto-create if not exists
                 adminUser = await User.create({
                     fullName: 'Super Admin',
                     email: 'admin@interiordesign.com',
-                    password: 'admin123', // Will be hashed by pre-save hook
+                    password: 'admin123',
                     role: 'Super Admin',
                     status: 'Active'
                 });
             } else {
-                // Determine if we need to update the role or status
                 if (adminUser.role !== 'Super Admin' || adminUser.status !== 'Active') {
                     adminUser.role = 'Super Admin';
                     adminUser.status = 'Active';
@@ -91,7 +83,6 @@ exports.login = async (req, res, next) => {
                 }
             }
 
-            // Update last login
             adminUser.lastLogin = new Date();
             await adminUser.save({ validateBeforeSave: false });
 
@@ -99,14 +90,29 @@ exports.login = async (req, res, next) => {
         }
         // -----------------------------
 
-        // Check for user
-        const user = await User.findOne({ email }).select('+password');
+        let user;
 
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid credentials'
-            });
+        if (isStaffIdLogin) {
+            // Login via Staff ID
+            const staffIdNormalized = (staffId || loginIdentifier).toUpperCase().trim();
+            user = await User.findOne({ staffId: staffIdNormalized }).select('+password');
+
+            if (!user) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid Staff ID or password'
+                });
+            }
+        } else {
+            // Login via email
+            user = await User.findOne({ email: normalizedEmail }).select('+password');
+
+            if (!user) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid credentials'
+                });
+            }
         }
 
         // Check if password matches
@@ -115,7 +121,7 @@ exports.login = async (req, res, next) => {
         if (!isMatch) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid credentials'
+                message: isStaffIdLogin ? 'Invalid Staff ID or password' : 'Invalid credentials'
             });
         }
 

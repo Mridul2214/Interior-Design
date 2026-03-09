@@ -20,10 +20,22 @@ const UserSchema = new mongoose.Schema({
             'Please provide a valid email'
         ]
     },
+    staffId: {
+        type: String,
+        unique: true,
+        sparse: true,
+        trim: true
+    },
     phone: {
         type: String,
         trim: true,
-        match: [/^[0-9+\-\s()]+$/, 'Please provide a valid phone number']
+        validate: {
+            validator: function (v) {
+                if (!v) return true;
+                return /^[0-9]{10}$/.test(v);
+            },
+            message: 'Phone number must be exactly 10 digits'
+        }
     },
     password: {
         type: String,
