@@ -24,7 +24,7 @@ const Layout = ({ user, onLogout }) => {
                 <Header user={user} />
                 <Outlet />
             </main>
-            <AIChat />
+            {/* <AIChat /> */}
         </div>
     );
 };
