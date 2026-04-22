@@ -52,6 +52,28 @@ const QuotationItemSchema = new mongoose.Schema({
     }
 });
 
+const QuotationVersionSchema = new mongoose.Schema({
+    version: {
+        type: Number,
+        required: true
+    },
+    items: [QuotationItemSchema],
+    subtotal: Number,
+    taxRate: Number,
+    taxAmount: Number,
+    discount: Number,
+    offerPrice: Number,
+    totalAmount: Number,
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }
+});
+
 const QuotationSchema = new mongoose.Schema({
     quotationNumber: {
         type: String,
@@ -105,7 +127,7 @@ const QuotationSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Draft', 'Sent', 'Pending', 'Approved', 'Rejected', 'Expired'],
+        enum: ['Draft', 'Under Review', 'Revision', 'Design Approved', 'Material Approved', 'Sent to Procurement', 'Approved', 'Rejected', 'Expired'],
         default: 'Draft'
     },
     validUntil: {
@@ -130,6 +152,37 @@ const QuotationSchema = new mongoose.Schema({
     },
     approvedAt: {
         type: Date
+    },
+    rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    rejectedAt: {
+        type: Date
+    },
+    rejectionReason: {
+        type: String,
+        trim: true
+    },
+    revisionRequestedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    revisionRequestedAt: {
+        type: Date
+    },
+    revisionReason: {
+        type: String,
+        trim: true
+    },
+    version: {
+        type: Number,
+        default: 1
+    },
+    versions: [QuotationVersionSchema],
+    currentVersion: {
+        type: Number,
+        default: 1
     }
 }, {
     timestamps: true

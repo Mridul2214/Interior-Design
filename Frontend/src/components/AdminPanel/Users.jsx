@@ -28,8 +28,9 @@ const Users = () => {
         fullName: '',
         email: '',
         phone: '',
-        role: 'Designer',
-        password: ''
+        role: 'Admin',
+        password: '',
+        department: 'Admin'
     });
 
     useEffect(() => {
@@ -55,7 +56,8 @@ const Users = () => {
             fullName: user.fullName || '',
             email: user.email || '',
             phone: user.phone || '',
-            role: user.role || 'Designer',
+            role: user.role || 'Admin',
+            department: user.department || 'Admin',
             password: '' // Leave password empty during edit unless user wants to change it
         });
         setShowModal(true);
@@ -88,7 +90,7 @@ const Users = () => {
                 setShowModal(false);
                 fetchUsers();
                 setEditingUser(null);
-                setFormData({ fullName: '', email: '', phone: '', role: 'Designer', password: '' });
+                setFormData({ fullName: '', email: '', phone: '', role: 'Admin', department: 'Admin', password: '' });
             }
         } catch (err) {
             alert(err.message || `Error ${editingUser ? 'updating' : 'creating'} user`);
@@ -117,7 +119,12 @@ const Users = () => {
     );
 
     const getRoleClass = (role) => {
-        return role?.toLowerCase().replace(' ', '-') || 'default';
+        if (!role) return 'default';
+        const roleLower = role.toLowerCase();
+        if (roleLower.includes('admin')) return 'admin';
+        if (roleLower.includes('manager')) return 'manager';
+        if (roleLower.includes('staff')) return 'staff';
+        return 'default';
     };
 
     return (
@@ -270,10 +277,27 @@ const Users = () => {
                                     value={formData.role}
                                     onChange={handleInputChange}
                                 >
-                                    <option value="Admin">Admin</option>
-                                    <option value="Designer">Designer</option>
-                                    <option value="Manager">Manager</option>
-                                    <option value="User">User</option>
+                                    <optgroup label="Core Admin">
+                                        <option value="Super Admin">Super Admin</option>
+                                        <option value="Admin">Admin</option>
+                                        <option value="Manager">General Manager</option>
+                                    </optgroup>
+                                    <optgroup label="Design Department">
+                                        <option value="Design Manager">Design Manager</option>
+                                        <option value="Design Staff">Design Staff</option>
+                                    </optgroup>
+                                    <optgroup label="Procurement Department">
+                                        <option value="Procurement Manager">Procurement Manager</option>
+                                        <option value="Procurement Staff">Procurement Staff</option>
+                                    </optgroup>
+                                    <optgroup label="Production Department">
+                                        <option value="Production Manager">Production Manager</option>
+                                        <option value="Production Staff">Production Staff</option>
+                                    </optgroup>
+                                    <optgroup label="Accounts Department">
+                                        <option value="Accounts Manager">Accounts Manager</option>
+                                        <option value="Accounts Staff">Accounts Staff</option>
+                                    </optgroup>
                                 </select>
                             </div>
                             <div className="form-group">

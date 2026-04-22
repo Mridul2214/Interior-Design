@@ -14,10 +14,10 @@ const { protect, authorize } = require('../middleware/auth');
 router.use(protect);
 
 router.route('/')
-    .get(authorize('Super Admin', 'Admin'), getUsers)
+    .get(authorize('Super Admin', 'Admin', 'Design Manager', 'Procurement Manager', 'Production Manager', 'Accounts Manager', 'Manager'), getUsers)
     .post(authorize('Super Admin', 'Admin'), createUser);
 
-router.get('/stats', authorize('Super Admin', 'Admin'), getUserStats);
+router.get('/stats', authorize('Super Admin', 'Admin', 'Design Manager', 'Procurement Manager', 'Production Manager', 'Accounts Manager', 'Manager'), getUserStats);
 
 router.route('/:id')
     .get(getUser)

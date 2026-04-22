@@ -15,15 +15,19 @@ import Settings from './components/AdminPanel/Settings';
 import Users from './components/AdminPanel/Users';
 import Invoice from './components/AdminPanel/Invoice';
 import QuotationView from './components/AdminPanel/QuotationView';
+import Projects from './components/AdminPanel/Projects';
 import Login from './components/Login';
 
-// Staff Panel Imports
 import StaffLayout from './components/StaffPanel/StaffLayout';
 import StaffDashboard from './components/StaffPanel/StaffDashboard';
 import SiteVisit from './components/StaffPanel/SiteVisit';
 import StaffTasks from './components/StaffPanel/StaffTasks';
 import StaffClients from './components/StaffPanel/StaffClients';
 import StaffQuotations from './components/StaffPanel/StaffQuotations';
+
+import RoleDashboard from './components/Dashboard/RoleDashboard';
+import MaterialReviewHub from './components/Designing/Manager/MaterialReviewHub';
+import { isAdminLayout, isStaffLayout, useRoleDashboard } from './hooks/useRoleDashboard';
 
 import Lenis from 'lenis';
 import { ToastProvider } from './context/ToastContext';
@@ -34,7 +38,6 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize Lenis for smooth scrolling
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -53,7 +56,6 @@ function App() {
 
     requestAnimationFrame(raf);
 
-    // Check if user is already logged in
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
 
@@ -100,15 +102,19 @@ function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
+  const userRole = user?.role;
+  const shouldUseAdminLayout = isAdminLayout(userRole);
+  const shouldUseStaffLayout = isStaffLayout(userRole);
+
   return (
     <ToastProvider>
       <Router>
         <Routes>
-          {/* Admin Routes */}
-          {user?.role !== 'Staff' && (
+          {/* Admin Layout - for Super Admin, Admin, Manager, and Department Managers */}
+          {shouldUseAdminLayout && (
             <Route path="/" element={<Layout user={user} onLogout={handleLogout} />}>
-              <Route index element={<Dashboard />} />
-              <Route path="quotations" element={<Quotations />} />
+              <Route index element={<RoleDashboard user={user} onLogout={handleLogout} />} />
+              <Route path="quotations" element={<Quotations user={user} />} />
               <Route path="quotations/new" element={<NewQuotation />} />
               <Route path="quotations/edit/:id" element={<NewQuotation isEdit={true} />} />
               <Route path="quotations/view/:id" element={<QuotationView />} />
@@ -122,15 +128,17 @@ function App() {
               <Route path="settings" element={<Settings />} />
               <Route path="users" element={<Users />} />
               <Route path="invoice" element={<Invoice />} />
+              <Route path="projects" element={<Projects />} />
+              <Route path="material-review" element={<MaterialReviewHub user={user} />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           )}
 
-          {/* Staff Routes */}
-          {user?.role === 'Staff' && (
+          {/* Staff Layout - for Department Staff */}
+          {shouldUseStaffLayout && (
             <Route path="/staff" element={<StaffLayout user={user} onLogout={handleLogout} />}>
               <Route index element={<Navigate to="/staff/dashboard" replace />} />
-              <Route path="dashboard" element={<StaffDashboard user={user} />} />
+              <Route path="dashboard" element={<RoleDashboard user={user} onLogout={handleLogout} />} />
               <Route path="tasks" element={<StaffTasks user={user} />} />
               <Route path="site-visits" element={<SiteVisit user={user} />} />
               <Route path="clients" element={<StaffClients user={user} />} />
@@ -138,15 +146,18 @@ function App() {
               <Route path="quotations/new" element={<NewQuotation isStaff={true} user={user} />} />
               <Route path="quotations/edit/:id" element={<NewQuotation isStaff={true} isEdit={true} user={user} />} />
               <Route path="quotations/view/:id" element={<QuotationView isStaff={true} />} />
+              <Route path="material-review" element={<MaterialReviewHub user={user} />} />
               <Route path="*" element={<Navigate to="/staff/dashboard" replace />} />
             </Route>
           )}
 
-          {/* Fallback for role mismatches or direct home access */}
+          {/* Fallback routing */}
           <Route path="/" element={
-            user?.role === 'Staff' ?
-              <Navigate to="/staff/dashboard" replace /> :
+            shouldUseStaffLayout ? (
+              <Navigate to="/staff/dashboard" replace />
+            ) : (
               <Navigate to="/" replace />
+            )
           } />
         </Routes>
       </Router>

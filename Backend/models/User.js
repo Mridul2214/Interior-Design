@@ -45,8 +45,27 @@ const UserSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['Super Admin', 'Admin', 'Designer', 'Manager', 'Staff', 'User'],
+        enum: [
+            'Super Admin',
+            'Admin',
+            'Design Manager',
+            'Design Staff',
+            'Procurement Manager',
+            'Procurement Staff',
+            'Production Manager',
+            'Production Staff',
+            'Accounts Manager',
+            'Accounts Staff',
+            'Manager',
+            'Staff',
+            'User'
+        ],
         default: 'User'
+    },
+    department: {
+        type: String,
+        enum: ['Design', 'Procurement', 'Production', 'Accounts', 'Sales', 'Admin', null],
+        default: null
     },
     status: {
         type: String,
@@ -70,7 +89,6 @@ const UserSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Encrypt password before saving
 UserSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {
         next();
@@ -79,7 +97,6 @@ UserSchema.pre('save', async function (next) {
     this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Sign JWT and return
 UserSchema.methods.getSignedJwtToken = function () {
     return jwt.sign(
         { id: this._id },
@@ -88,9 +105,24 @@ UserSchema.methods.getSignedJwtToken = function () {
     );
 };
 
-// Match user entered password to hashed password in database
 UserSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
+};
+
+UserSchema.methods.isManager = function () {
+    return ['Super Admin', 'Admin', 'Design Manager', 'Procurement Manager', 'Production Manager', 'Accounts Manager', 'Manager'].includes(this.role);
+};
+
+UserSchema.methods.isStaff = function () {
+    return ['Design Staff', 'Procurement Staff', 'Production Staff', 'Accounts Staff', 'Staff'].includes(this.role);
+};
+
+UserSchema.methods.getDepartment = function () {
+    if (this.role.includes('Design')) return 'Design';
+    if (this.role.includes('Procurement')) return 'Procurement';
+    if (this.role.includes('Production')) return 'Production';
+    if (this.role.includes('Accounts')) return 'Accounts';
+    return 'Admin';
 };
 
 module.exports = mongoose.model('User', UserSchema);

@@ -54,7 +54,28 @@ exports.getUser = async (req, res) => {
 exports.createUser = async (req, res) => {
     try {
         req.body.createdBy = req.user.id;
-        const user = await User.create(req.body);
+        let user = await User.create(req.body);
+
+        // Auto-create a Staff record if this user is a departmental staff/manager
+        const staffRoles = ['Design Manager', 'Design Staff', 'Procurement Manager', 'Procurement Staff', 'Production Manager', 'Production Staff', 'Accounts Manager', 'Accounts Staff'];
+        
+        if (staffRoles.includes(user.role)) {
+            const Staff = require('../models/Staff');
+            // Check if phone was provided, if not use a placeholder to pass validation if strictly needed
+            const staffRecord = await Staff.create({
+                name: user.fullName,
+                email: user.email,
+                phone: user.phone || '0000000000',
+                role: user.role,
+                joiningDate: new Date(),
+                status: user.status || 'Active',
+                createdBy: req.user.id
+            });
+            
+            // Link the generated staffId back to the user
+            user = await User.findByIdAndUpdate(user._id, { staffId: staffRecord.staffId }, { new: true });
+        }
+
         user.password = undefined;
         res.status(201).json({ success: true, data: user });
     } catch (error) {
@@ -81,6 +102,21 @@ exports.updateUser = async (req, res) => {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
+        // Sync updates to the associated Staff record if it exists
+        if (user.staffId) {
+            const Staff = require('../models/Staff');
+            await Staff.findOneAndUpdate(
+                { staffId: user.staffId },
+                {
+                    name: user.fullName,
+                    email: user.email,
+                    phone: user.phone,
+                    role: user.role,
+                    status: user.status
+                }
+            );
+        }
+
         res.status(200).json({ success: true, data: user });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -93,6 +129,13 @@ exports.deleteUser = async (req, res) => {
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
+
+        // If this user is also a Staff member, delete the Staff record to prevent orphans
+        if (user.staffId) {
+            const Staff = require('../models/Staff');
+            await Staff.findOneAndDelete({ staffId: user.staffId });
+        }
+
         await user.deleteOne();
         res.status(200).json({ success: true, message: 'User deleted', data: {} });
     } catch (error) {

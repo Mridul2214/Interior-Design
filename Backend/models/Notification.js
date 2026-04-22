@@ -13,7 +13,7 @@ const NotificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['Info', 'Success', 'Warning', 'Error', 'Quote', 'Invoice', 'Task', 'Inventory', 'PO'],
+        enum: ['Info', 'Success', 'Warning', 'Error', 'Quote', 'Invoice', 'Task', 'Inventory', 'PO', 'Material'],
         default: 'Info'
     },
     recipient: {
@@ -23,7 +23,7 @@ const NotificationSchema = new mongoose.Schema({
     },
     relatedModel: {
         type: String,
-        enum: ['Quotation', 'Invoice', 'Task', 'PurchaseOrder', 'Inventory', 'Client', null],
+        enum: ['Quotation', 'Invoice', 'Task', 'PurchaseOrder', 'Inventory', 'Client', 'Project', 'MaterialRequest', null],
         default: null
     },
     relatedId: {

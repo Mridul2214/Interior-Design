@@ -84,12 +84,20 @@ exports.createStaff = async (req, res, next) => {
 
         // 2. If email and password provided, create a User record for login
         if (email && password) {
+            // Determine department from role
+            let dept = 'Admin';
+            if (role.toLowerCase().includes('design')) dept = 'Design';
+            else if (role.toLowerCase().includes('procurement')) dept = 'Procurement';
+            else if (role.toLowerCase().includes('production')) dept = 'Production';
+            else if (role.toLowerCase().includes('accounts')) dept = 'Accounts';
+
             await User.create({
                 fullName: name,
                 email,
                 phone,
-                role: 'Staff',
+                role: role, // Use the actual role (e.g. 'Design Manager') instead of hardcoded 'Staff'
                 password,
+                department: dept,
                 staffId: staff.staffId, // Link Staff ID to User
                 status: 'Active'
             });
@@ -133,6 +141,21 @@ exports.updateStaff = async (req, res, next) => {
             runValidators: true
         });
 
+        // Sync updates to the associated User login account if one exists
+        if (staff.staffId) {
+            const User = require('../models/User');
+            await User.findOneAndUpdate(
+                { staffId: staff.staffId },
+                {
+                    fullName: staff.name,
+                    email: staff.email,
+                    phone: staff.phone,
+                    role: staff.role,
+                    status: staff.status
+                }
+            );
+        }
+
         res.status(200).json({
             success: true,
             data: staff
@@ -156,6 +179,12 @@ exports.deleteStaff = async (req, res, next) => {
                 success: false,
                 message: 'Staff member not found'
             });
+        }
+
+        // Also delete the associated User login account if one exists
+        if (staff.staffId) {
+            const User = require('../models/User');
+            await User.findOneAndDelete({ staffId: staff.staffId });
         }
 
         await Staff.findByIdAndDelete(req.params.id);

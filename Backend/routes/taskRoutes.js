@@ -5,7 +5,15 @@ const {
     createTask,
     updateTask,
     deleteTask,
-    getTaskStats
+    getTaskStats,
+    addComment,
+    getTaskComments,
+    getTaskTimeline,
+    reassignTask,
+    submitTask,
+    reviewSubmission,
+    pushToProcurement,
+    addDailyUpdate
 } = require('../controllers/taskController');
 
 const router = express.Router();
@@ -18,10 +26,23 @@ router.route('/')
     .post(createTask);
 
 router.get('/stats', getTaskStats);
+router.get('/overdue', getTasks);
 
 router.route('/:id')
     .get(getTask)
     .put(updateTask)
     .delete(deleteTask);
+
+router.route('/:id/comments')
+    .post(addComment)
+    .get(getTaskComments);
+
+router.get('/:id/timeline', getTaskTimeline);
+
+router.put('/:id/reassign', reassignTask);
+router.put('/:id/submit', submitTask);
+router.put('/:id/review', reviewSubmission);
+router.put('/:id/push-procurement', pushToProcurement);
+router.post('/:id/daily-update', addDailyUpdate);
 
 module.exports = router;

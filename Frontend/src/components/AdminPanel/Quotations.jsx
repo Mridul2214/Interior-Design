@@ -4,13 +4,16 @@ import { Link } from 'react-router-dom';
 import { quotationAPI } from '../../config/api';
 import './css/Quotations.css';
 
-const Quotations = ({ isStaff }) => {
+const Quotations = ({ isStaff, user }) => {
     const [quotations, setQuotations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('All');
     const [submitting, setSubmitting] = useState(false);
+
+    // Only Super Admin and Admin can approve/delete quotations
+    const canApprove = ['Super Admin', 'Admin'].includes(user?.role);
 
     useEffect(() => {
         fetchQuotations();
@@ -173,7 +176,7 @@ const Quotations = ({ isStaff }) => {
                                                 <Link to={`/quotations/view/${q._id}`} className="btn-icon view" title="View">
                                                     <Eye size={18} />
                                                 </Link>
-                                                {!isStaff && q.status === 'Pending' && (
+                                                {!isStaff && canApprove && q.status === 'Pending' && (
                                                     <button
                                                         className="btn-icon approve"
                                                         onClick={() => handleApprove(q._id)}
@@ -183,7 +186,7 @@ const Quotations = ({ isStaff }) => {
                                                         <CheckCircle size={18} />
                                                     </button>
                                                 )}
-                                                {!isStaff && (
+                                                {!isStaff && canApprove && (
                                                     <button
                                                         className="btn-icon delete"
                                                         onClick={() => handleDelete(q._id)}

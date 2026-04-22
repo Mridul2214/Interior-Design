@@ -180,6 +180,11 @@ exports.updateDetails = async (req, res, next) => {
             phone: req.body.phone
         };
 
+        // Include avatar if provided
+        if (req.body.avatar !== undefined) {
+            fieldsToUpdate.avatar = req.body.avatar;
+        }
+
         const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
             new: true,
             runValidators: true

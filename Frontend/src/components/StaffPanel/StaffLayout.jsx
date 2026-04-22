@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import StaffSidebar from './StaffSidebar';
+import StaffHomeSidebar from './StaffSidebar';
+import DesigningStaffSidebar from '../Designing/Staff/StaffSidebar';
+import ProcurementStaffSidebar from '../Procurement/Staff/StaffSidebar';
+import ProductionStaffSidebar from '../Production/Staff/StaffSidebar';
 import StaffHeader from './StaffHeader';
+import { getRoleDepartment } from '../../hooks/useRoleDashboard';
 import './css/StaffLayout.css';
 
 const StaffLayout = ({ user, onLogout }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const location = useLocation();
+    const department = getRoleDepartment(user?.role);
 
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
@@ -24,14 +29,17 @@ const StaffLayout = ({ user, onLogout }) => {
 
     const { title, subtitle } = getPageDetails();
 
+    const renderSidebar = () => {
+        const props = { user, onLogout, isCollapsed: !isSidebarOpen, toggleSidebar };
+        if (department === 'Design') return <DesigningStaffSidebar {...props} />;
+        if (department === 'Procurement') return <ProcurementStaffSidebar {...props} />;
+        if (department === 'Production') return <ProductionStaffSidebar {...props} />;
+        return <StaffHomeSidebar user={user} onLogout={onLogout} isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />;
+    };
+
     return (
         <div className="staff-layout">
-            <StaffSidebar
-                user={user}
-                onLogout={onLogout}
-                isOpen={isSidebarOpen}
-                toggleSidebar={toggleSidebar}
-            />
+            {renderSidebar()}
 
             <main className="staff-main-content">
                 <div className="staff-header-container">

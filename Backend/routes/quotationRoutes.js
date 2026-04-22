@@ -6,7 +6,10 @@ const {
     updateQuotation,
     deleteQuotation,
     approveQuotation,
-    getQuotationStats
+    getQuotationStats,
+    getVersionHistory,
+    compareVersions,
+    calculateTotals
 } = require('../controllers/quotationController');
 
 const router = express.Router();
@@ -19,12 +22,15 @@ router.route('/')
     .post(createQuotation);
 
 router.get('/stats', getQuotationStats);
+router.post('/calculate-totals', calculateTotals);
 
 router.route('/:id')
     .get(getQuotation)
     .put(updateQuotation)
     .delete(authorize('Super Admin', 'Admin'), deleteQuotation);
 
-router.put('/:id/approve', authorize('Super Admin', 'Admin', 'Manager'), approveQuotation);
+router.put('/:id/approve', authorize('Super Admin', 'Admin', 'Manager', 'Design Manager', 'Procurement Manager', 'Production Manager', 'Accounts Manager'), approveQuotation);
+router.get('/:id/versions', getVersionHistory);
+router.get('/:id/compare', compareVersions);
 
 module.exports = router;

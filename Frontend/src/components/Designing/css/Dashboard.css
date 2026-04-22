@@ -1,0 +1,484 @@
+.workflow-dashboard {
+    padding: 2rem;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    margin-bottom: 2rem;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.header-content h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+.role-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.workflow-progress-bar {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.progress-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.step-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+}
+
+.progress-step.active .step-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.progress-step span {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.progress-step.active span {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.progress-line {
+    flex: 1;
+    height: 2px;
+    background: #e2e8f0;
+    margin: 0 12px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-card.design .stat-icon {
+    background: #f5f3ff;
+    color: #8b5cf6;
+}
+
+.stat-card.procurement .stat-icon {
+    background: #fffbeb;
+    color: #f59e0b;
+}
+
+.stat-card.production .stat-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.stat-card.completed .stat-icon {
+    background: #f0fdf4;
+    color: #10b981;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.card-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-header h3 svg {
+    color: #667eea;
+}
+
+.view-all {
+    font-size: 0.8rem;
+    color: #667eea;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: gap 0.2s;
+}
+
+.view-all:hover {
+    gap: 8px;
+}
+
+.projects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.project-item {
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+}
+
+.project-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.project-name {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 0.9rem;
+}
+
+.project-number {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.project-stage {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.project-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+
+.progress-text {
+    font-size: 0.7rem;
+    color: #64748b;
+    font-weight: 600;
+    min-width: 35px;
+}
+
+.tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.task-item {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px;
+    background: #f8fafc;
+    border-radius: 10px;
+}
+
+.task-status {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.task-status.completed {
+    background: #dcfce7;
+    color: #10b981;
+}
+
+.task-status.in-progress {
+    background: #dbeafe;
+    color: #3b82f6;
+}
+
+.task-status.to-do {
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+
+.task-status.blocked {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.task-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.task-title {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 0.85rem;
+}
+
+.task-project {
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+.task-due {
+    font-size: 0.75rem;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    transition: background 0.2s;
+}
+
+.notification-item.unread {
+    background: #eff6ff;
+    border-left: 3px solid #667eea;
+}
+
+.notif-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notif-icon.success { background: #dcfce7; color: #10b981; }
+.notif-icon.error { background: #fee2e2; color: #ef4444; }
+.notif-icon.warning { background: #fef3c7; color: #f59e0b; }
+.notif-icon.info { background: #e0e7ff; color: #667eea; }
+
+.notif-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.notif-title {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 0.85rem;
+}
+
+.notif-desc {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.notif-count {
+    background: #ef4444;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.budget-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.budget-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+}
+
+.budget-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.budget-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.budget-value.spent {
+    color: #f59e0b;
+}
+
+.budget-value.remaining {
+    color: #10b981;
+}
+
+.budget-bar {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.budget-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .workflow-progress-bar {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .progress-line {
+        display: none;
+    }
+}

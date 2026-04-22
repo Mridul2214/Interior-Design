@@ -183,6 +183,7 @@
 .popup-content {
     max-height: 420px;
     overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .popup-content::-webkit-scrollbar {

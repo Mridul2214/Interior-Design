@@ -26,7 +26,7 @@ router.route('/:id')
     .put(updatePurchaseOrder)
     .delete(authorize('Super Admin', 'Admin'), deletePurchaseOrder);
 
-router.put('/:id/approve', authorize('Super Admin', 'Admin', 'Manager'), approvePurchaseOrder);
+router.put('/:id/approve', authorize('Super Admin', 'Admin', 'Manager', 'Design Manager', 'Procurement Manager', 'Production Manager', 'Accounts Manager'), approvePurchaseOrder);
 router.put('/:id/receive', markAsReceived);
 
 module.exports = router;

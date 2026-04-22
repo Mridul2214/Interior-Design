@@ -3,7 +3,8 @@ export const BASE_IMAGE_URL = API_BASE_URL.replace('/api', '');
 
 // Helper function to get auth token
 const getAuthToken = () => {
-    return localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    return (token === 'null' || token === 'undefined') ? null : token;
 };
 
 // Helper function to get auth headers
@@ -25,6 +26,15 @@ const apiCall = async (endpoint, options = {}) => {
                 ...options.headers
             }
         });
+
+        if (response.status === 401) {
+            // Token is invalid or expired
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // Force reload to trigger App redirection to login
+            window.location.href = '/';
+            throw new Error('Unauthorized: Session expired or invalid token');
+        }
 
         const data = await response.json();
 
@@ -122,7 +132,16 @@ export const quotationAPI = {
         method: 'PUT'
     }),
 
-    getStats: () => apiCall('/quotations/stats')
+    getStats: () => apiCall('/quotations/stats'),
+
+    getVersionHistory: (id) => apiCall(`/quotations/${id}/versions`),
+
+    compareVersions: (id, v1, v2) => apiCall(`/quotations/${id}/compare?v1=${v1}&v2=${v2}`),
+
+    calculateTotals: (items, taxRate, discount) => apiCall('/quotations/calculate-totals', {
+        method: 'POST',
+        body: JSON.stringify({ items, taxRate, discount })
+    })
 };
 
 // Inventory APIs
@@ -267,7 +286,41 @@ export const taskAPI = {
         method: 'DELETE'
     }),
 
-    getStats: () => apiCall('/tasks/stats')
+    getStats: () => apiCall('/tasks/stats'),
+
+    getOverdue: () => apiCall('/tasks/overdue'),
+
+    addComment: (id, text) => apiCall(`/tasks/${id}/comments`, {
+        method: 'POST',
+        body: JSON.stringify({ text })
+    }),
+
+    getComments: (id) => apiCall(`/tasks/${id}/comments`),
+
+    getTimeline: (id) => apiCall(`/tasks/${id}/timeline`),
+
+    reassign: (id, assignedTo, reason) => apiCall(`/tasks/${id}/reassign`, {
+        method: 'PUT',
+        body: JSON.stringify({ assignedTo, reason })
+    }),
+    
+    submit: (id, data) => apiCall(`/tasks/${id}/submit`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+
+    review: (id, data) => apiCall(`/tasks/${id}/review`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+
+    pushToProcurement: (id) => apiCall(`/tasks/${id}/push-procurement`, {
+        method: 'PUT'
+    }),
+    addDailyUpdate: (id, data) => apiCall(`/tasks/${id}/daily-update`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+    })
 };
 
 export const siteVisitAPI = {
@@ -402,7 +455,20 @@ export const notificationAPI = {
     create: (data) => apiCall('/notifications', {
         method: 'POST',
         body: JSON.stringify(data)
-    })
+    }),
+
+    getUnreadCount: () => apiCall('/notifications/unread-count')
+};
+
+// Design Dashboard APIs
+export const designDashboardAPI = {
+    getManagerDashboard: () => apiCall('/design/dashboard/manager'),
+
+    getStaffDashboard: () => apiCall('/design/dashboard/staff'),
+
+    getOverdueTasks: () => apiCall('/design/tasks/overdue'),
+
+    getStaffPerformance: () => apiCall('/design/staff/performance')
 };
 
 // AI APIs
@@ -418,7 +484,200 @@ export const aiAPI = {
     })
 };
 
-// Upload API
+// Settings APIs
+export const settingsAPI = {
+    get: () => apiCall('/settings'),
+
+    update: (data) => apiCall('/settings', {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    })
+};
+
+// Project APIs
+export const projectAPI = {
+    getAll: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiCall(`/projects?${query}`);
+    },
+
+    getById: (id) => apiCall(`/projects/${id}`),
+
+    create: (data) => apiCall('/projects', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    update: (id, data) => apiCall(`/projects/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+
+    updateStage: (id, data) => apiCall(`/projects/${id}/stage`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+
+    getByStage: (stage) => apiCall(`/projects/stage/${stage}`),
+
+    getStats: () => apiCall('/projects/stats'),
+
+    validateHandoff: (id) => apiCall(`/projects/${id}/handoff/validate`),
+
+    performHandoff: (id) => apiCall(`/projects/${id}/handoff`, {
+        method: 'POST'
+    }),
+
+    getWorkflowChecklist: (id) => apiCall(`/projects/${id}/workflow-checklist`)
+};
+
+// Vendor APIs
+export const vendorAPI = {
+    getAll: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiCall(`/vendors?${query}`);
+    },
+
+    getById: (id) => apiCall(`/vendors/${id}`),
+
+    create: (data) => apiCall('/vendors', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    update: (id, data) => apiCall(`/vendors/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+
+    delete: (id) => apiCall(`/vendors/${id}`, {
+        method: 'DELETE'
+    }),
+
+    getStats: () => apiCall('/vendors/stats')
+};
+
+// Procurement APIs
+export const procurementAPI = {
+    getMaterialRequests: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiCall(`/procurement/material-requests?${query}`);
+    },
+
+    createMaterialRequest: (data) => apiCall('/procurement/material-requests', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    updateMaterialRequest: (id, data) => apiCall(`/procurement/material-requests/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+
+    getVendorComparisons: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiCall(`/procurement/vendor-comparisons?${query}`);
+    },
+
+    createVendorComparison: (data) => apiCall('/procurement/vendor-comparisons', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    selectVendor: (id, data) => apiCall(`/procurement/vendor-comparisons/${id}/select-vendor`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+
+    createPOFromComparison: (id) => apiCall(`/procurement/vendor-comparisons/${id}/create-po`, {
+        method: 'POST'
+    }),
+
+    getStats: () => apiCall('/procurement/stats')
+};
+
+// Production APIs
+export const productionAPI = {
+    getTasks: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiCall(`/production/tasks?${query}`);
+    },
+
+    createTask: (data) => apiCall('/production/tasks', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    updateTask: (id, data) => apiCall(`/production/tasks/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+
+    reportIssue: (taskId, data) => apiCall(`/production/tasks/${taskId}/report-issue`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    getPipeline: () => apiCall('/production/pipeline'),
+
+    getStats: () => apiCall('/production/stats')
+};
+
+// Accounts APIs
+export const accountsAPI = {
+    getExpenses: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiCall(`/accounts/expenses?${query}`);
+    },
+
+    createExpense: (data) => apiCall('/accounts/expenses', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    updateExpense: (id, data) => apiCall(`/accounts/expenses/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+
+    getPayments: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiCall(`/accounts/payments?${query}`);
+    },
+
+    createPayment: (data) => apiCall('/accounts/payments', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    getProjectFinancials: (projectId) => apiCall(`/accounts/project/${projectId}/financials`),
+
+    getStats: () => apiCall('/accounts/stats')
+};
+
+// Checklist APIs
+export const checklistAPI = {
+    getByProject: (projectId) => apiCall(`/checklists/project/${projectId}`),
+
+    create: (projectId, data) => apiCall(`/checklists/project/${projectId}`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    updateStep: (projectId, stepId, data) => apiCall(`/checklists/project/${projectId}/step/${stepId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+
+    addStep: (projectId, data) => apiCall(`/checklists/project/${projectId}/step`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+
+    deleteStep: (projectId, stepId) => apiCall(`/checklists/project/${projectId}/step/${stepId}`, {
+        method: 'DELETE'
+    })
+};
 
 // Upload API
 export const uploadAPI = {
@@ -450,5 +709,13 @@ export default {
     notifications: notificationAPI,
 
     ai: aiAPI,
-    staff: staffAPI
+    staff: staffAPI,
+    settings: settingsAPI,
+    projects: projectAPI,
+    vendors: vendorAPI,
+    procurement: procurementAPI,
+    production: productionAPI,
+    accounts: accountsAPI,
+    checklists: checklistAPI,
+    designDashboard: designDashboardAPI
 };

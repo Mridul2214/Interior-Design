@@ -136,8 +136,7 @@ const Tasks = ({ isStaff, user }) => {
 
     const filteredQuotations = formData.client
         ? quotations.filter(q => 
-            (q.client?._id === formData.client || q.client === formData.client) && 
-            q.status === 'Approved'
+            (q.client?._id === formData.client || q.client === formData.client)
           )
         : [];
 
@@ -466,21 +465,17 @@ const Tasks = ({ isStaff, user }) => {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td className="task-actions-cell">
                                                 <div className="task-actions">
-                                                    <button onClick={() => handleViewDetails(task)} className="btn-task-action view" title="View Evidence">
+                                                    <button className="btn-icon" onClick={() => handleViewDetails(task)} title="View Details">
                                                         <Eye size={16} />
                                                     </button>
-                                                    {!isStaff && (
-                                                        <>
-                                                            <button onClick={() => handleEdit(task)} className="btn-task-action edit" title="Edit">
-                                                                <Edit size={16} />
-                                                            </button>
-                                                            <button onClick={() => handleDelete(task._id)} className="btn-task-action delete" title="Delete">
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </>
-                                                    )}
+                                                    <button className="btn-icon" onClick={() => handleEdit(task)} title="Link to Project/Edit">
+                                                        <Edit size={16} />
+                                                    </button>
+                                                    <button className="btn-icon delete" onClick={() => handleDelete(task._id)} title="Delete Task">
+                                                        <Trash2 size={16} />
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -565,17 +560,17 @@ const Tasks = ({ isStaff, user }) => {
                                         />
                                     </div>
 
-                                    <div className="form-field">
+                                     <div className="form-field">
                                         <CustomSelect
-                                            label="Quotation / Project (Approved Only)"
+                                            label="Link to Project / Quotation (Required for BOQ)"
                                             name="quotation"
                                             options={filteredQuotations.map(q => ({
                                                 value: q._id,
-                                                label: `${q.quotationNumber} - ${q.projectName}`
+                                                label: `${q.quotationNumber} - ${q.projectName} (${q.status})`
                                             }))}
                                             value={formData.quotation}
                                             onChange={handleInputChange}
-                                            placeholder={formData.client ? (filteredQuotations.length > 0 ? "Select Approved Quotation" : "No Approved Quotations") : "Select Client First"}
+                                            placeholder={formData.client ? (filteredQuotations.length > 0 ? "Select Project to Link" : "No Projects Found for Client") : "Select Client First"}
                                             disabled={!formData.client}
                                         />
                                     </div>

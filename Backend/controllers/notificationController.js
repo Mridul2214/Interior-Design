@@ -2,11 +2,14 @@ const Notification = require('../models/Notification');
 
 exports.getNotifications = async (req, res) => {
     try {
-        const { isRead, page = 1, limit = 20 } = req.query;
+        const { isRead, page = 1, limit = 20, type } = req.query;
         let query = { recipient: req.user.id };
 
         if (isRead !== undefined) {
             query.isRead = isRead === 'true';
+        }
+        if (type) {
+            query.type = type;
         }
 
         const skip = (page - 1) * limit;
@@ -30,6 +33,22 @@ exports.getNotifications = async (req, res) => {
             page: parseInt(page),
             pages: Math.ceil(total / limit),
             data: notifications
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.getUnreadCount = async (req, res) => {
+    try {
+        const unreadCount = await Notification.countDocuments({
+            recipient: req.user.id,
+            isRead: false
+        });
+
+        res.status(200).json({
+            success: true,
+            unreadCount
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

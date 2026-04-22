@@ -40,13 +40,14 @@ const timeAgo = (date) => {
     return new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 };
 
-const Header = () => {
+const Header = ({ user }) => {
     const location = useLocation();
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
     const pollRef = useRef(null);
+    const popupRef = useRef(null);
 
     const fetchNotifications = useCallback(async () => {
         try {
@@ -66,6 +67,25 @@ const Header = () => {
         pollRef.current = setInterval(fetchNotifications, 30000);
         return () => clearInterval(pollRef.current);
     }, [fetchNotifications]);
+
+    useEffect(() => {
+        const popup = popupRef.current;
+        if (popup) {
+            const handleWheel = (e) => {
+                const { scrollTop, scrollHeight, clientHeight } = popup;
+                const isAtTop = scrollTop === 0;
+                const isAtBottom = Math.abs(scrollTop + clientHeight - scrollHeight) < 1;
+
+                e.stopPropagation();
+
+                if ((e.deltaY > 0 && isAtBottom) || (e.deltaY < 0 && isAtTop)) {
+                    if (e.cancelable) e.preventDefault();
+                }
+            };
+            popup.addEventListener('wheel', handleWheel, { passive: false });
+            return () => popup.removeEventListener('wheel', handleWheel);
+        }
+    }, [showNotifications, notifications]);
 
     const handleMarkAsRead = async (id, e) => {
         e.stopPropagation();
@@ -143,7 +163,7 @@ const Header = () => {
 
             <div className="header-actions">
                 {/* Dashboard Specific Action: New Quotation Button */}
-                {(location.pathname === '/') && (
+                {(location.pathname === '/' && user?.role?.toLowerCase() !== 'design manager') && (
                     <Link to="/quotations/new" style={{ textDecoration: 'none' }}>
                         <button className="btn-primary">
                             <Plus size={20} />
@@ -193,7 +213,12 @@ const Header = () => {
                                         </button>
                                     </div>
                                 </div>
-                                <div className="popup-content">
+                                <div 
+                                    className="popup-content" 
+                                    ref={popupRef}
+                                    data-lenis-prevent
+                                    onWheel={(e) => e.stopPropagation()}
+                                >
                                     {notifications.length > 0 ? (
                                         notifications.map((notif, index) => {
                                             const TypeIcon = ICON_MAP[notif.type] || Info;
