@@ -27,7 +27,7 @@ const Layout = ({ user, onLogout }) => {
 
 
     return (
-        <div className={`layout-container ${isCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <div className={`layout-container ${isCollapsed ? 'sidebar-collapsed' : ''} ${department?.toLowerCase()}-layout`}>
             {renderSidebar()}
             <main className="main-content">
                 <Header user={user} />

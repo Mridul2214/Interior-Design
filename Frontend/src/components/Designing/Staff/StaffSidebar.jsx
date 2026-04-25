@@ -14,9 +14,9 @@ const StaffSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
     const navItems = [
         { name: 'My Dashboard', icon: LayoutDashboard, path: '/staff/dashboard?tab=overview', tab: 'overview' },
         { name: 'My Tasks', icon: CheckSquare, path: '/staff/dashboard?tab=tasks', tab: 'tasks' },
+        { name: 'Materials Board', icon: Package, path: '/staff/dashboard?tab=materials', tab: 'materials' },
         { name: 'Revisions', icon: Target, path: '/staff/dashboard?tab=revisions', tab: 'revisions' },
         { name: 'Submitted Tasks', icon: CheckSquare, path: '/staff/dashboard?tab=submissions', tab: 'submissions' },
-        { name: 'Material Hub', icon: Package, path: '/staff/material-review', tab: null },
     ];
 
     const userInitials = user?.fullName

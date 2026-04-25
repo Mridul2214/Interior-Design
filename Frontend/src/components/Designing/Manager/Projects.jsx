@@ -1,98 +1,99 @@
 import React from 'react';
-import { Palette, TrendingUp, Briefcase, ChevronRight, CheckCircle, Package, Eye, Send, X, Clock, User, ArrowRight } from 'lucide-react';
-import '../css/ManagerDashboard.css';
+import { 
+    Briefcase, 
+    ChevronRight, 
+    Maximize, 
+    Clock, 
+    TrendingUp, 
+    AlertCircle, 
+    Package,
+    ArrowRight
+} from 'lucide-react';
+import '../css/DesignStudio.css';
 
 const Projects = ({ projects = [], materialRequests = [], onReviewRequest, onUpdateStatus, onHandoffInitiate }) => {
+    const moodImages = [
+        "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=800",
+        "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=600",
+        "https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&q=80&w=600",
+        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=600",
+        "https://images.unsplash.com/photo-1556912177-c54030639a75?auto=format&fit=crop&q=80&w=600",
+        "https://images.unsplash.com/photo-1615873968403-89e068628265?auto=format&fit=crop&q=80&w=600"
+    ];
+
     return (
-        <div className="design-projects fade-in">
-            <div className="pipeline-section-header" style={{ marginBottom: '2rem' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                        <Briefcase size={22} />
-                    </div>
-                    Active Interior Design Projects
-                </h2>
-                <p style={{ color: '#64748b', marginTop: '0.5rem', marginLeft: '52px' }}>Monitor the design progress and current status of active projects in your pipeline.</p>
-            </div>
+        <div className="design-studio-container fade-in">
+            {/* Studio Header */}
+            <header className="editorial-header">
+                <div>
+                    <div className="editorial-date">Studio Projects // Lifecycle Archive</div>
+                    <h1>THE <span>PORT</span>FOLIO</h1>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#888' }}>{projects.length} ACTIVE DEVELOPMENTS</div>
+                </div>
+            </header>
 
-            <div className="projects-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '2rem' }}>
-                {Array.isArray(projects) && projects.length > 0 ? projects.map(project => {
-                    const projectMaterials = Array.isArray(materialRequests) ? materialRequests.filter(r => {
-                        const projId = r.project?._id || r.project;
-                        return projId && projId.toString() === project._id?.toString();
-                    }) : [];
-                    const pendingMaterials = projectMaterials.filter(r => r.status === 'Pending' || r.status === 'Review Pending');
-                    
+            <div className="project-canvas">
+                {projects.map((project, idx) => {
+                    const projectMaterials = materialRequests?.filter(r => 
+                        (r.project?._id || r.project)?.toString() === project._id?.toString()
+                    ) || [];
+                    const pendingMaterials = projectMaterials.filter(r => r.status === 'Design Review');
+
                     return (
-                        <div key={project._id} className="premium-project-card" style={{ 
-                            background: 'white', 
-                            borderRadius: '24px', 
-                            border: '1px solid #f1f5f9', 
-                            padding: '1.5rem', 
-                            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
-                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                            position: 'relative',
-                            overflow: 'hidden'
-                        }}>
-                            {/* Gradient Background Decoration */}
-                            <div style={{ position: 'absolute', top: 0, right: 0, width: '150px', height: '150px', background: 'radial-gradient(circle, rgba(99, 102, 241, 0.03) 0%, transparent 70%)', zIndex: 0 }}></div>
+                        <div key={project._id} className="canvas-item">
+                            <div className="canvas-image" style={{ background: `url(${moodImages[idx % moodImages.length]}) center/cover` }}>
+                                <div style={{ width: '100%', height: '100%', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', opacity: 0, transition: '0.3s' }} className="canvas-hover">
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <div style={{ background: 'white', padding: '6px 12px', borderRadius: '2px', fontSize: '0.65rem', fontWeight: 800 }}>
+                                            {project.projectNumber}
+                                        </div>
+                                        <div style={{ background: 'white', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Maximize size={16} />
+                                        </div>
+                                    </div>
+                                    <div style={{ color: 'white' }}>
+                                        <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '4px' }}>Stage</div>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{project.stage || 'Design Development'}</div>
+                                    </div>
+                                </div>
+                                <style>{`.canvas-item:hover .canvas-hover { opacity: 1 !important; background: rgba(0,0,0,0.4); }`}</style>
+                            </div>
                             
-                            <div style={{ position: 'relative', zIndex: 1 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                                    <div>
-                                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>{project.projectNumber}</div>
-                                        <h4 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#1e293b' }}>{project.name}</h4>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                                            <User size={14} color="#94a3b8" />
-                                            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{project.client?.name || 'Private Client'}</span>
-                                        </div>
-                                    </div>
-                                    <span style={{ 
-                                        padding: '6px 12px', 
-                                        borderRadius: '100px', 
-                                        fontSize: '0.7rem', 
-                                        fontWeight: 800,
-                                        letterSpacing: '0.5px',
-                                        textTransform: 'uppercase',
-                                        background: project.status === 'Completed' ? '#dcfce7' : '#f1f5f9',
-                                        color: project.status === 'Completed' ? '#15803d' : '#64748b',
-                                        border: '1px solid',
-                                        borderColor: project.status === 'Completed' ? '#bbf7d0' : '#e2e8f0'
-                                    }}>
-                                        {project.status}
-                                    </span>
-                                </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                                <h3 className="canvas-title" style={{ margin: 0 }}>{project.name}</h3>
+                                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1a1a1a' }}>{project.progress || 0}%</div>
+                            </div>
 
-                                <div className="project-detail-stats" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
-                                        <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Timeline</div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#1e293b', fontWeight: 600 }}>
-                                            <Clock size={14} color="#6366f1" />
-                                            {project.targetEndDate ? new Date(project.targetEndDate).toLocaleDateString() : 'Set Deadline'}
-                                        </div>
-                                    </div>
-                                    <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
-                                        <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Progress</div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#1e293b', fontWeight: 600 }}>
-                                            <TrendingUp size={14} color="#10b981" />
-                                            {project.progress || 0}%
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div style={{ marginTop: '1.5rem', width: '100%', height: '6px', background: '#f1f5f9', borderRadius: '10px', overflow: 'hidden' }}>
-                                    <div style={{ width: `${project.progress || 0}%`, height: '100%', background: 'linear-gradient(90deg, #6366f1, #a855f7)', borderRadius: '10px' }}></div>
-                                </div>
+                            <div className="canvas-meta" style={{ marginBottom: '1.5rem' }}>
+                                <span>{project.client?.name || 'Private Client'}</span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <Clock size={12} color="#c4a484" /> 
+                                    {project.targetEndDate ? new Date(project.targetEndDate).toLocaleDateString() : 'Set Date'}
+                                </span>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button 
+                                    onClick={() => onHandoffInitiate(project)}
+                                    style={{ flex: 1, background: '#1a1a1a', color: 'white', border: 'none', padding: '12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                >
+                                    HANDOFF <ArrowRight size={14} />
+                                </button>
+                                {pendingMaterials.length > 0 && (
+                                    <button 
+                                        onClick={() => onReviewRequest(project._id)}
+                                        style={{ width: '42px', height: '42px', background: '#fef3c7', border: '1px solid #fcd34d', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                        title="Pending Approvals"
+                                    >
+                                        <AlertCircle size={18} color="#92400e" />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     );
-                }) : (
-                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '5rem 2rem', background: '#f8fafc', borderRadius: '32px', border: '2px dashed #e2e8f0' }}>
-                        <Clock size={48} color="#cbd5e1" style={{ marginBottom: '1.5rem' }} />
-                        <h4 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#64748b' }}>No active design projects found</h4>
-                        <p style={{ color: '#94a3b8', fontSize: '0.95rem', maxWidth: '400px', margin: '0.5rem auto 0' }}>All projects are either in production, completed, or starting soon.</p>
-                    </div>
-                )}
+                })}
             </div>
         </div>
     );

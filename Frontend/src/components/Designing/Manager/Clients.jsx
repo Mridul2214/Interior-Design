@@ -1,6 +1,13 @@
 import React from 'react';
-import { Users, Mail, Phone, Briefcase, ChevronRight } from 'lucide-react';
-import '../css/ManagerDashboard.css';
+import { 
+    Users, 
+    Mail, 
+    Phone, 
+    Briefcase, 
+    ArrowRight,
+    Search
+} from 'lucide-react';
+import '../css/DesignStudio.css';
 
 const Clients = ({ projects }) => {
     // Extract unique clients from projects
@@ -19,66 +26,77 @@ const Clients = ({ projects }) => {
     }, []);
 
     return (
-        <div className="design-clients">
-            <div className="section-card">
-                <div className="section-header">
-                    <h3><Users size={18} /> My Project Clients</h3>
+        <div className="design-studio-container fade-in">
+            {/* Studio Header */}
+            <header className="editorial-header">
+                <div>
+                    <div className="editorial-date">Studio Relations // Client Portfolio</div>
+                    <h1>THE <span>PATRON</span> LIST</h1>
                 </div>
-                <div className="clients-list" style={{ marginTop: '1.5rem' }}>
-                    <div className="table-responsive" style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                <tr>
-                                    <th style={{ textAlign: 'left', padding: '1rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}>Client Name</th>
-                                    <th style={{ textAlign: 'left', padding: '1rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}>Active Projects</th>
-                                    <th style={{ textAlign: 'left', padding: '1rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}>Contact</th>
-                                    <th style={{ textAlign: 'right', padding: '1rem', color: '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase' }}>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {uniqueClients.map(client => (
-                                    <tr key={client._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                        <td style={{ padding: '1.25rem 1rem' }}>
-                                            <div style={{ fontWeight: 600, color: '#0f172a' }}>{client.name}</div>
-                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>ID: {client._id?.slice(-6).toUpperCase()}</div>
-                                        </td>
-                                        <td style={{ padding: '1.25rem 1rem' }}>
-                                            {client.projects.map(p => (
-                                                <div key={p._id} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>
-                                                    <Briefcase size={12} />
-                                                    {p.name}
-                                                </div>
-                                            ))}
-                                        </td>
-                                        <td style={{ padding: '1.25rem 1rem' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#64748b', marginBottom: '4px' }}>
-                                                <Mail size={12} /> {client.email || 'No email provided'}
-                                            </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#64748b' }}>
-                                                <Phone size={12} /> {client.phone || 'No phone provided'}
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '1.25rem 1rem', textAlign: 'right' }}>
-                                            <button 
-                                                className="action-btn-small"
-                                                style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #4f46e5', color: '#4f46e5', background: 'transparent', fontWeight: 600, fontSize: '0.75rem', cursor: 'pointer' }}
-                                            >
-                                                Details <ChevronRight size={14} style={{ verticalAlign: 'middle' }} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {uniqueClients.length === 0 && (
-                                    <tr>
-                                        <td colSpan="4" style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
-                                            No clients associated with your design projects.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                <div style={{ textAlign: 'right' }}>
+                    <div style={{ background: '#eee', padding: '10px 20px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Search size={16} />
+                        <span style={{ fontSize: '0.8rem', color: '#888' }}>Filter Patrons...</span>
                     </div>
                 </div>
+            </header>
+
+            <div style={{ borderTop: '2px solid #1a1a1a', paddingTop: '3rem' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ textAlign: 'left', borderBottom: '1px solid #eee' }}>
+                            <th style={{ padding: '20px 0', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#888' }}>PATRON</th>
+                            <th style={{ padding: '20px 0', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#888' }}>CONTACT</th>
+                            <th style={{ padding: '20px 0', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#888' }}>ENGAGEMENTS</th>
+                            <th style={{ padding: '20px 0', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#888', textAlign: 'right' }}>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {uniqueClients.map((client, idx) => (
+                            <tr key={client._id} style={{ borderBottom: '1px solid #f9f9f9' }}>
+                                <td style={{ padding: '30px 0' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 300, color: '#ccc' }}>0{idx + 1}</div>
+                                        <div>
+                                            <div style={{ fontWeight: 800, fontSize: '1.2rem' }}>{client.name}</div>
+                                            <div style={{ fontSize: '0.7rem', color: '#c4a484', fontWeight: 700 }}>PREMIUM CLIENT</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style={{ padding: '30px 0' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.85rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <Mail size={14} color="#aaa" /> {client.email || 'N/A'}
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <Phone size={14} color="#aaa" /> {client.phone || 'N/A'}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style={{ padding: '30px 0' }}>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                        {client.projects.map(p => (
+                                            <span key={p._id} style={{ fontSize: '0.7rem', fontWeight: 700, background: '#fcfaf7', border: '1px solid #eee', padding: '4px 10px', borderRadius: '2px' }}>
+                                                {p.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </td>
+                                <td style={{ padding: '30px 0', textAlign: 'right' }}>
+                                    <button style={{ background: 'transparent', border: 'none', fontWeight: 800, fontSize: '0.75rem', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto', cursor: 'pointer' }}>
+                                        VIEW PORTFOLIO <ArrowRight size={16} />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                
+                {uniqueClients.length === 0 && (
+                    <div style={{ padding: '10rem 0', textAlign: 'center' }}>
+                        <h2 style={{ fontWeight: 300, color: '#ccc' }}>No clients recorded in the studio archive.</h2>
+                    </div>
+                )}
             </div>
         </div>
     );

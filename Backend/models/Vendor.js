@@ -29,14 +29,14 @@ const VendorSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
-    materialsSupplied: [{
-        type: String,
-        trim: true
+    materialsSupplied: [{ type: String, trim: true }],
+    products: [{
+        itemName: { type: String, required: true, trim: true },
+        unitPrice: { type: Number, required: true, min: 0 },
+        unit: { type: String, default: 'pieces', trim: true },
+        description: { type: String, trim: true }
     }],
-    categories: [{
-        type: String,
-        trim: true
-    }],
+    categories: [{ type: String, trim: true }],
     rating: {
         type: Number,
         min: 0,

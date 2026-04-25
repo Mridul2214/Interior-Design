@@ -34,9 +34,10 @@ const ManagerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
 
     return (
         <div className={`sidebar-container design ${isCollapsed ? 'collapsed' : ''}`}>
-            <div className="sidebar-header">
+            <div className="sidebar-header" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                 <div className="brand-wrapper">
-                    <h1 className="brand-title">Design Manager</h1>
+                    <h1 className="brand-title" style={{ fontWeight: 300, letterSpacing: '3px', fontSize: '1rem' }}>STUDIO <span style={{ fontWeight: 800 }}>DESIGN</span></h1>
+                    <p className="brand-subtitle" style={{ fontSize: '0.6rem', color: '#c4a484', letterSpacing: '1px' }}>CREATIVE MANAGEMENT</p>
                 </div>
                 <button className="btn-toggle-sidebar" onClick={toggleSidebar}>
                     <Menu size={20} />
@@ -47,8 +48,8 @@ const ManagerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
                 <ul className="nav-list">
                     {navItems.map((item) => (
                         <li key={item.name} className="nav-item">
-                            <NavLink 
-                                to={item.path} 
+                            <NavLink
+                                to={item.path}
                                 className={() => {
                                     const isTabActive = item.tab ? currentTab === item.tab && location.pathname === '/' : location.pathname === item.path;
                                     return `nav-link ${isTabActive ? 'active' : ''}`;

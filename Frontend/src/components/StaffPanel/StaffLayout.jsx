@@ -38,7 +38,7 @@ const StaffLayout = ({ user, onLogout }) => {
     };
 
     return (
-        <div className="staff-layout">
+        <div className={`staff-layout ${!isSidebarOpen ? 'sidebar-collapsed' : ''}`}>
             {renderSidebar()}
 
             <main className="staff-main-content">

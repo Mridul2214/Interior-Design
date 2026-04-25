@@ -1,50 +1,87 @@
 import React from 'react';
-import { Box, Package, Eye, ChevronRight, Briefcase, Tag } from 'lucide-react';
-import '../css/ManagerDashboard.css';
+import { 
+    Box, 
+    Package, 
+    Eye, 
+    Briefcase, 
+    Layers,
+    ArrowRight,
+    Search
+} from 'lucide-react';
+import '../css/DesignStudio.css';
 
 const Inventory = ({ materialRequests, projects, onReviewRequest }) => {
     return (
-        <div className="design-inventory">
-            <div className="section-card">
-                <div className="section-header">
-                    <h3><Box size={18} /> Materials & Design Inventory</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                            {materialRequests?.filter(r => r.status === 'Pending').length} pending approval
-                        </span>
+        <div className="design-studio-container fade-in">
+            {/* Studio Header */}
+            <header className="editorial-header">
+                <div>
+                    <div className="editorial-date">Studio Library // Technical Specs</div>
+                    <h1>THE <span>SPEC</span> LOG</h1>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                    <div style={{ background: '#eee', padding: '10px 20px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Search size={16} />
+                        <span style={{ fontSize: '0.8rem', color: '#888' }}>Find Specification...</span>
                     </div>
                 </div>
-                <div className="grouped-requests" style={{ marginTop: '1.5rem' }}>
-                    {projects.map(project => {
+            </header>
+
+            <div className="studio-grid" style={{ gridTemplateColumns: '1fr', gap: '4rem' }}>
+                <div className="spec-log-main">
+                    {projects.map((project, pIdx) => {
                         const projectRequests = materialRequests?.filter(r => 
                             (r.project?._id || r.project)?.toString() === project._id?.toString()
                         );
                         if (!projectRequests || projectRequests.length === 0) return null;
 
                         return (
-                            <div key={project._id} className="project-request-group" style={{ marginBottom: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
-                                <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <Briefcase size={16} color="#64748b" />
-                                        <strong style={{ fontSize: '0.9rem' }}>{project.name}</strong>
+                            <div key={project._id} style={{ marginBottom: '5rem' }}>
+                                <div style={{ borderBottom: '2px solid #1a1a1a', paddingBottom: '1rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#c4a484', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '4px' }}>PROJECT 0{pIdx + 1}</div>
+                                        <h2 style={{ fontSize: '2rem', fontWeight: 800, margin: 0, letterSpacing: '-1px' }}>{project.name}</h2>
                                     </div>
-                                    <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{projectRequests.length} total requests</span>
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#888' }}>{projectRequests.length} SPECIFICATIONS</span>
                                 </div>
-                                <div style={{ padding: '0.5rem' }}>
-                                    {projectRequests.map(req => (
-                                        <div key={req._id} className="request-sub-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', borderBottom: '1px solid #f1f5f9' }}>
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>{req.requestNumber}</span>
-                                                    <span className={`status-badge-mini ${req.status?.toLowerCase()}`}>{req.status}</span>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem' }}>
+                                    {projectRequests.map((req, rIdx) => (
+                                        <div key={req._id} style={{ border: '1px solid #eee', padding: '2rem', background: '#fff', position: 'relative' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '2rem' }}>
+                                                <div>
+                                                    <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#aaa', letterSpacing: '1px' }}>ID: {req.requestNumber}</div>
+                                                    <div style={{ fontSize: '1.2rem', fontWeight: 800, marginTop: '5px' }}>Material List</div>
                                                 </div>
-                                                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
-                                                    {req.items?.length || 0} items requested · {req.requestedBy?.fullName || 'Staff'}
+                                                <div style={{ 
+                                                    fontSize: '0.65rem', 
+                                                    fontWeight: 900, 
+                                                    background: req.status === 'Design Review' ? '#1a1a1a' : '#eee', 
+                                                    color: req.status === 'Design Review' ? '#fff' : '#666',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '2px',
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    {req.status}
                                                 </div>
                                             </div>
-                                            <div className="request-actions" style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <button className="btn-icon" onClick={() => onReviewRequest(req)} title="Review & Approve">
-                                                    <Eye size={16} />
+
+                                            <div style={{ marginBottom: '2rem', fontSize: '0.85rem', color: '#666', lineHeight: 1.6 }}>
+                                                {req.items?.length || 0} unique material items specified for final procurement phase.
+                                            </div>
+
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f9f9f9', paddingTop: '1.5rem' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 800 }}>
+                                                        {req.requestedBy?.fullName?.charAt(0) || 'D'}
+                                                    </div>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888' }}>Spec by {req.requestedBy?.fullName || 'Senior Designer'}</span>
+                                                </div>
+                                                <button 
+                                                    onClick={() => onReviewRequest(req)}
+                                                    style={{ background: 'transparent', border: '1px solid #1a1a1a', padding: '8px 20px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                                >
+                                                    REVIEW SPECS <ArrowRight size={14} />
                                                 </button>
                                             </div>
                                         </div>
@@ -53,7 +90,13 @@ const Inventory = ({ materialRequests, projects, onReviewRequest }) => {
                             </div>
                         );
                     })}
-                    {materialRequests?.length === 0 && <div className="empty-state">No material requests found.</div>}
+
+                    {(!materialRequests || materialRequests.length === 0) && (
+                        <div style={{ padding: '10rem 0', textAlign: 'center' }}>
+                            <Box size={48} color="#eee" style={{ marginBottom: '2rem' }} />
+                            <h2 style={{ fontWeight: 300, color: '#ccc' }}>No material specifications are currently pending review.</h2>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

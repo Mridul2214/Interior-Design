@@ -2,7 +2,7 @@ const Vendor = require('../models/Vendor');
 
 exports.getVendors = async (req, res) => {
     try {
-        const { search, status, category, page = 1, limit = 10 } = req.query;
+        const { search, status, category, page = 1, limit = 1000 } = req.query;
         
         let query = {};
         
@@ -10,20 +10,23 @@ exports.getVendors = async (req, res) => {
             query.$or = [
                 { name: { $regex: search, $options: 'i' } },
                 { vendorCode: { $regex: search, $options: 'i' } },
-                { email: { $regex: search, $options: 'i' } }
+                { email: { $regex: search, $options: 'i' } },
+                { category: { $regex: search, $options: 'i' } },
+                { phone: { $regex: search, $options: 'i' } }
             ];
         }
         
         if (status) query.status = status;
         if (category) query.categories = category;
         
-        const skip = (page - 1) * limit;
+        const parsedLimit = parseInt(limit);
+        const skip = (parseInt(page) - 1) * parsedLimit;
         
         const vendors = await Vendor.find(query)
             .populate('createdBy', 'fullName')
             .sort({ name: 1 })
             .skip(skip)
-            .limit(parseInt(limit));
+            .limit(parsedLimit);
         
         const total = await Vendor.countDocuments(query);
         

@@ -42,9 +42,14 @@
 
 @media (min-width: 1024px) {
     .staff-main-content {
-        padding-left: 280px;
+        padding-left: var(--sidebar-width, 280px);
         /* Make room for the fixed sidebar */
         padding-top: 0;
+        transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .staff-layout.sidebar-collapsed .staff-main-content {
+        padding-left: 80px;
     }
 
     .staff-header-container {

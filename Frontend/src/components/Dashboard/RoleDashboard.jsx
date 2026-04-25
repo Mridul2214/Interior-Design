@@ -22,7 +22,7 @@ const RoleDashboard = ({ user, onLogout }) => {
         case 'procurement_manager':
             return <ProcurementManagerDashboard user={user} onLogout={onLogout} />;
         case 'procurement_staff':
-            return <ProcurementManagerDashboard user={user} onLogout={onLogout} />;
+            return <ProcurementStaffDashboard user={user} onLogout={onLogout} />;
         case 'production_manager':
             return <ProductionManagerDashboard user={user} onLogout={onLogout} />;
         case 'production_staff':

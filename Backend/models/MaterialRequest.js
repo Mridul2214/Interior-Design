@@ -23,6 +23,14 @@ const MaterialRequestItemSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    isExtra: {
+        type: Boolean,
+        default: false
+    },
+    reasonForExtra: {
+        type: String,
+        trim: true
+    },
     requiredByDate: {
         type: Date
     },
@@ -30,6 +38,37 @@ const MaterialRequestItemSchema = new mongoose.Schema({
         type: String,
         enum: ['Pending', 'Quoted', 'Ordered', 'Received'],
         default: 'Pending'
+    }
+});
+
+const TimeExtensionSchema = new mongoose.Schema({
+    requestedDate: {
+        type: Date,
+        required: true
+    },
+    reason: {
+        type: String,
+        trim: true
+    },
+    status: {
+        type: String,
+        enum: ['Pending', 'Approved', 'Rejected'],
+        default: 'Pending'
+    },
+    requestedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    reviewedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    reviewedAt: {
+        type: Date
+    },
+    managerRemarks: {
+        type: String,
+        trim: true
     }
 });
 
@@ -57,7 +96,7 @@ const MaterialRequestSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Pending', 'Approved', 'Rejected', 'In Progress', 'Completed', 'Cancelled'],
+        enum: ['Design Review', 'Pending', 'Approved', 'Rejected', 'In Progress', 'Completed', 'Cancelled', 'Assigned', 'Purchasing'],
         default: 'Pending'
     },
     managerRemarks: {
@@ -79,6 +118,19 @@ const MaterialRequestSchema = new mongoose.Schema({
     },
     completedAt: {
         type: Date
+    },
+    timeExtension: TimeExtensionSchema,
+    staffRemarks: {
+        type: String,
+        trim: true
+    },
+    staffUpdateNotes: {
+        type: String,
+        trim: true
+    },
+    isPushedFromDesign: {
+        type: Boolean,
+        default: false
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,

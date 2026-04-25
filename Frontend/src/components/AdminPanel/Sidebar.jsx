@@ -67,8 +67,8 @@ const Sidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
             ];
         } else if (dashboardType === 'procurement_manager') {
             roleSpecificItems = [
-                { name: 'Vendors', icon: Building2, path: '/vendors' },
-                { name: 'Material Requests', icon: Package, path: '/material-requests' },
+                { name: 'Vendors', icon: Building2, path: '/?tab=vendors' },
+                { name: 'Material Requests', icon: Package, path: '/?tab=requests' },
             ];
         } else if (dashboardType === 'production_manager') {
             roleSpecificItems = [
@@ -150,7 +150,7 @@ const Sidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
         : '?';
 
     return (
-        <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`} data-lenis-prevent>
+        <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''} ${department?.toLowerCase()}`} data-lenis-prevent>
             <div className="sidebar-header">
                 <div className="brand-wrapper">
                     <h1 className="brand-title">Interior Design</h1>

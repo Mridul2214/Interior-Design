@@ -1,0 +1,164 @@
+:root {
+    --studio-bg: #fcfaf7;
+    --studio-text: #1a1a1a;
+    --studio-accent: #c4a484;
+    /* Muted Gold/Tan */
+    --studio-secondary: #2d2d2d;
+    --studio-border: rgba(0, 0, 0, 0.08);
+}
+
+.design-studio-container {
+    background-color: var(--studio-bg);
+    min-height: 100vh;
+    padding: 2.5rem;
+    color: var(--studio-text);
+    font-family: 'Inter', sans-serif;
+}
+
+/* Editorial Header */
+.editorial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 4rem;
+    border-bottom: 1px solid var(--studio-border);
+    padding-bottom: 2rem;
+}
+
+.editorial-header h1 {
+    font-size: 3.5rem;
+    font-weight: 300;
+    margin: 0;
+    letter-spacing: -2px;
+    line-height: 1;
+}
+
+.editorial-header h1 span {
+    font-weight: 800;
+    display: block;
+    color: var(--studio-accent);
+}
+
+.editorial-date {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    font-weight: 600;
+    color: #666;
+}
+
+/* Studio Grid - Asymmetric */
+.studio-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 3rem;
+    margin-bottom: 4rem;
+}
+
+/* Minimalist Stats */
+.stat-minimal {
+    border-top: 1px solid var(--studio-border);
+    padding-top: 1.5rem;
+}
+
+.stat-minimal .label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #888;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.stat-minimal .value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    display: block;
+}
+
+/* Mood Board Section */
+.mood-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 200px);
+    gap: 1rem;
+}
+
+.mood-item {
+    background: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mood-item:hover {
+    transform: scale(1.02);
+}
+
+.mood-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(20%) contrast(110%);
+}
+
+.mood-item.large {
+    grid-column: span 2;
+    grid-row: span 2;
+}
+
+/* "The Canvas" - Project List */
+.project-canvas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 4rem;
+}
+
+.canvas-item {
+    cursor: pointer;
+}
+
+.canvas-image {
+    width: 100%;
+    aspect-ratio: 4/5;
+    background: #e5e5e5;
+    margin-bottom: 1.5rem;
+    transition: all 0.5s ease;
+    border-radius: 2px;
+}
+
+.canvas-item:hover .canvas-image {
+    filter: brightness(0.9);
+}
+
+.canvas-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.canvas-meta {
+    font-size: 0.8rem;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Floating Action */
+.fab-studio {
+    position: fixed;
+    bottom: 3rem;
+    right: 3rem;
+    background: var(--studio-secondary);
+    color: white;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 100;
+}

@@ -21,7 +21,12 @@ exports.getQuotations = async (req, res) => {
         if (status) query.status = status;
         if (client) query.client = client;
 
-        if (req.user.role === 'Staff') {
+        const roleLower = req.user.role.toLowerCase();
+        if (roleLower.includes('procurement')) {
+            query.status = { $in: ['Sent to Procurement', 'Approved'] };
+        }
+
+        if (roleLower === 'staff' && !roleLower.includes('procurement')) {
             const Staff = require('../models/Staff');
             const Task = require('../models/Task');
             const staffMember = await Staff.findOne({ email: req.user.email });

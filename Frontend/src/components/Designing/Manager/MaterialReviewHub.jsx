@@ -31,7 +31,7 @@ const MaterialReviewHub = ({ user }) => {
         try {
             setLoading(true);
             const [matRes, projRes, staffRes] = await Promise.all([
-                procurementAPI.getMaterialRequests(),
+                procurementAPI.getMaterialRequests({ limit: 100 }),
                 projectAPI.getAll({ limit: 100 }),
                 staffAPI.getAll()
             ]);
@@ -114,74 +114,88 @@ const MaterialReviewHub = ({ user }) => {
             </div>
 
             <div className="grouped-content">
-                {projects.map(project => {
-                    const projectRequests = filteredRequests.filter(r => 
-                        (r.project?._id || r.project)?.toString() === project._id?.toString()
-                    );
-                    if (projectRequests.length === 0) return null;
+                {(() => {
+                    // Group requests by project
+                    const groups = filteredRequests.reduce((acc, req) => {
+                        const projectId = (req.project?._id || req.project || 'unassigned').toString();
+                        if (!acc[projectId]) {
+                            acc[projectId] = {
+                                project: req.project && typeof req.project === 'object' ? req.project : projects.find(p => p._id === projectId),
+                                requests: []
+                            };
+                        }
+                        acc[projectId].requests.push(req);
+                        return acc;
+                    }, {});
 
-                    return (
-                        <div key={project._id} className="project-review-group" style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', marginBottom: '2rem', overflow: 'hidden' }}>
-                            <div style={{ background: '#f8fafc', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <div style={{ background: '#eef2ff', padding: '8px', borderRadius: '8px' }}>
-                                        <Briefcase size={18} color="#4f46e5" />
+                    return Object.entries(groups).map(([projectId, group]) => {
+                        const project = group.project;
+                        const projectName = project?.name || 'Unknown Project';
+                        const projectRequests = group.requests;
+
+                        return (
+                            <div key={projectId} className="project-review-group" style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', marginBottom: '2rem', overflow: 'hidden' }}>
+                                <div style={{ background: '#f8fafc', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{ background: '#eef2ff', padding: '8px', borderRadius: '8px' }}>
+                                            <Briefcase size={18} color="#4f46e5" />
+                                        </div>
+                                        <strong style={{ fontSize: '1.1rem', color: '#1e293b' }}>{projectName}</strong>
                                     </div>
-                                    <strong style={{ fontSize: '1.1rem', color: '#1e293b' }}>{project.name}</strong>
+                                    <span className="badge-outline">{projectRequests.length} Requests</span>
                                 </div>
-                                <span className="badge-outline">{projectRequests.length} Requests</span>
-                            </div>
-                            
-                            <div className="requests-table-container">
-                                <table className="requests-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                    <thead>
-                                        <tr style={{ background: '#fcfcfc', textAlign: 'left', fontSize: '0.8rem', textTransform: 'uppercase', color: '#94a3b8', borderBottom: '1px solid #f1f5f9' }}>
-                                            <th style={{ padding: '1rem 1.5rem' }}>Request ID</th>
-                                            <th style={{ padding: '1rem 1.5rem' }}>Designer</th>
-                                            <th style={{ padding: '1rem 1.5rem' }}>Items</th>
-                                            <th style={{ padding: '1rem 1.5rem' }}>Status</th>
-                                            <th style={{ padding: '1rem 1.5rem' }}>Created</th>
-                                            <th style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {projectRequests.map(req => (
-                                            <tr key={req._id} style={{ borderBottom: '1px solid #f8fafc', transition: '0.2s' }}>
-                                                <td style={{ padding: '1rem 1.5rem', fontWeight: 600, color: '#4f46e5' }}>{req.requestNumber}</td>
-                                                <td style={{ padding: '1rem 1.5rem' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <div style={{ background: '#f1f5f9', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', overflow: 'hidden' }}>
-                                                            {req.requestedBy?.avatar ? <img src={getImageUrl(req.requestedBy.avatar)} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (req.requestedBy?.fullName?.[0] || 'S')}
-                                                        </div>
-                                                        <span style={{ fontSize: '0.85rem' }}>{req.requestedBy?.fullName || 'Staff'}</span>
-                                                    </div>
-                                                </td>
-                                                <td style={{ padding: '1rem 1.5rem' }}>
-                                                    <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{req.items?.length || 0} materials</span>
-                                                </td>
-                                                <td style={{ padding: '1rem 1.5rem' }}>
-                                                    <span className={`status-pill ${req.status.toLowerCase()}`}>{req.status}</span>
-                                                </td>
-                                                <td style={{ padding: '1rem 1.5rem', fontSize: '0.8rem', color: '#64748b' }}>
-                                                    {new Date(req.createdAt).toLocaleDateString()}
-                                                </td>
-                                                <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
-                                                    <button 
-                                                        className="btn-icon" 
-                                                        onClick={() => { setSelectedRequest(req); setShowReviewModal(true); }}
-                                                        style={{ background: '#f8fafc' }}
-                                                    >
-                                                        <Eye size={18} />
-                                                    </button>
-                                                </td>
+                                
+                                <div className="requests-table-container">
+                                    <table className="requests-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                        <thead>
+                                            <tr style={{ background: '#fcfcfc', textAlign: 'left', fontSize: '0.8rem', textTransform: 'uppercase', color: '#94a3b8', borderBottom: '1px solid #f1f5f9' }}>
+                                                <th style={{ padding: '1rem 1.5rem' }}>Request ID</th>
+                                                <th style={{ padding: '1rem 1.5rem' }}>Designer</th>
+                                                <th style={{ padding: '1rem 1.5rem' }}>Items</th>
+                                                <th style={{ padding: '1rem 1.5rem' }}>Status</th>
+                                                <th style={{ padding: '1rem 1.5rem' }}>Created</th>
+                                                <th style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>Actions</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {projectRequests.map(req => (
+                                                <tr key={req._id} style={{ borderBottom: '1px solid #f8fafc', transition: '0.2s' }}>
+                                                    <td style={{ padding: '1rem 1.5rem', fontWeight: 600, color: '#4f46e5' }}>{req.requestNumber}</td>
+                                                    <td style={{ padding: '1rem 1.5rem' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <div style={{ background: '#f1f5f9', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', overflow: 'hidden' }}>
+                                                                {req.requestedBy?.avatar ? <img src={getImageUrl(req.requestedBy.avatar)} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (req.requestedBy?.fullName?.[0] || 'S')}
+                                                            </div>
+                                                            <span style={{ fontSize: '0.85rem' }}>{req.requestedBy?.fullName || 'Staff'}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ padding: '1rem 1.5rem' }}>
+                                                        <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{req.items?.length || 0} materials</span>
+                                                    </td>
+                                                    <td style={{ padding: '1rem 1.5rem' }}>
+                                                        <span className={`status-pill ${req.status.toLowerCase()}`}>{req.status}</span>
+                                                    </td>
+                                                    <td style={{ padding: '1rem 1.5rem', fontSize: '0.8rem', color: '#64748b' }}>
+                                                        {new Date(req.createdAt).toLocaleDateString()}
+                                                    </td>
+                                                    <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                                                        <button 
+                                                            className="btn-icon" 
+                                                            onClick={() => { setSelectedRequest(req); setShowReviewModal(true); }}
+                                                            style={{ background: '#f8fafc' }}
+                                                        >
+                                                            <Eye size={18} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    });
+                })()}
             </div>
 
             {/* ── Modal for Details & Review ── */}
@@ -202,12 +216,20 @@ const MaterialReviewHub = ({ user }) => {
                                 </h4>
                                 <div className="items-grid" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                     {selectedRequest.items?.map((item, idx) => (
-                                        <div key={idx} style={{ background: '#fcfcfc', border: '1px solid #f1f5f9', padding: '1rem', borderRadius: '10px' }}>
+                                        <div key={idx} style={{ background: item.isExtra ? '#f0fdf4' : '#fcfcfc', border: item.isExtra ? '1px solid #bbf7d0' : '1px solid #f1f5f9', padding: '1rem', borderRadius: '10px' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                                <strong style={{ fontSize: '0.9rem' }}>{item.itemName}</strong>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <strong style={{ fontSize: '0.9rem' }}>{item.itemName}</strong>
+                                                    {item.isExtra && <span style={{ background: '#10b981', color: 'white', padding: '1px 6px', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 800 }}>EXTRA ITEM</span>}
+                                                </div>
                                                 <span style={{ background: '#4f46e5', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem' }}>× {item.quantity} {item.unit || 'pieces'}</span>
                                             </div>
                                             <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}><strong>Specs:</strong> {item.specifications || 'N/A'}</p>
+                                            {item.isExtra && item.reasonForExtra && (
+                                                <p style={{ fontSize: '0.75rem', color: '#b91c1c', marginTop: '6px', background: '#fee2e2', padding: '6px', borderRadius: '6px' }}>
+                                                    <strong>Reason for Extra:</strong> {item.reasonForExtra}
+                                                </p>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

@@ -2,8 +2,10 @@
 .sidebar-container {
     width: var(--sidebar-width);
     height: 100vh;
-    background-color: #ffffff; /* Pure white */
-    border-right: 1px solid #e2e8f0; /* Soft border */
+    background-color: #ffffff;
+    /* Pure white */
+    border-right: 1px solid #e2e8f0;
+    /* Soft border */
     position: fixed;
     left: 0;
     top: 0;
@@ -44,7 +46,8 @@
 
 .brand-title {
     font-size: 1.15rem;
-    color: #0f172a; /* Slate 900 */
+    color: #0f172a;
+    /* Slate 900 */
     letter-spacing: -0.02em;
     margin: 0;
     font-family: inherit;
@@ -53,7 +56,8 @@
 
 .brand-subtitle {
     font-size: 0.7rem;
-    color: #64748b; /* Slate 500 */
+    color: #64748b;
+    /* Slate 500 */
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 600;
@@ -63,7 +67,8 @@
     background: transparent;
     border: none;
     cursor: pointer;
-    color: #94a3b8; /* Slate 400 */
+    color: #94a3b8;
+    /* Slate 400 */
     padding: 6px;
     border-radius: 6px;
     display: flex;
@@ -99,9 +104,11 @@
 .sidebar-nav::-webkit-scrollbar {
     width: 4px;
 }
+
 .sidebar-nav::-webkit-scrollbar-track {
     background: transparent;
 }
+
 .sidebar-nav::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 4px;
@@ -116,7 +123,8 @@
     font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #94a3b8; /* Slate 400 */
+    color: #94a3b8;
+    /* Slate 400 */
     font-weight: 700;
     padding: 0 1.5rem;
     margin-bottom: 0.5rem;
@@ -143,11 +151,13 @@
     display: flex;
     align-items: center;
     padding: 0.65rem 1.5rem;
-    color: #64748b; /* Slate 500 */
+    color: #64748b;
+    /* Slate 500 */
     font-weight: 500;
     font-size: 0.9rem;
     transition: all 0.2s ease;
-    border-left: 3px solid transparent; /* Prepare for active state */
+    border-left: 3px solid transparent;
+    /* Prepare for active state */
     overflow: hidden;
     position: relative;
 }
@@ -155,41 +165,51 @@
 .sidebar-container.collapsed .nav-link {
     justify-content: center;
     padding: 0.75rem;
-    border-left: none; /* remove border when collapsed to keep icons centered */
+    border-left: none;
+    /* remove border when collapsed to keep icons centered */
 }
 
 /* Active State - Modern Style */
 .nav-link.active {
-    background-color: #f1f5f9; /* Soft background */
-    color: #0f172a; /* Slate 900 - dark text */
+    background-color: #f1f5f9;
+    /* Soft background */
+    color: #0f172a;
+    /* Slate 900 - dark text */
     font-weight: 600;
-    border-left-color: #3b82f6; /* Default Blue accent line */
+    border-left-color: #3b82f6;
+    /* Default Blue accent line */
 }
 
 /* Department Specific Active States */
 .sidebar-container.design .nav-link.active {
     background-color: #f5f3ff;
-    border-left-color: #8b5cf6; /* Purple */
+    border-left-color: #8b5cf6;
+    /* Purple */
     color: #4c1d95;
 }
+
 .sidebar-container.design .nav-link.active .nav-icon {
     color: #8b5cf6;
 }
 
 .sidebar-container.procurement .nav-link.active {
-    background-color: #f0fdf4;
-    border-left-color: #22c55e; /* Green */
-    color: #14532d;
+    background-color: #eff6ff;
+    border-left-color: #3b82f6;
+    /* Premium Blue */
+    color: #1e40af;
 }
+
 .sidebar-container.procurement .nav-link.active .nav-icon {
-    color: #22c55e;
+    color: #3b82f6;
 }
 
 .sidebar-container.production .nav-link.active {
     background-color: #fff7ed;
-    border-left-color: #f97316; /* Orange */
+    border-left-color: #f97316;
+    /* Orange */
     color: #7c2d12;
 }
+
 .sidebar-container.production .nav-link.active .nav-icon {
     color: #f97316;
 }
@@ -225,7 +245,8 @@
 }
 
 .nav-link.active .nav-icon {
-    color: #3b82f6; /* Blue icon when active */
+    color: #3b82f6;
+    /* Blue icon when active */
     opacity: 1;
 }
 

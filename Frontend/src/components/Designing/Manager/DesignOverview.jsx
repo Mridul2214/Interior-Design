@@ -1,95 +1,224 @@
 import React from 'react';
-import { Palette, FileText, Tag, List, CheckCircle, TrendingUp, ArrowRight, User, Clock, AlertCircle } from 'lucide-react';
+import { Palette, FileText, Tag, List, CheckCircle, TrendingUp, ArrowRight, User, Clock, AlertCircle, Package, Activity, Sparkles } from 'lucide-react';
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+    ResponsiveContainer, Cell, PieChart, Pie, AreaChart, Area
+} from 'recharts';
 import '../css/ManagerDashboard.css';
 
-const DesignOverview = ({ stats, tasks, quotations, teamStats }) => {
+const DesignOverview = ({ stats, tasks, quotations, teamStats, materialRequests }) => {
     const pendingReviews = (tasks || []).filter(t => t.status === 'Review Pending');
     const redos = (tasks || []).filter(t => t.status === 'Revision Required');
     const approved = (tasks || []).filter(t => t.status === 'Approved');
 
+    const pieData = [
+        { name: 'Pending', value: pendingReviews.length, color: '#f59e0b' },
+        { name: 'Approved', value: approved.length, color: '#10b981' },
+        { name: 'Revisions', value: redos.length, color: '#ef4444' }
+    ];
+
+    const weeklyVelocity = [
+        { name: 'Mon', designs: 3 },
+        { name: 'Tue', designs: 5 },
+        { name: 'Wed', designs: 8 },
+        { name: 'Thu', designs: 6 },
+        { name: 'Fri', designs: 10 },
+        { name: 'Sat', designs: 4 },
+        { name: 'Sun', designs: 2 }
+    ];
+
+    const teamWorkload = (teamStats || []).map(member => ({
+        name: member.name,
+        tasks: member.activeTasks || 0
+    })).slice(0, 5);
+
     return (
         <div className="design-overview fade-in">
-            <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                <div className="premium-stat-card" style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                    <div className="icon-box" style={{ background: '#f5f3ff', color: '#6366f1', padding: '12px', borderRadius: '16px' }}><Palette size={24} /></div>
-                    <div>
-                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>{tasks?.length || 0}</div>
-                        <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '4px' }}>Designing Tasks</div>
+            {/* Creative Banner */}
+            <div className="welcome-banner" style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)', borderRadius: '24px', padding: '2.5rem', marginBottom: '2.5rem', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, right: 0, width: '400px', height: '100%', background: 'radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 70%)', pointerEvents: 'none' }}></div>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                        <div style={{ padding: '8px', background: 'rgba(255,255,255,0.2)', borderRadius: '12px' }}>
+                            <Sparkles size={20} color="#fff" />
+                        </div>
+                        <span style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '2px' }}>Studio Intelligence</span>
                     </div>
+                    <h3 style={{ fontSize: '2.25rem', fontWeight: 900, color: 'white', marginBottom: '8px' }}>Design Manager's Workspace</h3>
+                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1.1rem', maxWidth: '600px' }}>Curate experiences, review aesthetics, and monitor the creative pulse of every project.</p>
                 </div>
-                
-                <div className="premium-stat-card" style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                    <div className="icon-box" style={{ background: '#ecfdf5', color: '#10b981', padding: '12px', borderRadius: '16px' }}><CheckCircle size={24} /></div>
-                    <div>
-                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>{pendingReviews.length}</div>
-                        <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '4px' }}>Pending Reviews</div>
-                    </div>
-                </div>
+            </div>
 
-                <div className="premium-stat-card" style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                    <div className="icon-box" style={{ background: '#fff7ed', color: '#f59e0b', padding: '12px', borderRadius: '16px' }}><Clock size={24} /></div>
-                    <div>
-                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>{redos.length}</div>
-                        <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '4px' }}>Active Redos</div>
+            {/* Premium Stats Grid */}
+            <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                <div className="stat-card premium">
+                    <div className="stat-icon" style={{ background: '#f5f3ff', color: '#8b5cf6' }}>
+                        <Palette size={24} />
+                    </div>
+                    <div className="stat-content">
+                        <span className="stat-label">Active Designs</span>
+                        <span className="stat-value">{tasks?.length || 0}</span>
                     </div>
                 </div>
-
-                <div className="premium-stat-card" style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                    <div className="icon-box" style={{ background: '#eff6ff', color: '#3b82f6', padding: '12px', borderRadius: '16px' }}><User size={24} /></div>
-                    <div>
-                        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>{teamStats?.length || 0}</div>
-                        <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '4px' }}>Design Team</div>
+                <div className="stat-card premium">
+                    <div className="stat-icon" style={{ background: '#fff7ed', color: '#f97316' }}>
+                        <Clock size={24} />
+                    </div>
+                    <div className="stat-content">
+                        <span className="stat-label">Pending Reviews</span>
+                        <span className="stat-value">{pendingReviews.length}</span>
+                    </div>
+                </div>
+                <div className="stat-card premium">
+                    <div className="stat-icon" style={{ background: '#fef2f2', color: '#ef4444' }}>
+                        <AlertCircle size={24} />
+                    </div>
+                    <div className="stat-content">
+                        <span className="stat-label">Active Redos</span>
+                        <span className="stat-value">{redos.length}</span>
+                    </div>
+                </div>
+                <div className="stat-card premium">
+                    <div className="stat-icon" style={{ background: '#ecfdf5', color: '#10b981' }}>
+                        <CheckCircle size={24} />
+                    </div>
+                    <div className="stat-content">
+                        <span className="stat-label">Total Approved</span>
+                        <span className="stat-value">{approved.length}</span>
                     </div>
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem' }}>
-                <div className="section-card shadow-sm" style={{ padding: '2rem', borderRadius: '24px', background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)', color: 'white' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                        <div>
-                            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>Design Pipeline Summary</h3>
-                            <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '0.85rem' }}>Overview of task statuses across the department</p>
-                        </div>
-                        <TrendingUp size={24} color="#8b5cf6" />
+            {/* Visual Analytics Row */}
+            <div className="visuals-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                <div className="card-premium" style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', border: '1px solid #f1f5f9', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                        <h4 style={{ margin: 0, fontWeight: 800, fontSize: '1.1rem', color: '#1e293b' }}>Creative Velocity</h4>
+                        <span className="badge-lite">Weekly Output</span>
                     </div>
-                    
-                    <div className="summary-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
-                        <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f59e0b' }}>{redos.length}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Redos Given</div>
-                        </div>
-                        <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#10b981' }}>{approved.length}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Approved</div>
-                        </div>
-                        <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#3b82f6' }}>{tasks?.filter(t=>t.status==='Completed').length || 0}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Handed Over</div>
-                        </div>
+                    <div style={{ height: '260px', width: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={weeklyVelocity}>
+                                <defs>
+                                    <linearGradient id="colorDesigns" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.1} />
+                                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
+                                <Area type="monotone" dataKey="designs" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorDesigns)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
 
-                <div className="section-card" style={{ padding: '2rem', borderRadius: '24px', background: 'white', border: '1px solid #f1f5f9' }}>
-                    <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.1rem', fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <AlertCircle size={20} color="#f59e0b" /> Critical Submissions
-                    </h3>
-                    <div className="critical-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="card-premium" style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', border: '1px solid #f1f5f9', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)' }}>
+                    <h4 style={{ margin: 0, fontWeight: 800, fontSize: '1.1rem', color: '#1e293b', marginBottom: '1.5rem' }}>Portfolio Health</h4>
+                    <div style={{ height: '260px', width: '100%', position: 'relative' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={pieData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={70}
+                                    outerRadius={90}
+                                    paddingAngle={8}
+                                    dataKey="value"
+                                >
+                                    {pieData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
+                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b' }}>{tasks?.length || 0}</div>
+                            <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Total Tasks</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Team Dynamics */}
+            <div className="card-premium" style={{ background: 'white', padding: '1.5rem', borderRadius: '24px', border: '1px solid #f1f5f9', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)', marginBottom: '2.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h4 style={{ margin: 0, fontWeight: 800, fontSize: '1.1rem', color: '#1e293b' }}>Designer Capacity</h4>
+                    <span className="badge-lite">Active Workload</span>
+                </div>
+                <div style={{ height: '200px', width: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={teamWorkload}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                            <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
+                            <Bar dataKey="tasks" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={40} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            {/* Operational Lists */}
+            <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                <div className="card-premium" style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', border: '1px solid #f1f5f9' }}>
+                    <div className="card-header" style={{ border: 'none', padding: 0, marginBottom: '1.5rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <AlertCircle size={20} color="#f59e0b" /> Critical Design Reviews
+                        </h3>
+                    </div>
+                    <div className="critical-list" style={{ display: 'grid', gap: '1rem' }}>
                         {pendingReviews.length > 0 ? pendingReviews.slice(0, 4).map(task => (
-                            <div key={task._id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: '#f8fafc', borderRadius: '16px' }}>
-                                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #e2e8f0' }}>
-                                    <Clock size={18} color="#6366f1" />
+                            <div key={task._id} className="queue-item-premium" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: '#f8fafc', borderRadius: '16px' }}>
+                                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                                    <Palette size={18} color="#8b5cf6" />
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>{task.title}</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Submitted on {new Date(task.updatedAt).toLocaleDateString()}</div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b' }}>{task.title}</div>
+                                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Assigned to {task.assignedTo?.map(s => s.name).join(', ')}</div>
                                 </div>
-                                <ArrowRight size={16} color="#94a3b8" />
+                                <button className="btn-action-round" style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                                    <ArrowRight size={14} color="#8b5cf6" />
+                                </button>
                             </div>
                         )) : (
-                            <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8', fontSize: '0.85rem' }}>
-                                No pending reviews at the moment.
-                            </div>
+                            <div style={{ textAlign: 'center', padding: '2rem', background: '#f8fafc', borderRadius: '16px', color: '#94a3b8', fontSize: '0.9rem' }}>No pending reviews</div>
                         )}
+                    </div>
+                </div>
+
+                <div className="card-premium" style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', border: '1px solid #f1f5f9' }}>
+                    <div className="card-header" style={{ border: 'none', padding: 0, marginBottom: '1.5rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Package size={20} color="#6366f1" /> Material List Approvals
+                        </h3>
+                    </div>
+                    <div className="critical-list" style={{ display: 'grid', gap: '1rem' }}>
+                        {materialRequests && materialRequests.filter(r => r.status === 'Design Review').length > 0 ?
+                            materialRequests.filter(r => r.status === 'Design Review').slice(0, 4).map(req => (
+                                <div key={req._id} className="queue-item-premium" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: '#f8fafc', borderRadius: '16px' }}>
+                                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                                        <Tag size={18} color="#0284c7" />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b' }}>{req.requestNumber}</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{req.items?.length || 0} items for {req.project?.name}</div>
+                                    </div>
+                                    <button
+                                        className="btn-action-round"
+                                        onClick={() => onApproveMaterial(req)}
+                                        style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}
+                                    >
+                                        <ArrowRight size={14} color="#0284c7" />
+                                    </button>
+                                </div>
+                            )) : (
+                                <div style={{ textAlign: 'center', padding: '2rem', background: '#f8fafc', borderRadius: '16px', color: '#94a3b8', fontSize: '0.9rem' }}>No pending approvals</div>
+                            )}
                     </div>
                 </div>
             </div>

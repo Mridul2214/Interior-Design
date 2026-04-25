@@ -207,9 +207,22 @@ const checkTaskDeadlines = async () => {
     }
 };
 
+const notifyUser = async (userId, options) => {
+    try {
+        return createNotification({
+            ...options,
+            specificRecipient: userId
+        });
+    } catch (error) {
+        console.error('Error in notifyUser:', error.message);
+        return [];
+    }
+};
+
 module.exports = {
     createNotification,
     notifyByRole,
+    notifyUser,
     notifyStaffUser,
     checkTaskDeadlines
 };

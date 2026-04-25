@@ -239,6 +239,7 @@ exports.performHandoff = async (req, res) => {
 
         const project = validation.project;
 
+        project.stage = 'Procurement';
         project.designStatus = 'Handoff Done';
         project.designComplete = true;
         project.handoffDate = new Date();

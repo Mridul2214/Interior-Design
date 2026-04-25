@@ -144,6 +144,19 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
         }
     };
 
+    const handleProjectHandoff = async (projectId) => {
+        if (!window.confirm('Are you sure you want to hand off this entire project to procurement?')) return;
+        try {
+            const res = await projectAPI.performHandoff(projectId);
+            if (res.success) {
+                alert('Project handed off to procurement successfully!');
+                fetchData();
+            }
+        } catch (err) {
+            alert('Handoff failed: ' + err.message);
+        }
+    };
+
     const handleSplitTask = async () => {
         if (!splitTaskData.title || splitTaskData.assignedTo.length === 0) return alert('Please fill in sub-task title and assignment');
         try {
@@ -185,32 +198,64 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
         return `₹${amount.toLocaleString('en-IN')}`;
     };
 
-    const getPriorityColor = (p) => ({ Critical: '#dc2626', High: '#ef4444', Medium: '#f59e0b', Low: '#10b981' }[p] || '#94a3b8');
+    const handleApproveMaterialRequest = async (requestId) => {
+        if (!window.confirm('Are you sure you want to release this material request to procurement?')) return;
+        try {
+            const res = await procurementAPI.approveMaterialRequest(requestId);
+            if (res.success) {
+                alert('Material request released to procurement successfully!');
+                fetchData();
+            }
+        } catch (err) {
+            alert('Approval failed: ' + err.message);
+        }
+    };
 
     if (loading) return <div className="loading-state">Loading Design Dashboard...</div>;
 
+    const getPriorityColor = (priority) => {
+        switch (priority?.toLowerCase()) {
+            case 'high': return '#ef4444';
+            case 'medium': return '#f59e0b';
+            case 'low': return '#10b981';
+            default: return '#64748b';
+        }
+    };
+
     const renderContent = () => {
+        if (activeTab === 'overview') {
+            return (
+                <DesignOverview
+                    stats={stats}
+                    tasks={tasks}
+                    quotations={quotations}
+                    teamStats={teamStats}
+                    materialRequests={materialRequests}
+                    onApproveMaterial={(req) => handleApproveMaterialRequest(req._id)}
+                />
+            );
+        }
         if (activeTab === 'quotations') return <Quotations quotations={quotations} formatCurrency={formatCurrency} />;
         if (activeTab === 'project_status') {
             return (
-                <Projects 
-                    projects={projects} 
-                    materialRequests={materialRequests} 
+                <Projects
+                    projects={projects}
+                    materialRequests={materialRequests}
                     onReviewRequest={(pid) => navigate(`/material-review?project=${pid}`)}
                     onUpdateStatus={(pid, stat) => projectAPI.update(pid, { status: stat }).then(fetchData)}
-                    onHandoffInitiate={(proj) => handlePushToProcurement(proj._id)}
+                    onHandoffInitiate={(proj) => handleProjectHandoff(proj._id)}
                 />
             );
         }
         if (activeTab === 'tasks') {
             return (
-                <Tasks 
-                    tasks={tasks} 
-                    teamStats={teamStats} 
+                <Tasks
+                    tasks={tasks}
+                    teamStats={teamStats}
                     staffList={staffList}
-                    onOpenAssignModal={() => setShowAssignModal(true)} 
+                    onOpenAssignModal={() => setShowAssignModal(true)}
                     onOpenEditTask={(task) => { setSelectedTask(task); setShowAssignModal(true); }}
-                    getPriorityColor={getPriorityColor} 
+                    getPriorityColor={getPriorityColor}
                     onReassign={handleReassignTask}
                     onViewUpdates={(task) => { setSelectedTask(task); setShowTaskUpdatesModal(true); }}
                     onSplit={(task) => { setSelectedTask(task); setSplitTaskData({ title: `${task.title} - Part 2`, assignedTo: [] }); setShowSplitModal(true); }}
@@ -226,9 +271,9 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                         {staffList.map(member => {
                             const activeCount = tasks.filter(t => t.assignedTo?.some(s => s._id === member._id) && t.status !== 'Completed').length;
                             return (
-                                <div 
-                                    key={member._id} 
-                                    className="member-row clickable-row" 
+                                <div
+                                    key={member._id}
+                                    className="member-row clickable-row"
                                     onClick={() => {
                                         setSelectedStaffForRecord(member);
                                         setShowStaffRecordModal(true);
@@ -263,7 +308,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
         }
 
         if (activeTab === 'ready_for_procurement') {
-            const approvedDesigns = tasks.filter(t => t.status === 'Approved');
+            const approvedDesigns = tasks.filter(t => t.status === 'Approved' && t.status !== 'Pushed to Procurement');
             return (
                 <div className="section-card">
                     <div className="section-header" style={{ marginBottom: '2rem' }}>
@@ -358,7 +403,14 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
         }
 
         if (activeTab === 'submissions') {
-            const submissions = tasks.filter(t => t.submissions?.length > 0 && (submissionFilter === 'All' || t.status === submissionFilter));
+            // By default (All), only show tasks needing action — exclude already approved/pushed ones
+            const submissions = tasks.filter(t => {
+                if (!t.submissions?.length) return false;
+                if (submissionFilter === 'All') {
+                    return t.status === 'Review Pending' || t.status === 'Revision Required';
+                }
+                return t.status === submissionFilter;
+            });
             return (
                 <div className="section-card">
                     <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -422,17 +474,17 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                         })}
                     </div>
                 </div>
-            )
+            );
         }
 
         return (
             <>
                 <DesignOverview stats={stats} tasks={tasks} quotations={quotations} teamStats={teamStats} />
-                <div className="section-card" style={{ gridColumn: 'span 2', marginTop: '2rem' }}>
-                    <div className="section-header"><h3><Bell size={18} /> Activity Feed</h3></div>
+                <div className="card" style={{ gridColumn: 'span 2', marginTop: '1rem' }}>
+                    <div className="card-header"><h3><Bell size={18} /> Activity Feed</h3></div>
                     <div className="notifications-feed">
                         {notifications.map(notif => (
-                            <div key={notif._id} className={`notif-item ${notif.isRead ? 'read' : 'unread'}`}>
+                            <div key={notif._id} className={`notif-item ${notif.notifRead ? 'read' : 'unread'}`}>
                                 <div className="notif-content">
                                     <p className="notif-title">{notif.title}</p>
                                     <p className="notif-desc">{notif.description}</p>
@@ -447,7 +499,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
     };
 
     return (
-        <div className="dashboard-content-area-unified fade-in" style={{ padding: '2rem', position: 'relative' }}>
+        <div className="dashboard-content-area-unified fade-in" style={{ padding: '1.5rem', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
                 <button
                     onClick={fetchData}
@@ -511,7 +563,19 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                                 <label>Relates to Approved Quotation</label>
                                 <select value={taskFormData.project} onChange={e => setTaskFormData({ ...taskFormData, project: e.target.value })} required>
                                     <option value="">Select Quotation / Project</option>
-                                    {quotations.map(q => <option key={q._id} value={q._id}>{q.quotationNumber} — {q.projectName}</option>)}
+                                    {quotations.filter(q => {
+                                        // Filter out quotations already assigned to tasks
+                                        // Unless we are editing the current task and it's the one already assigned
+                                        const isAlreadyAssigned = tasks.some(t =>
+                                            (t.quotation?._id === q._id || t.quotation === q._id || t.project?._id === q._id || t.project === q._id) &&
+                                            (!editingTaskId || t._id !== editingTaskId)
+                                        );
+                                        return !isAlreadyAssigned;
+                                    }).map(q => (
+                                        <option key={q._id} value={q._id}>
+                                            {q.quotationNumber} — {q.projectName}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="modal-footer">
@@ -635,7 +699,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                             <div className="update-timeline">
                                 {selectedTask.dailyUpdates?.length > 0 ? (
                                     [...selectedTask.dailyUpdates].reverse().map((upd, idx) => (
-                                        <div key={idx} style={{ 
+                                        <div key={idx} style={{
                                             background: upd.emergencies ? '#fff1f2' : '#f8fafc',
                                             padding: '1.25rem',
                                             borderRadius: '16px',
@@ -656,8 +720,8 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                                                 {upd.update}
                                             </div>
                                             {upd.emergencies && (
-                                                <div style={{ 
-                                                    background: '#ef4444', color: 'white', padding: '10px 14px', borderRadius: '10px', 
+                                                <div style={{
+                                                    background: '#ef4444', color: 'white', padding: '10px 14px', borderRadius: '10px',
                                                     fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px',
                                                     marginTop: '8px'
                                                 }}>
@@ -665,8 +729,8 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                                                 </div>
                                             )}
                                             {upd.extensionRequest && upd.extensionRequest.requestedDate && (
-                                                <div style={{ 
-                                                    background: '#fffbeb', border: '1px solid #fde68a', padding: '10px 14px', borderRadius: '10px', 
+                                                <div style={{
+                                                    background: '#fffbeb', border: '1px solid #fde68a', padding: '10px 14px', borderRadius: '10px',
                                                     marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
                                                 }}>
                                                     <div>
@@ -703,7 +767,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                 const active = staffTasks.filter(t => t.status !== 'Completed' && t.status !== 'Approved');
                 const completed = staffTasks.filter(t => t.status === 'Completed' || t.status === 'Approved');
                 const redoTotal = staffTasks.reduce((acc, t) => acc + (t.submissions?.length > 1 ? t.submissions.length - 1 : 0), 0);
-                
+
                 const calculateDuration = (task) => {
                     if (!task.createdAt || !task.updatedAt) return 'Calculating...';
                     const start = new Date(task.createdAt);
@@ -757,7 +821,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                         {active.length > 0 ? active.map(t => (
                                             <div key={t._id} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', background: '#fff', overflow: 'hidden' }}>
-                                                <div 
+                                                <div
                                                     style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', cursor: t.submissions?.length > 1 ? 'pointer' : 'default' }}
                                                     onClick={() => t.submissions?.length > 1 && setExpandedTaskId(expandedTaskId === t._id ? null : t._id)}
                                                 >
@@ -822,7 +886,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                                             <tbody>
                                                 {completed.length > 0 ? completed.map(t => (
                                                     <React.Fragment key={t._id}>
-                                                        <tr 
+                                                        <tr
                                                             style={{ borderBottom: '1px solid #e2e8f0', cursor: t.submissions?.length > 1 ? 'pointer' : 'default' }}
                                                             onClick={() => t.submissions?.length > 1 && setExpandedTaskId(expandedTaskId === t._id ? null : t._id)}
                                                         >
@@ -874,7 +938,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="modal-footer" style={{ borderTop: '1px solid #e2e8f0' }}>
                                 <button className="btn-primary" style={{ width: '100%' }} onClick={() => setShowStaffRecordModal(false)}>Close Record View</button>
                             </div>
@@ -895,33 +959,33 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                         <div className="modal-body" style={{ padding: '1.5rem' }}>
                             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                                 <label style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>Sub-Task Title</label>
-                                <input 
-                                    type="text" 
-                                    className="premium-input" 
+                                <input
+                                    type="text"
+                                    className="premium-input"
                                     value={splitTaskData.title}
                                     onChange={(e) => setSplitTaskData({ ...splitTaskData, title: e.target.value })}
                                     placeholder="Enter Title for the new task..."
                                 />
                             </div>
-                            
+
                             <div className="form-group">
                                 <label style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '10px', display: 'block' }}>Assign To Staff</label>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px', maxHeight: '200px', overflowY: 'auto', padding: '5px' }}>
                                     {staffList.map(staff => (
-                                        <div 
-                                            key={staff._id} 
+                                        <div
+                                            key={staff._id}
                                             onClick={() => {
                                                 const isAssigned = splitTaskData.assignedTo.some(id => id === staff._id);
                                                 setSplitTaskData({
                                                     ...splitTaskData,
-                                                    assignedTo: isAssigned 
+                                                    assignedTo: isAssigned
                                                         ? splitTaskData.assignedTo.filter(id => id !== staff._id)
                                                         : [...splitTaskData.assignedTo, staff._id]
                                                 });
                                             }}
-                                            style={{ 
-                                                padding: '10px', 
-                                                borderRadius: '10px', 
+                                            style={{
+                                                padding: '10px',
+                                                borderRadius: '10px',
                                                 border: `2px solid ${splitTaskData.assignedTo.includes(staff._id) ? '#6366f1' : '#f1f5f9'}`,
                                                 background: splitTaskData.assignedTo.includes(staff._id) ? '#eef2ff' : '#fff',
                                                 cursor: 'pointer',

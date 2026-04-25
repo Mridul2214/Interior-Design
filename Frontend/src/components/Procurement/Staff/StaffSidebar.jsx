@@ -8,12 +8,11 @@ import '../../AdminPanel/css/Sidebar.css';
 
 const StaffSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
     const navItems = [
-        { name: 'My Dashboard', icon: LayoutDashboard, path: '/staff/dashboard' },
-        { name: 'Inventory View', icon: Box, path: '/inventory' },
-        { name: 'Purchase Orders', icon: ShoppingCart, path: '/purchase-orders' },
-        { name: 'PO Inventory', icon: Package, path: '/po-inventory' },
-        { name: 'Material Hub', icon: Package, path: '/material-review' },
-        { name: 'My Tasks', icon: CheckSquare, path: '/staff/tasks' },
+        { name: 'My Dashboard', icon: LayoutDashboard, path: '/staff/dashboard?tab=overview' },
+        { name: 'Sourcing Hub', icon: ShoppingCart, path: '/staff/dashboard?tab=sourcing' },
+        { name: 'My Tasks', icon: CheckSquare, path: '/staff/dashboard?tab=tasks' },
+        { name: 'Purchase History', icon: Package, path: '/staff/dashboard?tab=history' },
+        { name: 'Vendors', icon: Box, path: '/staff/dashboard?tab=vendors' },
     ];
 
     const userInitials = user?.fullName

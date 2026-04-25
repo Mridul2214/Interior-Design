@@ -1,20 +1,18 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-    LayoutDashboard, Box, ShoppingCart, Package, Users, CheckSquare, Building2, LogOut, Menu
+    LayoutDashboard, Box, ShoppingCart, Package, Users, CheckSquare, Building2, LogOut, Menu, Plus
 } from 'lucide-react';
 import { BASE_IMAGE_URL } from '../../../config/api';
 import '../../AdminPanel/css/Sidebar.css';
 
 const ManagerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
     const navItems = [
-        { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
-        { name: 'Vendors', icon: Building2, path: '/vendors' },
-        { name: 'Material Requests', icon: Package, path: '/material-requests' },
-        { name: 'Purchase Orders', icon: ShoppingCart, path: '/purchase-orders' },
-        { name: 'Inventory', icon: Box, path: '/inventory' },
-        { name: 'PO Inventory', icon: Package, path: '/po-inventory' },
-        { name: 'Tasks', icon: CheckSquare, path: '/tasks' },
+        { name: 'Dashboard', icon: LayoutDashboard, path: '/?tab=overview' },
+        { name: 'Design Handoffs', icon: Plus, path: '/?tab=handoffs' },
+        { name: 'Material Requests', icon: Package, path: '/?tab=requests' },
+        { name: 'Assignments', icon: CheckSquare, path: '/?tab=assignments' },
+        { name: 'Vendors', icon: Building2, path: '/?tab=vendors' },
     ];
 
     const userInitials = user?.fullName

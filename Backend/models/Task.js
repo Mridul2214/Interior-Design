@@ -47,8 +47,8 @@ const TaskSchema = new mongoose.Schema({
         ref: 'Team'
     },
     project: {
-        type: String,
-        trim: true
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Project'
     },
     progress: {
         type: Number,
@@ -219,6 +219,14 @@ const TaskSchema = new mongoose.Schema({
 
 // Auto-update completedAt and progress when status changes
 TaskSchema.pre('save', function (next) {
+    // Sanitize empty strings in ObjectId fields to prevent casting errors
+    const fieldsToFix = ['project', 'quotation', 'client', 'team', 'createdBy'];
+    fieldsToFix.forEach(field => {
+        if (this[field] === '' || (this[field] && typeof this[field] === 'string' && this[field].trim() === '')) {
+            this[field] = undefined;
+        }
+    });
+
     if (this.isModified('status')) {
         const now = new Date();
         

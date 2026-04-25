@@ -1,4 +1,5 @@
 const Task = require('../models/Task');
+const MaterialRequest = require('../models/MaterialRequest');
 const { createNotification, notifyStaffUser } = require('../utils/notificationHelper');
 const { logAction } = require('../services/auditService');
 
@@ -20,12 +21,15 @@ exports.getTasks = async (req, res) => {
         if (assignedTo) query.assignedTo = assignedTo;
         if (includeOverdue === 'true') query.isOverdue = true;
 
-        // Automatically filter for staff users
-        if (req.user.role === 'Design Staff' || req.user.role === 'Staff') {
+        // Automatically filter for staff users (Flexible role check)
+        const roleLower = req.user.role.toLowerCase();
+        const isStaff = (roleLower.includes('staff') || roleLower.includes('designer')) && !roleLower.includes('manager') && !roleLower.includes('admin');
+
+        if (isStaff) {
             const Staff = require('../models/Staff');
             const staffMember = await Staff.findOne({ email: req.user.email });
             if (staffMember) {
-                query.assignedTo = { $in: [staffMember._id] };
+                query.assignedTo = staffMember._id;
             } else {
                 return res.status(200).json({ success: true, count: 0, data: [] });
             }
@@ -35,7 +39,8 @@ exports.getTasks = async (req, res) => {
         const tasks = await Task.find(query)
             .populate('assignedTo', 'name role email phone staffId')
             .populate('client', 'name email phone')
-            .populate('quotation', 'quotationNumber projectName totalAmount client')
+            .populate('quotation', 'quotationNumber projectName totalAmount client items')
+            .populate('project', 'name projectNumber stage status')
             .populate('team', 'name')
             .populate('createdBy', 'fullName')
             .populate('comments.user', 'fullName email role')
@@ -73,6 +78,7 @@ exports.getTask = async (req, res) => {
             .populate('assignedTo', 'name role email phone')
             .populate('client', 'name email phone')
             .populate('quotation', 'quotationNumber projectName totalAmount')
+            .populate('project', 'name projectNumber stage status')
             .populate('team', 'name')
             .populate('createdBy', 'fullName');
         if (!task) {
@@ -86,6 +92,13 @@ exports.getTask = async (req, res) => {
 
 exports.createTask = async (req, res) => {
     try {
+        // Sanitize ObjectId fields to prevent casting errors from empty strings
+        ['project', 'quotation', 'client', 'team'].forEach(field => {
+            if (req.body[field] === '') {
+                delete req.body[field];
+            }
+        });
+
         if (req.body.quotation) {
             const Quotation = require('../models/Quotation');
             const quotation = await Quotation.findById(req.body.quotation);
@@ -97,11 +110,18 @@ exports.createTask = async (req, res) => {
                 });
             }
 
-            if (quotation.status !== 'Approved') {
+            if (quotation.status !== 'Approved' && quotation.status !== 'Design Approved') {
                 return res.status(400).json({
                     success: false,
                     message: 'Only approved quotations can be assigned to tasks. Please wait for client approval.'
                 });
+            }
+
+            // Find associated project
+            const Project = require('../models/Project');
+            const project = await Project.findOne({ quotation: req.body.quotation });
+            if (project) {
+                req.body.project = project._id;
             }
         }
 
@@ -170,6 +190,13 @@ exports.createTask = async (req, res) => {
 
 exports.updateTask = async (req, res) => {
     try {
+        // Sanitize ObjectId fields to prevent casting errors from empty strings
+        ['project', 'quotation', 'client', 'team'].forEach(field => {
+            if (req.body[field] === '') {
+                delete req.body[field];
+            }
+        });
+
         let task = await Task.findById(req.params.id);
         if (!task) {
             return res.status(404).json({ success: false, message: 'Task not found' });
@@ -203,11 +230,18 @@ exports.updateTask = async (req, res) => {
                 });
             }
 
-            if (quotation.status !== 'Approved') {
+            if (quotation.status !== 'Approved' && quotation.status !== 'Design Approved') {
                 return res.status(400).json({
                     success: false,
                     message: 'Only approved quotations can be assigned to tasks. Please wait for client approval.'
                 });
+            }
+
+            // Find associated project
+            const Project = require('../models/Project');
+            const project = await Project.findOne({ quotation: req.body.quotation });
+            if (project) {
+                req.body.project = project._id;
             }
         }
 
@@ -366,6 +400,15 @@ exports.submitTask = async (req, res) => {
             timestamp: new Date()
         });
 
+        // Sanitize potentially corrupted fields that cause casting errors
+        const fieldsToFix = ['project', 'quotation', 'client', 'team'];
+        fieldsToFix.forEach(field => {
+            if (task[field] === '' || (task[field] && typeof task[field] === 'string' && task[field].trim() === '')) {
+                console.log(`Fixing corrupted ${field} field for task ${task._id}`);
+                task[field] = undefined;
+            }
+        });
+
         await task.save();
 
         res.status(200).json({ success: true, data: task, message: 'Task submitted for review' });
@@ -450,6 +493,19 @@ exports.pushToProcurement = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Task not found' });
         }
 
+        // If project is missing on task, try to get it from the associated Project model
+        if (!task.project && task.quotation) {
+            const Project = require('../models/Project');
+            const project = await Project.findOne({ quotation: task.quotation._id });
+            if (project) {
+                task.project = project._id;
+            }
+        }
+
+        if (!task.project) {
+            return res.status(400).json({ success: false, message: 'Task is not associated with a project. Please link a project before pushing to procurement.' });
+        }
+
         if (task.status !== 'Approved') {
             return res.status(400).json({ success: false, message: 'Only approved designs can be pushed to procurement' });
         }
@@ -462,14 +518,58 @@ exports.pushToProcurement = async (req, res) => {
             timestamp: new Date()
         });
 
+        let materialRequest = null;
+        // Map items if quotation exists, otherwise start with empty items
+        const materialRequestItems = (task.quotation && task.quotation.items) 
+            ? task.quotation.items.map(item => ({
+                itemName: item.itemName,
+                description: item.description,
+                quantity: item.quantity,
+                unit: item.unit || 'SCM',
+                specifications: item.material ? `${item.material} - ${item.finish || 'Standard'}` : null,
+                status: 'Pending'
+            }))
+            : [];
+
+        materialRequest = await MaterialRequest.create({
+            project: task.project,
+            quotation: task.quotation ? task.quotation._id : null,
+            items: materialRequestItems,
+            priority: 'Medium',
+            status: 'Pending',
+            requestedBy: req.user.id,
+            createdBy: req.user.id,
+            isPushedFromDesign: true,
+            notes: `Design handoff from task: ${task.title}. ${materialRequestItems.length === 0 ? 'PLEASE REVIEW AND ADD MATERIALS.' : ''}`
+        });
+
+        await Project.findByIdAndUpdate(task.project, {
+            stage: 'Procurement'
+        });
+
         if (task.quotation) {
             task.quotation.status = 'Sent to Procurement';
             await task.quotation.save();
         }
 
+        if (task.project) {
+            const Project = require('../models/Project');
+            const project = await Project.findById(task.project);
+            if (project && project.stage !== 'Procurement') {
+                project.stage = 'Procurement';
+                project.designComplete = true;
+                await project.save();
+            }
+        }
+
         await task.save();
 
-        res.status(200).json({ success: true, data: task, message: 'Design pushed to procurement successfully' });
+        res.status(200).json({ 
+            success: true, 
+            data: task, 
+            materialRequest,
+            message: 'Design pushed to procurement successfully' 
+        });
 
         createNotification({
             title: 'Design Pushed to Procurement',
@@ -478,6 +578,17 @@ exports.pushToProcurement = async (req, res) => {
             relatedModel: 'Task',
             relatedId: task._id,
             createdBy: req.user.id
+        });
+
+        const { notifyByRole } = require('../utils/notificationHelper');
+        notifyByRole('Procurement Manager', {
+            title: 'New Material Request',
+            description: materialRequest 
+                ? `New material request "${materialRequest.requestNumber}" created from design.`
+                : `Design "${task.title}" pushed to procurement for processing.`,
+            type: 'Info',
+            relatedModel: materialRequest ? 'MaterialRequest' : 'Task',
+            relatedId: materialRequest ? materialRequest._id : task._id
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -564,9 +675,12 @@ exports.getTaskTimeline = async (req, res) => {
 
 exports.reassignTask = async (req, res) => {
     try {
-        const { assignedTo, reason } = req.body;
-        if (!assignedTo) {
-            return res.status(400).json({ success: false, message: 'New assignee is required' });
+        const { assignedTo, staffIds, reason } = req.body;
+        // Support both single 'assignedTo' or array 'staffIds'
+        const newAssignees = staffIds || (Array.isArray(assignedTo) ? assignedTo : [assignedTo]);
+
+        if (!newAssignees || newAssignees.length === 0 || !newAssignees[0]) {
+            return res.status(400).json({ success: false, message: 'At least one assignee is required' });
         }
 
         const task = await Task.findById(req.params.id);
@@ -574,26 +688,30 @@ exports.reassignTask = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Task not found' });
         }
 
-        const oldAssignee = task.assignedTo?.toString();
+        const oldAssignees = task.assignedTo;
         const Staff = require('../models/Staff');
-        const newAssignee = await Staff.findById(assignedTo);
+        const staffMembers = await Staff.find({ _id: { $in: newAssignees } });
 
-        if (!newAssignee) {
-            return res.status(404).json({ success: false, message: 'Assignee not found' });
+        if (staffMembers.length === 0) {
+            return res.status(404).json({ success: false, message: 'No valid assignees found' });
         }
 
-        task.assignedTo = assignedTo;
-        task.timeline.push({
-            action: 'reassigned',
-            performedBy: req.user.id,
-            details: reason || `Task reassigned to ${newAssignee.name}`,
-            oldValue: oldAssignee,
-            newValue: assignedTo,
-            timestamp: new Date()
+        await Task.findByIdAndUpdate(req.params.id, {
+            $set: {
+                assignedTo: newAssignees,
+                lastStatusUpdate: new Date()
+            },
+            $push: {
+                timeline: {
+                    action: 'reassigned',
+                    performedBy: req.user.id,
+                    details: reason || `Task reassigned to ${staffMembers.map(s => s.name).join(', ')}`,
+                    oldValue: oldAssignees,
+                    newValue: newAssignees,
+                    timestamp: new Date()
+                }
+            }
         });
-        task.lastStatusUpdate = new Date();
-
-        await task.save();
 
         const updatedTask = await Task.findById(req.params.id)
             .populate('assignedTo', 'name role email phone')
@@ -602,16 +720,19 @@ exports.reassignTask = async (req, res) => {
 
         res.status(200).json({ success: true, data: updatedTask, message: 'Task reassigned successfully' });
 
-        if (newAssignee.email) {
-            notifyStaffUser(newAssignee.email, {
-                title: 'Task Reassigned to You',
-                description: `You have been assigned "${task.title}". Priority: ${task.priority}. Due: ${new Date(task.dueDate).toLocaleDateString('en-IN')}.${reason ? ` Reason: ${reason}` : ''}`,
-                type: 'Task',
-                relatedModel: 'Task',
-                relatedId: task._id,
-                createdBy: req.user.id
-            });
-        }
+        // Notify new assignees
+        staffMembers.forEach(staff => {
+            if (staff.email) {
+                notifyStaffUser(staff.email, {
+                    title: 'Task Reassigned to You',
+                    description: `You have been assigned "${task.title}". Priority: ${task.priority}. Due: ${new Date(task.dueDate).toLocaleDateString('en-IN')}.${reason ? ` Reason: ${reason}` : ''}`,
+                    type: 'Task',
+                    relatedModel: 'Task',
+                    relatedId: task._id,
+                    createdBy: req.user.id
+                });
+            }
+        });
 
         logAction({
             userId: req.user.id,
@@ -619,9 +740,9 @@ exports.reassignTask = async (req, res) => {
             module: 'Task',
             referenceId: task._id,
             referenceModel: 'Task',
-            oldValue: { assignedTo: oldAssignee },
-            newValue: { assignedTo: assignedTo, reason },
-            description: `Task "${task.title}" reassigned from ${oldAssignee} to ${assignedTo}`
+            oldValue: { assignedTo: oldAssignees },
+            newValue: { assignedTo: newAssignees, reason },
+            description: `Task "${task.title}" reassigned to ${staffMembers.map(s => s.name).join(', ')}`
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -692,33 +813,4 @@ exports.addDailyUpdate = async (req, res) => {
     }
 };
 
-// @desc    Reassign task to another staff member
-// @route   PUT /api/tasks/:id/reassign
-// @access  Private (Manager/Admin)
-exports.reassignTask = async (req, res) => {
-    try {
-        const { staffIds, reason } = req.body;
-        const task = await Task.findById(req.params.id);
-
-        if (!task) {
-            return res.status(404).json({ success: false, message: 'Task not found' });
-        }
-
-        const oldStaff = task.assignedTo;
-        task.assignedTo = staffIds;
-        
-        task.timeline.push({
-            action: 'reassigned',
-            performedBy: req.user.id,
-            details: `Task reassigned. Reason: ${reason || 'Not specified'}`,
-            oldValue: oldStaff,
-            newValue: staffIds
-        });
-
-        await task.save();
-
-        res.status(200).json({ success: true, data: task });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
+// End of taskController.js

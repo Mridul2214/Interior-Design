@@ -58,7 +58,7 @@ exports.createUser = async (req, res) => {
 
         // Auto-create a Staff record if this user is a departmental staff/manager
         const staffRoles = ['Design Manager', 'Design Staff', 'Procurement Manager', 'Procurement Staff', 'Production Manager', 'Production Staff', 'Accounts Manager', 'Accounts Staff'];
-        
+
         if (staffRoles.includes(user.role)) {
             const Staff = require('../models/Staff');
             // Check if phone was provided, if not use a placeholder to pass validation if strictly needed
@@ -71,7 +71,7 @@ exports.createUser = async (req, res) => {
                 status: user.status || 'Active',
                 createdBy: req.user.id
             });
-            
+
             // Link the generated staffId back to the user
             user = await User.findByIdAndUpdate(user._id, { staffId: staffRecord.staffId }, { new: true });
         }
@@ -85,22 +85,25 @@ exports.createUser = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
     try {
-        const fieldsToUpdate = {
-            fullName: req.body.fullName,
-            email: req.body.email,
-            phone: req.body.phone,
-            role: req.body.role,
-            status: req.body.status
-        };
-
-        const user = await User.findByIdAndUpdate(req.params.id, fieldsToUpdate, {
-            new: true,
-            runValidators: true
-        }).select('-password');
+        const user = await User.findById(req.params.id);
 
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
+
+        // Update fields
+        user.fullName = req.body.fullName || user.fullName;
+        user.email = req.body.email || user.email;
+        user.phone = req.body.phone || user.phone;
+        user.role = req.body.role || user.role;
+        user.status = req.body.status || user.status;
+
+        // Update password if provided
+        if (req.body.password) {
+            user.password = req.body.password;
+        }
+
+        await user.save();
 
         // Sync updates to the associated Staff record if it exists
         if (user.staffId) {
@@ -117,8 +120,15 @@ exports.updateUser = async (req, res) => {
             );
         }
 
+        user.password = undefined;
         res.status(200).json({ success: true, data: user });
     } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: 'A user with this email or staff ID already exists'
+            });
+        }
         res.status(500).json({ success: false, message: error.message });
     }
 };

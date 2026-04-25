@@ -38,6 +38,7 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    /* 
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -49,25 +50,36 @@ function App() {
       touchMultiplier: 2,
     });
 
+    let rafId;
     function raf(time) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
+    */
 
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
 
     if (token && savedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(savedUser));
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        if (parsedUser) {
+          setIsAuthenticated(true);
+          setUser(parsedUser);
+        }
+      } catch (e) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
 
     setLoading(false);
 
     return () => {
-      lenis.destroy();
+      // if (lenis) lenis.destroy();
+      // cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -129,6 +141,7 @@ function App() {
               <Route path="users" element={<Users />} />
               <Route path="invoice" element={<Invoice />} />
               <Route path="projects" element={<Projects />} />
+              <Route path="projects/:id" element={<Projects />} />
               <Route path="material-review" element={<MaterialReviewHub user={user} />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
@@ -151,12 +164,19 @@ function App() {
             </Route>
           )}
 
-          {/* Fallback routing */}
-          <Route path="/" element={
-            shouldUseStaffLayout ? (
+          {/* Fallback routing - Redirect unknown paths to appropriate dashboard */}
+          {/* Catch-all for undefined roles or routing errors */}
+          <Route path="*" element={
+            shouldUseAdminLayout ? (
+              <Navigate to="/" replace />
+            ) : shouldUseStaffLayout ? (
               <Navigate to="/staff/dashboard" replace />
             ) : (
-              <Navigate to="/" replace />
+              <div style={{ padding: '2rem', textAlign: 'center' }}>
+                <h2>No Dashboard Assigned</h2>
+                <p>User Role: {userRole || 'None'}</p>
+                <button onClick={handleLogout}>Logout</button>
+              </div>
             )
           } />
         </Routes>
