@@ -17,7 +17,8 @@ import {
     Building2,
     Palette,
     ShoppingCart,
-    ClipboardCheck
+    ClipboardCheck,
+    CheckCircle
 } from 'lucide-react';
 import { getRoleDepartment, useRoleDashboard } from '../../hooks/useRoleDashboard';
 import './css/StaffSidebar.css';
@@ -56,7 +57,7 @@ const StaffSidebar = ({ user, onLogout, isOpen, toggleSidebar }) => {
                 { name: 'Clients', icon: Users, path: '/staff/clients' },
             ],
             Sales: [
-                { name: 'Sales Tasks', icon: FileText, path: '/staff/dashboard' },
+                { name: 'Design Approvals', icon: CheckCircle, path: '/staff/dashboard' },
                 { name: 'My Tasks', icon: CheckSquare, path: '/staff/tasks' },
                 { name: 'Clients', icon: Users, path: '/staff/clients' },
                 { name: 'Quotations', icon: FileText, path: '/staff/quotations' },

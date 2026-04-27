@@ -317,6 +317,17 @@ export const taskAPI = {
     pushToProcurement: (id) => apiCall(`/tasks/${id}/push-procurement`, {
         method: 'PUT'
     }),
+    salesApprove: (id, data) => apiCall(`/tasks/${id}/sales-approve`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
+    sendToAdmin: (id) => apiCall(`/tasks/${id}/send-to-admin`, {
+        method: 'PUT'
+    }),
+    adminReview: (id, data) => apiCall(`/tasks/${id}/admin-review`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    }),
     addDailyUpdate: (id, data) => apiCall(`/tasks/${id}/daily-update`, {
         method: 'POST',
         body: JSON.stringify(data)

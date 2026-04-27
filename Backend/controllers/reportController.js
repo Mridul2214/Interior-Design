@@ -31,6 +31,7 @@ exports.getDashboardStats = async (req, res) => {
         const totalTasks = await Task.countDocuments();
         const completedTasks = await Task.countDocuments({ status: 'Completed' });
         const inProgressTasks = await Task.countDocuments({ status: 'In Progress' });
+        const pendingAdminReviews = await Task.countDocuments({ status: 'Pending Admin Review' });
 
         // Inventory alerts
         const totalInventory = await Inventory.countDocuments();
@@ -62,7 +63,8 @@ exports.getDashboardStats = async (req, res) => {
                 tasks: {
                     total: totalTasks,
                     completed: completedTasks,
-                    inProgress: inProgressTasks
+                    inProgress: inProgressTasks,
+                    pendingAdmin: pendingAdminReviews
                 },
                 inventory: {
                     totalCount: totalInventory,

@@ -23,14 +23,24 @@ exports.getTasks = async (req, res) => {
 
         // Automatically filter for staff users (Flexible role check)
         const roleLower = req.user.role.toLowerCase();
-        const isStaff = (roleLower.includes('staff') || roleLower.includes('designer')) && !roleLower.includes('manager') && !roleLower.includes('admin');
+        const isSales = roleLower.includes('sales');
+        const isStaff = (roleLower.includes('staff') || roleLower.includes('designer') || isSales) && !roleLower.includes('manager') && !roleLower.includes('admin');
 
         if (isStaff) {
             const Staff = require('../models/Staff');
             const staffMember = await Staff.findOne({ email: req.user.email });
             if (staffMember) {
-                query.assignedTo = staffMember._id;
-            } else {
+                if (isSales) {
+                    // Sales can see tasks assigned to them OR tasks pending sales review
+                    query.$or = [
+                        { assignedTo: staffMember._id },
+                        { status: 'Pending Sales Review' }
+                    ];
+                } else {
+                    query.assignedTo = staffMember._id;
+                }
+            } else if (!isSales) {
+                // If not found in staff model and not sales, return empty
                 return res.status(200).json({ success: true, count: 0, data: [] });
             }
         }
@@ -373,7 +383,7 @@ exports.deleteTask = async (req, res) => {
 
 exports.submitTask = async (req, res) => {
     try {
-        const { staffNotes, files } = req.body;
+        const { staffNotes, files, designItems } = req.body;
         const task = await Task.findById(req.params.id);
 
         if (!task) {
@@ -386,6 +396,7 @@ exports.submitTask = async (req, res) => {
         const submission = {
             files: files || [],
             staffNotes,
+            designItems: designItems || [],
             submittedBy: staffMember ? staffMember._id : null,
             submittedAt: new Date(),
             status: 'Pending Review'
@@ -445,8 +456,8 @@ exports.reviewSubmission = async (req, res) => {
         submission.reviewedAt = new Date();
         submission.reviewedBy = req.user.id;
 
-        if (status === 'Approved') {
-            task.status = 'Approved';
+        if (status === 'Approved' || status === 'Pending Sales Review') {
+            task.status = 'Pending Sales Review';
             task.timeline.push({
                 action: 'approved',
                 performedBy: req.user.id,
@@ -481,6 +492,18 @@ exports.reviewSubmission = async (req, res) => {
                 createdBy: req.user.id
             });
         });
+
+        if (status === 'Approved' || status === 'Pending Sales Review') {
+            const { notifyByRole } = require('../utils/notificationHelper');
+            const designerNames = assignees.map(a => a.name).join(', ') || 'the design team';
+            notifyByRole('Sales', {
+                title: '🎨 New Design for Review',
+                description: `Design approved by manager for "${task.title}". Submitted by: ${designerNames}. Please review and present to client.`,
+                type: 'Info',
+                relatedModel: 'Task',
+                relatedId: task._id
+            });
+        }
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -589,6 +612,198 @@ exports.pushToProcurement = async (req, res) => {
             type: 'Info',
             relatedModel: materialRequest ? 'MaterialRequest' : 'Task',
             relatedId: materialRequest ? materialRequest._id : task._id
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Sales approves/rejects design
+exports.salesApproveTask = async (req, res) => {
+    try {
+        const { approved, salesNotes } = req.body;
+        const task = await Task.findById(req.params.id);
+        if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+
+        if (task.status !== 'Pending Sales Review') {
+            return res.status(400).json({ success: false, message: 'Task is not pending sales review' });
+        }
+
+        task.status = approved ? 'Sales Approved' : 'Revision Required';
+        task.timeline.push({
+            action: 'salesApproved',
+            performedBy: req.user.id,
+            details: approved
+                ? `Sales approved design. Notes: ${salesNotes || 'None'}`
+                : `Sales rejected design. Reason: ${salesNotes || 'None'}`,
+            timestamp: new Date()
+        });
+        await task.save();
+
+        res.status(200).json({ success: true, data: task, message: approved ? 'Design approved by Sales' : 'Design sent back for revision' });
+
+        // Notify Design Manager
+        const { notifyByRole } = require('../utils/notificationHelper');
+        notifyByRole('Design Manager', {
+            title: approved ? '✅ Sales Approved Design' : '⚠️ Sales Rejected Design',
+            description: approved
+                ? `Sales team approved design for "${task.title}". Please push to Admin for final review.`
+                : `Sales team rejected design for "${task.title}". Reason: ${salesNotes}. Please coordinate revision.`,
+            type: approved ? 'Success' : 'Warning',
+            relatedModel: 'Task',
+            relatedId: task._id
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Manager sends approved design to Superadmin
+exports.managerSendToAdmin = async (req, res) => {
+    try {
+        const task = await Task.findById(req.params.id);
+        if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+
+        if (task.status !== 'Sales Approved') {
+            return res.status(400).json({ success: false, message: 'Design must be Sales Approved before sending to Admin' });
+        }
+
+        task.status = 'Pending Admin Review';
+        task.timeline.push({
+            action: 'sentToAdmin',
+            performedBy: req.user.id,
+            details: 'Design and item list forwarded to Superadmin for final approval',
+            timestamp: new Date()
+        });
+        await task.save();
+
+        res.status(200).json({ success: true, data: task, message: 'Design sent to Superadmin for review' });
+
+        // Notify Superadmin
+        const { notifyByRole } = require('../utils/notificationHelper');
+        notifyByRole('Superadmin', {
+            title: '📋 Design Pending Your Approval',
+            description: `Design Manager submitted "${task.title}" for final approval. Review the design and item list to push to procurement.`,
+            type: 'Info',
+            relatedModel: 'Task',
+            relatedId: task._id
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Superadmin reviews and approves/rejects design
+exports.adminReviewDesign = async (req, res) => {
+    try {
+        const { approved, rejectionReason } = req.body;
+        const task = await Task.findById(req.params.id).populate('quotation');
+        if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
+
+        if (task.status !== 'Pending Admin Review') {
+            return res.status(400).json({ success: false, message: 'Task is not pending admin review' });
+        }
+
+        if (!approved) {
+            // Admin rejects — send back to manager for redo
+            task.status = 'Admin Rejected';
+            task.timeline.push({
+                action: 'adminReviewed',
+                performedBy: req.user.id,
+                details: `Admin rejected design. Reason: ${rejectionReason || 'Not specified'}`,
+                timestamp: new Date()
+            });
+            await task.save();
+
+            res.status(200).json({ success: true, data: task, message: 'Design rejected and sent back for revision' });
+
+            const { notifyByRole } = require('../utils/notificationHelper');
+            notifyByRole('Design Manager', {
+                title: '❌ Admin Rejected Design',
+                description: `Superadmin rejected "${task.title}". Reason: ${rejectionReason}. Please coordinate with your team to redo.`,
+                type: 'Error',
+                relatedModel: 'Task',
+                relatedId: task._id
+            });
+            return;
+        }
+
+        // Admin approves — push to procurement
+        if (!task.project && task.quotation) {
+            const Project = require('../models/Project');
+            const project = await Project.findOne({ quotation: task.quotation._id });
+            if (project) task.project = project._id;
+        }
+
+        task.status = 'Pushed to Procurement';
+        task.timeline.push({
+            action: 'adminReviewed',
+            performedBy: req.user.id,
+            details: 'Admin approved design and pushed to procurement',
+            timestamp: new Date()
+        });
+
+        // Build material request from designItems in latest submission
+        const latestSubmission = task.submissions?.[task.submissions.length - 1];
+        const designItems = latestSubmission?.designItems || [];
+        const materialRequestItems = designItems.map(item => ({
+            itemName: item.name,
+            description: `Size: ${item.size || 'N/A'}`,
+            quantity: item.quantity || 1,
+            unit: item.unit || 'pcs',
+            status: 'Pending'
+        }));
+
+        let materialRequest = null;
+        if (task.project) {
+            materialRequest = await MaterialRequest.create({
+                project: task.project,
+                quotation: task.quotation ? task.quotation._id : null,
+                items: materialRequestItems,
+                priority: 'Medium',
+                status: 'Pending',
+                requestedBy: req.user.id,
+                createdBy: req.user.id,
+                isPushedFromDesign: true,
+                notes: `Admin-approved design handoff from task: ${task.title}.`
+            });
+
+            const Project = require('../models/Project');
+            await Project.findByIdAndUpdate(task.project, { stage: 'Procurement', designComplete: true });
+        }
+
+        if (task.quotation) {
+            task.quotation.status = 'Sent to Procurement';
+            await task.quotation.save();
+        }
+
+        await task.save();
+
+        res.status(200).json({ success: true, data: task, materialRequest, message: 'Design approved and pushed to procurement' });
+
+        createNotification({
+            title: '🚀 Design Pushed to Procurement',
+            description: `Admin approved "${task.title}" and it has been forwarded to procurement.`,
+            type: 'Success',
+            relatedModel: 'Task',
+            relatedId: task._id,
+            createdBy: req.user.id
+        });
+
+        const { notifyByRole } = require('../utils/notificationHelper');
+        notifyByRole('Procurement Manager', {
+            title: 'New Material Request from Design',
+            description: `Design "${task.title}" approved by admin. Material request created with ${materialRequestItems.length} item(s).`,
+            type: 'Info',
+            relatedModel: materialRequest ? 'MaterialRequest' : 'Task',
+            relatedId: materialRequest ? materialRequest._id : task._id
+        });
+        notifyByRole('Design Manager', {
+            title: '✅ Admin Approved — Procurement Notified',
+            description: `Design "${task.title}" was approved by Superadmin and has been pushed to the Procurement team.`,
+            type: 'Success',
+            relatedModel: 'Task',
+            relatedId: task._id
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

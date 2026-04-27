@@ -37,35 +37,79 @@ const Overview = ({ pendingRequests, designHandoffs, assignedRequests, completed
             {/* Elegant Stat Cards */}
             <div className="glass-stats-grid">
                 <div className="glass-stat-card">
-                    <div className="glass-stat-icon-wrapper icon-purple">
-                        <Target size={20} strokeWidth={1.5} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                            <div className="glass-stat-value">{pendingRequests.length}</div>
+                            <div className="glass-stat-label">Pending Reviews</div>
+                        </div>
+                        <div className="glass-stat-icon-wrapper icon-purple">
+                            <Target size={20} strokeWidth={1.5} />
+                        </div>
                     </div>
-                    <div className="glass-stat-value">{pendingRequests.length}</div>
-                    <div className="glass-stat-label">Pending Reviews</div>
+                    <div style={{ height: '40px', width: '100%', marginTop: '1rem' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={performanceData}>
+                                <Area type="monotone" dataKey="count" stroke="#a78bfa" fill="#f5f3ff" strokeWidth={2} dot={false} />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
                 
                 <div className="glass-stat-card">
-                    <div className="glass-stat-icon-wrapper icon-blue">
-                        <Truck size={20} strokeWidth={1.5} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                            <div className="glass-stat-value">{assignedRequests.length}</div>
+                            <div className="glass-stat-label">Active Assignments</div>
+                        </div>
+                        <div className="glass-stat-icon-wrapper icon-blue">
+                            <Truck size={20} strokeWidth={1.5} />
+                        </div>
                     </div>
-                    <div className="glass-stat-value">{assignedRequests.length}</div>
-                    <div className="glass-stat-label">Active Assignments</div>
+                    <div style={{ height: '40px', width: '100%', marginTop: '1rem' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={performanceData.map(d => ({ ...d, count: d.count * 0.8 }))}>
+                                <Area type="monotone" dataKey="count" stroke="#60a5fa" fill="#eff6ff" strokeWidth={2} dot={false} />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
 
                 <div className="glass-stat-card">
-                    <div className="glass-stat-icon-wrapper icon-green">
-                        <CheckCircle size={20} strokeWidth={1.5} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                            <div className="glass-stat-value">{completedRequests.length}</div>
+                            <div className="glass-stat-label">Completed Orders</div>
+                        </div>
+                        <div className="glass-stat-icon-wrapper icon-green">
+                            <CheckCircle size={20} strokeWidth={1.5} />
+                        </div>
                     </div>
-                    <div className="glass-stat-value">{completedRequests.length}</div>
-                    <div className="glass-stat-label">Completed Orders</div>
+                    <div style={{ height: '40px', width: '100%', marginTop: '1rem' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={performanceData.map(d => ({ ...d, count: d.count * 1.2 }))}>
+                                <Area type="monotone" dataKey="count" stroke="#34d399" fill="#f0fdf4" strokeWidth={2} dot={false} />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
 
                 <div className="glass-stat-card">
-                    <div className="glass-stat-icon-wrapper icon-orange">
-                        <AlertTriangle size={20} strokeWidth={1.5} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                            <div className="glass-stat-value">{extensionRequests.length}</div>
+                            <div className="glass-stat-label">Time Extensions</div>
+                        </div>
+                        <div className="glass-stat-icon-wrapper icon-orange">
+                            <AlertTriangle size={20} strokeWidth={1.5} />
+                        </div>
                     </div>
-                    <div className="glass-stat-value">{extensionRequests.length}</div>
-                    <div className="glass-stat-label">Time Extensions</div>
+                    <div style={{ height: '40px', width: '100%', marginTop: '1rem' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={performanceData.map(d => ({ ...d, count: d.count * 0.5 }))}>
+                                <Area type="monotone" dataKey="count" stroke="#fbbf24" fill="#fffbeb" strokeWidth={2} dot={false} />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             </div>
 
@@ -104,6 +148,16 @@ const Overview = ({ pendingRequests, designHandoffs, assignedRequests, completed
                     <div style={{ height: '280px', width: '100%', position: 'relative' }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
+                                {/* Background Track Ring */}
+                                <Pie
+                                    data={[{ value: 1 }]}
+                                    innerRadius={75}
+                                    outerRadius={95}
+                                    fill="#f5f5f4"
+                                    stroke="none"
+                                    dataKey="value"
+                                    isAnimationActive={false}
+                                />
                                 <Pie
                                     data={chartData}
                                     cx="50%"

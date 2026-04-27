@@ -56,6 +56,7 @@ const UserSchema = new mongoose.Schema({
             'Project Engineer',
             'Site Engineer',
             'Site Supervisor',
+            'Sales',
             'Accounts Manager',
             'Accounts Staff',
             'Manager',
@@ -124,6 +125,7 @@ UserSchema.methods.getDepartment = function () {
     if (this.role.includes('Procurement')) return 'Procurement';
     if (this.role.includes('Production') || this.role === 'Project Manager' || this.role === 'Project Engineer' || this.role === 'Site Engineer' || this.role === 'Site Supervisor') return 'Production';
     if (this.role.includes('Accounts')) return 'Accounts';
+    if (this.role === 'Sales') return 'Sales';
     return 'Admin';
 };
 

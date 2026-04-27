@@ -13,7 +13,10 @@ const {
     submitTask,
     reviewSubmission,
     pushToProcurement,
-    addDailyUpdate
+    addDailyUpdate,
+    salesApproveTask,
+    managerSendToAdmin,
+    adminReviewDesign
 } = require('../controllers/taskController');
 
 const router = express.Router();
@@ -44,5 +47,10 @@ router.put('/:id/submit', submitTask);
 router.put('/:id/review', reviewSubmission);
 router.put('/:id/push-procurement', pushToProcurement);
 router.post('/:id/daily-update', addDailyUpdate);
+
+// New Design Approval Workflow Routes
+router.put('/:id/sales-approve', salesApproveTask);
+router.put('/:id/send-to-admin', managerSendToAdmin);
+router.put('/:id/admin-review', adminReviewDesign);
 
 module.exports = router;

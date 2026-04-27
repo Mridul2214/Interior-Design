@@ -7,89 +7,123 @@ import {
     TrendingUp, 
     AlertCircle, 
     Package,
-    ArrowRight
+    ArrowRight,
+    Users
 } from 'lucide-react';
 import '../css/DesignStudio.css';
 
-const Projects = ({ projects = [], materialRequests = [], onReviewRequest, onUpdateStatus, onHandoffInitiate }) => {
-    const moodImages = [
-        "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=800",
-        "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1556912177-c54030639a75?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1615873968403-89e068628265?auto=format&fit=crop&q=80&w=600"
-    ];
-
+const Projects = ({ projects = [], tasks = [], getImageUrl, materialRequests = [], onReviewRequest, onUpdateStatus, onHandoffInitiate }) => {
     return (
-        <div className="design-studio-container fade-in">
-            {/* Studio Header */}
-            <header className="editorial-header">
+        <div className="portfolio-modern fade-in">
+            <div className="portfolio-header">
                 <div>
-                    <div className="editorial-date">Studio Projects // Lifecycle Archive</div>
-                    <h1>THE <span>PORT</span>FOLIO</h1>
+                    <h1>Project Portfolio</h1>
+                    <p>Track design progress and handoff status for all active developments.</p>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#888' }}>{projects.length} ACTIVE DEVELOPMENTS</div>
+                <div className="portfolio-stats">
+                    <div className="stat-bubble">
+                        <span className="stat-num">{projects.length}</span>
+                        <span className="stat-label">Active Projects</span>
+                    </div>
                 </div>
-            </header>
+            </div>
 
-            <div className="project-canvas">
+            <div className="portfolio-grid">
                 {projects.map((project, idx) => {
                     const projectMaterials = materialRequests?.filter(r => 
                         (r.project?._id || r.project)?.toString() === project._id?.toString()
                     ) || [];
                     const pendingMaterials = projectMaterials.filter(r => r.status === 'Design Review');
 
+                    const projectTasks = tasks.filter(t => 
+                        (t.project?._id || t.project || t.quotation?._id || t.quotation)?.toString() === project._id?.toString()
+                    );
+
+                    let displayStatus = 'Pending Assignment';
+                    let statusClass = 'pending';
+                    let statusDueDate = project.targetEndDate;
+
+                    if (project.stage === 'Procurement') {
+                        displayStatus = 'Forwarded to Procurement';
+                        statusClass = 'procurement';
+                    } else if (projectTasks.length > 0) {
+                        const hasSubmissions = projectTasks.some(t => t.submissions?.length > 0);
+                        const isApproved = projectTasks.every(t => t.status === 'Approved' || t.status === 'Pushed to Procurement' || t.status === 'Completed');
+                        const needsRevision = projectTasks.some(t => t.status === 'Revision Required');
+                        const isReviewPending = projectTasks.some(t => t.status === 'Review Pending');
+                        const isSalesReview = projectTasks.some(t => t.status === 'Pending Sales Review');
+                        
+                        const primaryTask = projectTasks.find(t => t.status !== 'Completed') || projectTasks[0];
+
+                        if (isApproved) {
+                            displayStatus = 'Approved';
+                            statusClass = 'completed';
+                        } else if (isSalesReview) {
+                            displayStatus = 'Pending Sales';
+                            statusClass = 'submitted';
+                        } else if (needsRevision) {
+                            displayStatus = 'Revision Required';
+                            statusClass = 'revision';
+                        } else if (isReviewPending || hasSubmissions) {
+                            displayStatus = 'Files Received';
+                            statusClass = 'submitted';
+                        } else {
+                            displayStatus = `Assigned`;
+                            statusClass = 'assigned';
+                            if (primaryTask?.dueDate) statusDueDate = primaryTask.dueDate;
+                        }
+                    }
+
+                    const moodImages = [
+                        "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=800",
+                        "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&q=80&w=600",
+                        "https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&q=80&w=600"
+                    ];
+
+                    let previewImage = moodImages[idx % moodImages.length];
+                    const submissions = projectTasks
+                        .flatMap(t => t.submissions || [])
+                        .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+
+                    if (submissions.length > 0 && submissions[0].files?.length > 0) {
+                        const imgFile = submissions[0].files.find(f => f.url?.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i));
+                        if (imgFile) previewImage = getImageUrl(imgFile.url);
+                    }
+
                     return (
-                        <div key={project._id} className="canvas-item">
-                            <div className="canvas-image" style={{ background: `url(${moodImages[idx % moodImages.length]}) center/cover` }}>
-                                <div style={{ width: '100%', height: '100%', padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', opacity: 0, transition: '0.3s' }} className="canvas-hover">
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <div style={{ background: 'white', padding: '6px 12px', borderRadius: '2px', fontSize: '0.65rem', fontWeight: 800 }}>
-                                            {project.projectNumber}
-                                        </div>
-                                        <div style={{ background: 'white', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <Maximize size={16} />
-                                        </div>
-                                    </div>
-                                    <div style={{ color: 'white' }}>
-                                        <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '4px' }}>Stage</div>
-                                        <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{project.stage || 'Design Development'}</div>
-                                    </div>
-                                </div>
-                                <style>{`.canvas-item:hover .canvas-hover { opacity: 1 !important; background: rgba(0,0,0,0.4); }`}</style>
+                        <div key={project._id} className="portfolio-card">
+                            <div className="card-media">
+                                <img src={previewImage} alt={project.name} />
+                                <div className={`status-tag ${statusClass}`}>{displayStatus}</div>
                             </div>
                             
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                                <h3 className="canvas-title" style={{ margin: 0 }}>{project.name}</h3>
-                                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1a1a1a' }}>{project.progress || 0}%</div>
-                            </div>
+                            <div className="card-body">
+                                <div className="card-header-main">
+                                    <h3 className="project-name">{project.name}</h3>
+                                    <span className="project-num">{project.projectNumber}</span>
+                                </div>
 
-                            <div className="canvas-meta" style={{ marginBottom: '1.5rem' }}>
-                                <span>{project.client?.name || 'Private Client'}</span>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <Clock size={12} color="#c4a484" /> 
-                                    {project.targetEndDate ? new Date(project.targetEndDate).toLocaleDateString() : 'Set Date'}
-                                </span>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <button 
-                                    onClick={() => onHandoffInitiate(project)}
-                                    style={{ flex: 1, background: '#1a1a1a', color: 'white', border: 'none', padding: '12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                                >
-                                    HANDOFF <ArrowRight size={14} />
-                                </button>
-                                {pendingMaterials.length > 0 && (
-                                    <button 
-                                        onClick={() => onReviewRequest(project._id)}
-                                        style={{ width: '42px', height: '42px', background: '#fef3c7', border: '1px solid #fcd34d', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                                        title="Pending Approvals"
-                                    >
-                                        <AlertCircle size={18} color="#92400e" />
-                                    </button>
-                                )}
+                                <div className="card-meta" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '1.25rem' }}>
+                                    <div className="meta-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#64748b' }}>
+                                        <div style={{ background: '#f8fafc', padding: '6px', borderRadius: '8px' }}><Briefcase size={12} /></div>
+                                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.client?.name || 'Private Client'}</span>
+                                    </div>
+                                    <div className="meta-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#64748b' }}>
+                                        <div style={{ background: '#eff6ff', padding: '6px', borderRadius: '8px' }}><Users size={12} color="#2563eb" /></div>
+                                        <span style={{ fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {projectTasks.length > 0 
+                                                ? projectTasks.flatMap(t => t.assignedTo || []).map(s => s.name || s.fullName).filter((v, i, a) => v && a.indexOf(v) === i).join(', ') || 'Unassigned' 
+                                                : 'Pending'}
+                                        </span>
+                                    </div>
+                                    <div className="meta-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#64748b', gridColumn: 'span 2' }}>
+                                        <div style={{ background: '#fef2f2', padding: '6px', borderRadius: '8px' }}><Clock size={12} color="#ef4444" /></div>
+                                        <span>
+                                            <strong style={{ color: '#ef4444' }}>{displayStatus === 'Assigned' ? 'Due: ' : 'Deadline: '}</strong>
+                                            {statusDueDate ? new Date(statusDueDate).toLocaleDateString() : 'TBD'}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     );

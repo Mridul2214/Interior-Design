@@ -1,29 +1,55 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, DollarSign, FileText, Package, ShoppingCart, Users, ArrowUpRight, ArrowDownRight, Minus, Activity, Landmark, PieChart as PieIcon } from 'lucide-react';
+import { TrendingUp, DollarSign, FileText, Package, ShoppingCart, Users, ArrowUpRight, ArrowDownRight, Minus, Activity, Landmark, Palette, PieChart as PieIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, Cell, PieChart, Pie } from 'recharts';
 import { reportAPI, purchaseOrderAPI } from '../../config/api';
 import './css/Dashboard.css';
 
-// Modern KPI Card
-const KPICard = ({ title, value, icon: Icon, color, bgColor, loading, details = [], trend = null }) => {
+// Modern KPI Card with Sparkline
+const KPICard = ({ title, value, icon: Icon, color, bgColor, loading, details = [], trend = null, sparkData = [] }) => {
     return (
         <div className="kpi-card">
             <div className="kpi-header">
-                <h3 className="kpi-title">{title}</h3>
+                <div className="kpi-info">
+                    <h3 className="kpi-title">{title}</h3>
+                    <div className="kpi-value-row">
+                        <span className="kpi-value">{loading ? <span className="loading-text">...</span> : value}</span>
+                        {trend && (
+                            <span className={`kpi-trend ${trend.type}`}>
+                                {trend.type === 'positive' && <ArrowUpRight size={14} />}
+                                {trend.type === 'negative' && <ArrowDownRight size={14} />}
+                                {trend.type === 'neutral' && <Minus size={14} />}
+                                {trend.value}
+                            </span>
+                        )}
+                    </div>
+                </div>
                 <div className="kpi-icon-wrapper" style={{ backgroundColor: bgColor, color: color }}>
                     <Icon size={18} />
                 </div>
             </div>
-            
-            <div className="kpi-value-row">
-                <span className="kpi-value">{loading ? <span className="loading-text">...</span> : value}</span>
-                {trend && (
-                    <span className={`kpi-trend ${trend.type}`}>
-                        {trend.type === 'positive' && <ArrowUpRight size={14} />}
-                        {trend.type === 'negative' && <ArrowDownRight size={14} />}
-                        {trend.type === 'neutral' && <Minus size={14} />}
-                        {trend.value}
-                    </span>
+
+            <div className="kpi-sparkline" style={{ height: '40px', width: '100%', marginTop: '10px' }}>
+                {!loading && sparkData.length > 0 && (
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={sparkData}>
+                            <defs>
+                                <linearGradient id={`colorSpark-${title.replace(/\s+/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+                                    <stop offset="95%" stopColor={color} stopOpacity={0} />
+                                </linearGradient>
+                            </defs>
+                            <Area
+                                type="monotone"
+                                dataKey="value"
+                                stroke={color}
+                                fill={`url(#colorSpark-${title.replace(/\s+/g, '')})`}
+                                strokeWidth={2}
+                                dot={false}
+                                isAnimationActive={true}
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
                 )}
             </div>
 
@@ -101,6 +127,7 @@ const PieTooltip = ({ active, payload }) => {
 };
 
 const Dashboard = ({ user }) => {
+    const navigate = useNavigate();
     const [stats, setStats] = useState(null);
     const [poStats, setPoStats] = useState({ total: 0, pending: 0, ordered: 0, received: 0 });
     const [revenueData, setRevenueData] = useState([]);
@@ -114,6 +141,11 @@ const Dashboard = ({ user }) => {
         if (hour < 18) return "Good afternoon";
         return "Good evening";
     };
+
+    // Mock Sparkline Data
+    const sparkData = [
+        { value: 40 }, { value: 35 }, { value: 55 }, { value: 45 }, { value: 60 }, { value: 50 }, { value: 75 }
+    ];
 
     useEffect(() => {
         fetchDashboardData();
@@ -195,6 +227,24 @@ const Dashboard = ({ user }) => {
                     </div>
                 )}
 
+                {stats?.tasks?.pendingAdmin > 0 && (
+                    <div className="approval-alert-card" onClick={() => navigate('/approvals')} style={{ cursor: 'pointer' }}>
+                        <div className="alert-content">
+                            <div className="alert-icon-box">
+                                <Palette size={20} />
+                            </div>
+                            <div className="alert-text">
+                                <h3>{stats.tasks.pendingAdmin} Designs Awaiting Your Approval</h3>
+                                <p>Designs from the studio are ready for final sign-off and procurement push.</p>
+                            </div>
+                        </div>
+                        <div className="alert-action">
+                            <span>Review Now</span>
+                            <ArrowUpRight size={16} />
+                        </div>
+                    </div>
+                )}
+
                 {/* KPI Cards Grid */}
                 <div className="stats-grid">
                     <KPICard
@@ -205,6 +255,7 @@ const Dashboard = ({ user }) => {
                         bgColor="#eff6ff"
                         loading={loading}
                         trend={{ type: 'positive', value: '12%' }}
+                        sparkData={sparkData}
                         details={[
                             { label: 'Pending', value: stats?.quotations?.pending || 0, color: '#f59e0b' },
                             { label: 'Approved', value: stats?.quotations?.approved || 0, color: '#10b981' }
@@ -218,6 +269,7 @@ const Dashboard = ({ user }) => {
                         bgColor="#f5f3ff"
                         loading={loading}
                         trend={{ type: 'neutral', value: '0%' }}
+                        sparkData={sparkData}
                         details={[
                             { label: 'Low Stock', value: stats?.inventory?.lowStock || 0, color: '#f59e0b' },
                             { label: 'Out of Stock', value: stats?.inventory?.outOfStock || 0, color: '#ef4444' }
@@ -231,6 +283,7 @@ const Dashboard = ({ user }) => {
                         bgColor="#fdf2f8"
                         loading={loading}
                         trend={{ type: 'negative', value: '3%' }}
+                        sparkData={sparkData}
                         details={[
                             { label: 'Pending', value: poStats.pending, color: '#f59e0b' },
                             { label: 'Received', value: poStats.received, color: '#10b981' }
@@ -244,6 +297,7 @@ const Dashboard = ({ user }) => {
                         bgColor="#f0f9ff"
                         loading={loading}
                         trend={{ type: 'positive', value: '8%' }}
+                        sparkData={sparkData}
                         details={[
                             { label: 'Active', value: stats?.clients?.active || 0, color: '#10b981' },
                             { label: 'New', value: stats?.clients?.new || 0, color: '#0ea5e9' }
@@ -265,12 +319,23 @@ const Dashboard = ({ user }) => {
                         <div className="pie-container">
                             <ResponsiveContainer width="100%" height={200}>
                                 <PieChart>
+                                    {/* Background Track Ring */}
+                                    <Pie
+                                        data={[{ value: 1 }]}
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        fill="#f1f5f9"
+                                        stroke="none"
+                                        dataKey="value"
+                                        isAnimationActive={false}
+                                    />
                                     <Pie
                                         data={financialPieData}
                                         innerRadius={60}
                                         outerRadius={80}
                                         paddingAngle={5}
                                         dataKey="value"
+                                        stroke="none"
                                     >
                                         {financialPieData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -295,7 +360,7 @@ const Dashboard = ({ user }) => {
                         </div>
                     </div>
 
-                    {/* Quotation Status Pie */}
+                    {/* Quotation Status Doughnut */}
                     <div className="analysis-card">
                         <div className="analysis-header">
                             <div className="analysis-icon green"><FileText size={20} /></div>
@@ -307,12 +372,23 @@ const Dashboard = ({ user }) => {
                         <div className="pie-container">
                             <ResponsiveContainer width="100%" height={200}>
                                 <PieChart>
+                                    {/* Background Track Ring */}
+                                    <Pie
+                                        data={[{ value: 1 }]}
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        fill="#f1f5f9"
+                                        stroke="none"
+                                        dataKey="value"
+                                        isAnimationActive={false}
+                                    />
                                     <Pie
                                         data={quotationPieData}
-                                        innerRadius={0}
+                                        innerRadius={60}
                                         outerRadius={80}
-                                        paddingAngle={0}
+                                        paddingAngle={5}
                                         dataKey="value"
+                                        stroke="none"
                                     >
                                         {quotationPieData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -321,6 +397,10 @@ const Dashboard = ({ user }) => {
                                     <Tooltip content={<PieTooltip />} />
                                 </PieChart>
                             </ResponsiveContainer>
+                            <div className="pie-center-label">
+                                <span className="label">Total Quotes</span>
+                                <span className="value">{stats?.quotations?.total || 0}</span>
+                            </div>
                         </div>
                         <div className="pie-legend">
                             {quotationPieData.map((item, index) => (
@@ -333,7 +413,7 @@ const Dashboard = ({ user }) => {
                         </div>
                     </div>
 
-                    {/* Inventory Health Pie */}
+                    {/* Inventory Health Doughnut */}
                     <div className="analysis-card">
                         <div className="analysis-header">
                             <div className="analysis-icon purple"><Package size={20} /></div>
@@ -345,12 +425,23 @@ const Dashboard = ({ user }) => {
                         <div className="pie-container">
                             <ResponsiveContainer width="100%" height={200}>
                                 <PieChart>
+                                    {/* Background Track Ring */}
+                                    <Pie
+                                        data={[{ value: 1 }]}
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        fill="#f1f5f9"
+                                        stroke="none"
+                                        dataKey="value"
+                                        isAnimationActive={false}
+                                    />
                                     <Pie
                                         data={inventoryPieData}
                                         innerRadius={60}
                                         outerRadius={80}
                                         paddingAngle={5}
                                         dataKey="value"
+                                        stroke="none"
                                     >
                                         {inventoryPieData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -397,32 +488,32 @@ const Dashboard = ({ user }) => {
                                 <AreaChart data={revenueData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} /> 
+                                            <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} />
                                             <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.0} />
                                         </linearGradient>
                                     </defs>
-                                    <XAxis 
-                                        dataKey="name" 
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        tick={{ fill: '#94a3b8', fontSize: 13 }} 
+                                    <XAxis
+                                        dataKey="name"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#94a3b8', fontSize: 13 }}
                                         dy={10}
                                     />
-                                    <YAxis 
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        tick={{ fill: '#94a3b8', fontSize: 13 }} 
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#94a3b8', fontSize: 13 }}
                                         tickFormatter={(value) => `${value / 1000}k`}
                                     />
                                     <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="4 4" />
                                     <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '4 4' }} />
-                                    <Area 
-                                        type="monotone" 
-                                        dataKey="value" 
-                                        stroke="#0ea5e9" 
-                                        strokeWidth={3} 
-                                        fillOpacity={1} 
-                                        fill="url(#colorRevenue)" 
+                                    <Area
+                                        type="monotone"
+                                        dataKey="value"
+                                        stroke="#0ea5e9"
+                                        strokeWidth={3}
+                                        fillOpacity={1}
+                                        fill="url(#colorRevenue)"
                                         activeDot={{ r: 6, fill: '#0ea5e9', stroke: '#fff', strokeWidth: 2 }}
                                     />
                                 </AreaChart>

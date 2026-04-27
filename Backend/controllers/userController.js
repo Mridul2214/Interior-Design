@@ -57,7 +57,7 @@ exports.createUser = async (req, res) => {
         let user = await User.create(req.body);
 
         // Auto-create a Staff record if this user is a departmental staff/manager
-        const staffRoles = ['Design Manager', 'Design Staff', 'Procurement Manager', 'Procurement Staff', 'Project Manager', 'Project Engineer', 'Site Engineer', 'Site Supervisor', 'Accounts Manager', 'Accounts Staff'];
+        const staffRoles = ['Design Manager', 'Design Staff', 'Procurement Manager', 'Procurement Staff', 'Project Manager', 'Project Engineer', 'Site Engineer', 'Site Supervisor', 'Accounts Manager', 'Accounts Staff', 'Sales'];
         if (staffRoles.includes(user.role)) {
             const Staff = require('../models/Staff');
             // Check if phone was provided, if not use a placeholder to pass validation if strictly needed

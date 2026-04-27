@@ -16,6 +16,7 @@ import Users from './components/AdminPanel/Users';
 import Invoice from './components/AdminPanel/Invoice';
 import QuotationView from './components/AdminPanel/QuotationView';
 import Projects from './components/AdminPanel/Projects';
+import DesignApprovals from './components/AdminPanel/DesignApprovals';
 import Login from './components/Login';
 
 import ProductionDashboard from './components/Production/Manager/Dashboard';
@@ -164,6 +165,7 @@ function App() {
               <Route path="projects" element={<Projects />} />
               <Route path="projects/:id" element={<Projects />} />
               <Route path="material-review" element={<MaterialReviewHub user={user} />} />
+              <Route path="approvals" element={<DesignApprovals />} />
 
               {/* Production Management Routes (Project Manager) */}
               <Route path="production-management/dashboard" element={<ProductionDashboard />} />

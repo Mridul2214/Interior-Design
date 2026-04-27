@@ -11,6 +11,10 @@ const TaskSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    creativeRequirements: {
+        type: String,
+        trim: true
+    },
     status: {
         type: String,
         enum: ['To Do', 'In Progress', 'Completed', 'Blocked'],
@@ -97,6 +101,12 @@ const TaskSchema = new mongoose.Schema({
             }
         }],
         staffNotes: String,
+        designItems: [{
+            name: String,
+            size: String,
+            unit: String,
+            quantity: Number
+        }],
         managerFeedback: String,
         status: {
             type: String,
@@ -119,7 +129,13 @@ const TaskSchema = new mongoose.Schema({
     }],
     status: {
         type: String,
-        enum: ['To Do', 'In Progress', 'Review Pending', 'Revision Required', 'Completed', 'Approved', 'Rejected', 'Pushed to Procurement', 'Blocked'],
+        enum: [
+            'To Do', 'In Progress', 'Review Pending', 'Revision Required',
+            'Completed', 'Approved', 'Rejected',
+            'Pending Sales Review', 'Sales Approved',
+            'Pending Admin Review', 'Admin Rejected',
+            'Pushed to Procurement', 'Blocked'
+        ],
         default: 'To Do'
     },
     completedAt: {
@@ -160,7 +176,9 @@ const TaskSchema = new mongoose.Schema({
     timeline: [{
         action: {
             type: String,
-            enum: ['created', 'started', 'reassigned', 'completed', 'reopened', 'updated', 'commented', 'submitted', 'revisionRequested', 'approved', 'pushed'],
+            enum: ['created', 'started', 'reassigned', 'completed', 'reopened', 'updated',
+                   'commented', 'submitted', 'revisionRequested', 'approved', 'pushed',
+                   'salesApproved', 'adminReviewed', 'sentToAdmin'],
             required: true
         },
         performedBy: {
@@ -229,17 +247,19 @@ TaskSchema.pre('save', function (next) {
 
     if (this.isModified('status')) {
         const now = new Date();
-        
-        if (this.status === 'Completed' || this.status === 'Approved' || this.status === 'Pushed to Procurement') {
+        const terminalStatuses = ['Completed', 'Approved', 'Sales Approved', 'Pushed to Procurement'];
+        if (terminalStatuses.includes(this.status)) {
             if (!this.completedAt) this.completedAt = now;
             this.progress = 100;
             this.isOverdue = false;
-        } else if (this.status === 'Review Pending') {
+        } else if (this.status === 'Pending Admin Review') {
             this.progress = 100;
-        } else if (this.status === 'Revision Required') {
-            this.progress = 50; // Indicates feedback loop
+        } else if (this.status === 'Review Pending' || this.status === 'Pending Sales Review') {
+            this.progress = 100;
+        } else if (this.status === 'Revision Required' || this.status === 'Admin Rejected') {
+            this.progress = 50;
         } else if (this.status === 'In Progress' && this.progress === 0) {
-            this.progress = 10; // Started
+            this.progress = 10;
         }
 
         if (this.completedAt && this.dueDate) {
@@ -248,7 +268,8 @@ TaskSchema.pre('save', function (next) {
     }
 
     // Overdue detection
-    if (this.status !== 'Completed' && this.status !== 'Approved' && this.status !== 'Pushed to Procurement') {
+    const nonOverdueStatuses = ['Completed', 'Approved', 'Sales Approved', 'Pending Admin Review', 'Pushed to Procurement'];
+    if (!nonOverdueStatuses.includes(this.status)) {
         if (this.dueDate && new Date(this.dueDate) < new Date()) {
             this.isOverdue = true;
         } else {

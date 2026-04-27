@@ -234,8 +234,8 @@ const Header = ({ user }) => {
                                         </button>
                                     </div>
                                 </div>
-                                <div 
-                                    className="popup-content" 
+                                <div
+                                    className="popup-content"
                                     ref={popupRef}
                                     data-lenis-prevent
                                     onWheel={(e) => e.stopPropagation()}

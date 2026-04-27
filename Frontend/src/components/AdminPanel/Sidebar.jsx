@@ -48,6 +48,7 @@ const Sidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
             { name: 'Purchase Orders', icon: ShoppingCart, path: '/purchase-orders' },
             { name: 'PO Inventory', icon: Package, path: '/po-inventory' },
             { name: 'Tasks', icon: CheckSquare, path: '/tasks' },
+            { name: 'Approvals', icon: Palette, path: '/approvals' },
         ];
 
         const systemItems = [
@@ -57,20 +58,13 @@ const Sidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
             { name: 'Settings', icon: Settings, path: '/settings' },
         ];
 
-        const productionManagementItems = [
-            { name: 'Dashboard', icon: LayoutDashboard, path: '/production-management/dashboard' },
-            { name: 'Projects', icon: Target, path: '/production-management/projects' },
-            { name: 'Tasks', icon: CheckSquare, path: '/production-management/tasks' },
-            { name: 'Team', icon: Users, path: '/production-management/team' },
-            { name: 'Approvals', icon: ClipboardCheck, path: '/production-management/approvals' },
-        ];
-
         // Add role-specific items
         let roleSpecificItems = [];
-        
+
         if (dashboardType === 'design_manager') {
             roleSpecificItems = [
-                { name: 'Design Overview', icon: Palette, path: '/' },
+                { name: 'Design Pipeline', icon: Palette, path: '/?tab=pipeline' },
+                { name: 'Studio Dashboard', icon: LayoutDashboard, path: '/?tab=dashboard' },
                 { name: 'Material Requests', icon: Package, path: '/material-review' },
             ];
         } else if (dashboardType === 'procurement_manager') {
@@ -94,7 +88,7 @@ const Sidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
         if (roleSpecificItems.length > 0) {
             // Replace 'Dashboard' with role-specific overview
             filteredMain[0] = roleSpecificItems[0];
-            
+
             // Add other role-specific items after Dashboard
             if (roleSpecificItems.length > 1) {
                 // Insert after dashboard
@@ -112,35 +106,35 @@ const Sidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
         // Filter groups based on role/department if not a Super Admin
         const roleLower = user?.role?.toLowerCase() || '';
         const isSuperAdmin = roleLower === 'super admin' || roleLower === 'admin';
-        const isProductionRole = ['project manager', 'project engineer', 'site engineer', 'site supervisor'].includes(roleLower);
 
         if (isSuperAdmin) return groups;
-
-        // Production roles get their own dedicated sidebar — not this one
-        if (isProductionRole) return [];
 
         // Departmet-based filtering
         return groups.map(group => {
             const filteredItems = group.items.filter(item => {
                 const path = item.path.toLowerCase();
-                
+
                 // Dashboard is for everyone
                 if (path === '/' || path === '/projects') return true;
 
                 if (roleLower.includes('design')) {
-                    return ['/quotations', '/clients', '/inventory', '/tasks', '/material-review'].includes(path);
+                    // Include the root path and new design pipeline tab
+                    return ['/', '/?tab=pipeline', '/?tab=dashboard', '/material-review', '/tasks', '/projects'].includes(path);
                 }
                 if (roleLower.includes('procurement')) {
                     return ['/inventory', '/purchase-orders', '/po-inventory', '/tasks'].includes(path);
                 }
-                if (roleLower.includes('production') || isProductionRole) {
-                    return path.startsWith('/production-management');
+                if (roleLower.includes('production')) {
+                    return ['/tasks', '/inventory', '/projects'].includes(path);
                 }
                 if (roleLower.includes('accounts')) {
                     return ['/invoice', '/reports', '/clients', '/projects'].includes(path);
                 }
                 if (roleLower === 'manager') {
-                    return ['/quotations', '/clients', '/tasks', '/projects', '/reports'].includes(path) || path.startsWith('/production-management');
+                    return ['/quotations', '/clients', '/tasks', '/projects', '/reports'].includes(path);
+                }
+                if (roleLower === 'sales') {
+                    return ['/quotations', '/clients', '/tasks', '/projects'].includes(path);
                 }
 
                 return true; // Default

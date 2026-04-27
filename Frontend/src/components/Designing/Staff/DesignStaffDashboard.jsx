@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     FileText, CheckSquare, Clock, Play, Image,
     Tag, Upload, Target, User,
-    AlertCircle, CheckCircle, Bell, Plus, FileUp, Send, List,
+    AlertCircle, CheckCircle, Bell, Plus, FileUp, Send, List, Check,
     Search, Trash2, PieChart, Briefcase, ChevronRight, X, LogOut,
     AlertTriangle, Lock as LockIcon, Menu, RefreshCw, Package, Users, Eye
 } from 'lucide-react';
@@ -12,6 +12,7 @@ import {
 } from '../../../config/api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import '../css/StaffDashboard.css';
+import Tasks from './Tasks';
 
 const DesignStaffDashboard = ({ user, onLogout }) => {
     const navigate = useNavigate();
@@ -29,8 +30,19 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
     const [uploading, setUploading] = useState(false);
     const [uploadData, setUploadData] = useState({
         files: [],
+        designItems: [], // Changed to array
         staffNotes: ''
     });
+
+    const PREDEFINED_ITEMS = [
+        "Plywood (18mm)", "Plywood (12mm)", "Plywood (6mm)", "Laminate (1mm)", 
+        "Adhesive (Fevicol SH)", "Hinges (Soft Close)", "Handles (6 inch)", 
+        "Handles (8 inch)", "Drawer Channels", "Edge Banding", "Paint (Enamel)", 
+        "Paint (Emulsion)", "Gypsum Board", "LED Strip (Warm White)", 
+        "Glass (6mm Clear)", "Mirror", "Screws (1 inch)", "Screws (1.5 inch)"
+    ];
+
+    const ITEM_UNITS = ["pcs", "kg", "mtr", "sq ft", "pkt", "box", "ltr", "roll"];
 
     // Material Request States
     const [materialRequests, setMaterialRequests] = useState([]);
@@ -42,6 +54,29 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
         priority: 'Medium',
         notes: ''
     });
+
+    // Item Builder Helpers
+    const handleAddDesignItem = () => {
+        setUploadData(prev => ({
+            ...prev,
+            designItems: [...prev.designItems, { name: '', size: '', unit: 'pcs', quantity: 1 }]
+        }));
+    };
+
+    const handleRemoveDesignItem = (index) => {
+        setUploadData(prev => ({
+            ...prev,
+            designItems: prev.designItems.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleDesignItemChange = (index, field, value) => {
+        setUploadData(prev => {
+            const newItems = [...prev.designItems];
+            newItems[index] = { ...newItems[index], [field]: value };
+            return { ...prev, designItems: newItems };
+        });
+    };
 
     // Quotation View States
     const [showQuotationModal, setShowQuotationModal] = useState(false);
@@ -172,12 +207,13 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
             setUploading(true);
             const res = await taskAPI.submit(selectedTask._id, {
                 files: uploadData.files,
+                designItems: uploadData.designItems,
                 staffNotes: uploadData.staffNotes
             });
             if (res.success) {
                 alert('Task submitted successfully for review!');
                 setShowUploadModal(false);
-                setUploadData({ files: [], staffNotes: '' });
+                setUploadData({ files: [], designItems: [], staffNotes: '' });
                 fetchData();
             }
         } catch (err) {
@@ -185,6 +221,41 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
             alert('Submission failed: ' + err.message);
         } finally {
             setUploading(false);
+        }
+    };
+
+    const handleUpdateTaskStatus = async (taskId, currentStatus) => {
+        const nextStatus = currentStatus === 'To Do' ? 'In Progress' : currentStatus;
+        if (nextStatus === currentStatus) return;
+        try {
+            const res = await taskAPI.update(taskId, { status: nextStatus });
+            if (res.success) {
+                fetchData();
+            }
+        } catch (err) {
+            console.error('Status Update Error:', err);
+        }
+    };
+
+    const handleMarkNotifRead = async (id) => {
+        try {
+            await notificationAPI.markAsRead(id);
+            setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+        } catch (err) {
+            console.error('Notif Read Error:', err);
+        }
+    };
+
+    const handleNotifClick = async (notif) => {
+        if (!notif.isRead) {
+            await handleMarkNotifRead(notif._id);
+        }
+        
+        // Navigation logic
+        if (notif.relatedModel === 'Task') {
+            navigate('?tab=tasks');
+        } else if (notif.relatedModel === 'MaterialRequest') {
+            navigate('?tab=materials');
         }
     };
 
@@ -205,9 +276,25 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
         <div className="dashboard-content-area-unified fade-in" style={{ padding: '1.5rem' }}>
             {activeTab === 'overview' && (
                 <>
-                    <div className="welcome-banner">
-                        <h3>Designer Workspace</h3>
-                        <p>Track your assignments and manage your design pipeline.</p>
+                    <div className="welcome-banner-premium" style={{
+                        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                        padding: '2.5rem',
+                        borderRadius: '24px',
+                        color: 'white',
+                        marginBottom: '2rem',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.2)'
+                    }}>
+                        <div style={{ position: 'relative', zIndex: 1 }}>
+                            <h3 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0 }}>Designer Workspace</h3>
+                            <p style={{ fontSize: '1rem', opacity: 0.9, marginTop: '8px', maxWidth: '500px' }}>
+                                Welcome back! Track your assignments, manage your design pipeline, and collaborate with the team.
+                            </p>
+                        </div>
+                        <div style={{ position: 'absolute', right: '-20px', top: '-20px', opacity: 0.1 }}>
+                            <PieChart size={200} />
+                        </div>
                     </div>
 
                     {dueSoonTasks.length > 0 && (
@@ -273,12 +360,25 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
                         </div>
                         <div className="notifications-feed">
                             {notifications.map(n => (
-                                <div key={n._id} className="notif-item unread" style={{ padding: '0.75rem 0' }}>
+                                <div 
+                                    key={n._id} 
+                                    className={`notif-item ${n.isRead ? 'read' : 'unread'}`} 
+                                    onClick={() => handleNotifClick(n)}
+                                >
                                     <div className="notif-content">
-                                        <p className="notif-title" style={{ fontSize: '0.9rem', fontWeight: 700 }}>{n.title}</p>
-                                        <p className="notif-desc" style={{ fontSize: '0.85rem' }}>{n.description}</p>
+                                        <p className="notif-title">{n.title}</p>
+                                        <p className="notif-desc">{n.description}</p>
                                         <span className="notif-time">{new Date(n.createdAt).toLocaleString()}</span>
                                     </div>
+                                    {!n.isRead && (
+                                        <button 
+                                            className="action-btn-mini" 
+                                            onClick={(e) => { e.stopPropagation(); handleMarkNotifRead(n._id); }}
+                                            style={{ background: '#6366f1', color: 'white', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '0.75rem', cursor: 'pointer' }}
+                                        >
+                                            <Check size={14} />
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                             {notifications.length === 0 && <div className="empty-state">No new notifications</div>}
@@ -288,76 +388,16 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
             )}
 
             {activeTab === 'tasks' && (
-                <div>
-                    <div className="task-board-header">
-                        <h2>Assigned Design Tasks</h2>
-                    </div>
-                    <div className="board-lists" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(450px, 1fr))', gap: '1rem' }}>
-                        <div className="board-column">
-                            <div className="col-header" style={{ marginBottom: '0.75rem' }}>
-                                <span>In Progress Tasks</span>
-                                <span className="count">{pendingTasks.length}</span>
-                            </div>
-                            <div className="queue-list" style={{ display: 'grid', gap: '0.75rem' }}>
-                                {pendingTasks.map(task => {
-                                    const isReassigned = task.timeline?.some(t => t.action === 'reassigned');
-                                    const isSplit = task.assignedTo?.length > 1;
-                                    const splitWith = task.assignedTo?.filter(s => s.email !== user?.email).map(s => s.name).join(', ');
-
-                                    return (
-                                        <div key={task._id} className="card" style={{ padding: '1rem' }}>
-                                            <div style={{ display: 'flex', gap: '12px' }}>
-                                                <div style={{ width: '4px', background: getPriorityColor(task.priority), borderRadius: '2px' }}></div>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                                                        <div>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                                                <strong style={{ fontSize: '0.95rem' }}>{task.title}</strong>
-                                                                {isReassigned && <span className="redo-badge">REASSIGNED</span>}
-                                                                {isSplit && <span className="redo-badge" style={{ color: '#0ea5e9', background: '#f0f9ff' }}>SPLIT</span>}
-                                                            </div>
-                                                            {task.quotation && (
-                                                                <div style={{ fontSize: '0.75rem', color: '#6366f1', fontWeight: 600, marginTop: '2px' }}>
-                                                                    <FileText size={12} /> {task.quotation.projectName}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div style={{ textAlign: 'right' }}>
-                                                            <span className="submission-time" style={{ fontSize: '0.7rem' }}>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '8px' }}>
-                                                        <span style={{ fontWeight: 600, color: task.status === 'Revision Required' ? '#ef4444' : '#64748b' }}>
-                                                            {task.status === 'Revision Required' ? 'Redo Required' : task.status}
-                                                        </span>
-                                                        {isSplit && splitWith && <span style={{ marginLeft: '8px' }}><Users size={12} /> {splitWith}</span>}
-                                                    </div>
-
-                                                    <div className="progress-container" style={{ width: '100%', height: '6px', background: '#f1f5f9', borderRadius: '3px', marginBottom: '12px' }}>
-                                                        <div className="progress-bar" style={{ width: `${task.progress || 0}%`, height: '100%', background: task.status === 'Revision Required' ? '#ef4444' : '#6366f1', borderRadius: '3px', transition: 'width 0.3s ease' }}></div>
-                                                    </div>
-
-                                                    <div style={{ display: 'flex', gap: '6px' }}>
-                                                        <button className="action-btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: '#6366f1', color: 'white' }} onClick={() => { setSelectedTask(task); setShowUploadModal(true); }}>
-                                                            <Upload size={14} /> Submit
-                                                        </button>
-                                                        <button className="action-btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: '#fff', border: '1px solid #e2e8f0' }} onClick={() => handleOpenMaterialModal(task)}>
-                                                            <Package size={14} /> Materials
-                                                        </button>
-                                                        <button className="action-btn" style={{ padding: '4px 10px', fontSize: '0.75rem', background: '#fff', border: '1px solid #e2e8f0' }} onClick={() => { setSelectedQuotation(task.quotation); setShowQuotationModal(true); }}>
-                                                            <Eye size={14} /> Info
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <Tasks 
+                    myTasks={pendingTasks} 
+                    onUpdateTaskStatus={handleUpdateTaskStatus}
+                    getPriorityColor={getPriorityColor}
+                    taskAPI={taskAPI}
+                    onOpenUpload={(task) => { setSelectedTask(task); setShowUploadModal(true); }}
+                    onOpenMaterial={null}
+                    onOpenQuotation={null}
+                    user={user}
+                />
             )}
 
             {activeTab === 'revisions' && (
@@ -386,9 +426,9 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
                                                         {isReassigned && <span style={{ background: '#fff7ed', color: '#c2410c', fontSize: '0.65rem', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, border: '1px solid #ffedd5' }}>REASSIGNED</span>}
                                                         {isSplit && <span style={{ background: '#f0f9ff', color: '#0369a1', fontSize: '0.65rem', padding: '2px 8px', borderRadius: '4px', fontWeight: 700, border: '1px solid #e0f2fe' }}>SPLIT</span>}
                                                     </div>
-                                                    {task.quotation && (
+                                                    {task.project && (
                                                         <div style={{ fontSize: '0.75rem', color: '#6366f1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                            <FileText size={12} /> {task.quotation.projectName} ({task.quotation.quotationNumber})
+                                                            <Briefcase size={12} /> {task.project.projectName}
                                                         </div>
                                                     )}
                                                 </div>
@@ -416,9 +456,6 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
                                                 <button className="btn-save-boq" style={{ backgroundColor: '#ef4444', border: 'none' }} onClick={() => { setSelectedTask(task); setShowUploadModal(true); }}>
                                                     <Upload size={16} /> Re-submit
                                                 </button>
-                                                <button className="btn-save-boq" style={{ backgroundColor: '#64748b' }} onClick={() => { setSelectedQuotation(task.quotation); setShowQuotationModal(true); }}>
-                                                    <FileText size={16} /> View Quotation
-                                                </button>
                                             </div>
                                         </div>
                                     );
@@ -429,118 +466,6 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
                 </div>
             )}
 
-            {activeTab === 'materials' && (
-                <div className="materials-board fade-in">
-                    <div className="task-board-header" style={{ marginBottom: '2rem' }}>
-                        <div>
-                            <h2>Materials Board</h2>
-                            <p style={{ color: '#64748b' }}>Project-wise material tracking and allocation.</p>
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-                        {tasks.filter(t => t.quotation).reduce((acc, t) => {
-                            const qId = t.quotation._id || t.quotation;
-                            if (!acc.find(item => item.id === qId)) {
-                                acc.push({
-                                    id: qId,
-                                    name: t.quotation.projectName,
-                                    number: t.quotation.quotationNumber,
-                                    items: t.quotation.items || [],
-                                    task: t
-                                });
-                            }
-                            return acc;
-                        }, []).map(project => {
-                            const projectExtras = materialRequests.filter(r =>
-                                (r.quotation?._id || r.quotation)?.toString() === project.id?.toString()
-                            );
-
-                            return (
-                                <div key={project.id} className="project-detail-card" style={{ padding: '0', overflow: 'hidden' }}>
-                                    <div className="pd-header" style={{ padding: '1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div className="pd-title">
-                                            <strong style={{ fontSize: '1.1rem', color: '#1e293b' }}>
-                                                <Package size={20} style={{ verticalAlign: 'middle', marginRight: '8px', color: '#4f46e5' }} />
-                                                {project.name}
-                                            </strong>
-                                            <span style={{ display: 'block', marginTop: '4px', fontSize: '0.8rem', color: '#64748b' }}>Ref: {project.number}</span>
-                                        </div>
-                                        <button className="btn-save-boq" style={{ background: '#4f46e5', border: 'none' }} onClick={() => handleOpenMaterialModal(project.task)}>
-                                            <Plus size={16} /> Request Extra Material
-                                        </button>
-                                    </div>
-
-                                    <div style={{ padding: '1.5rem' }}>
-                                        <h5 style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '1rem' }}>Original Quotation Materials</h5>
-                                        <table className="tag-table" style={{ margin: 0, marginBottom: '2rem' }}>
-                                            <thead>
-                                                <tr><th>Material / Item</th><th>Specifications</th><th>Quantity</th><th>Unit</th></tr>
-                                            </thead>
-                                            <tbody>
-                                                {project.items.map((item, idx) => (
-                                                    <tr key={idx}>
-                                                        <td><strong>{item.itemName}</strong></td>
-                                                        <td>{item.specifications || item.material || 'N/A'}</td>
-                                                        <td>{item.quantity}</td>
-                                                        <td>{item.unit}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-
-                                        {projectExtras.length > 0 && (
-                                            <>
-                                                <h5 style={{ fontSize: '0.85rem', color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <CheckCircle size={16} /> Extra Material Requests
-                                                </h5>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                                    {projectExtras.map(req => (
-                                                        <div key={req._id} style={{ 
-                                                            border: '1px solid #e2e8f0', 
-                                                            borderRadius: '12px', 
-                                                            padding: '1rem', 
-                                                            background: req.status === 'Design Review' ? '#fff7ed' : (req.status === 'Approved' || req.status === 'Pending' ? '#f0fdf4' : '#fffbeb') 
-                                                        }}>
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                                                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>REQ: {req.requestNumber}</span>
-                                                                <span className={`status-pill ${req.status.toLowerCase().replace(' ', '-')}`} style={{
-                                                                    background: req.status === 'Design Review' ? '#ffedd5' : '',
-                                                                    color: req.status === 'Design Review' ? '#9a3412' : ''
-                                                                }}>{req.status}</span>
-                                                            </div>
-                                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                                                {req.items.map((item, i) => (
-                                                                    <div key={i} style={{ fontSize: '0.9rem', padding: '8px', background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                                                                        <div style={{ fontWeight: 600 }}>{item.itemName}</div>
-                                                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Qty: {item.quantity} {item.unit}</div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                            {req.managerRemarks && (
-                                                                <div style={{ marginTop: '1rem', fontSize: '0.8rem', color: '#475569', fontStyle: 'italic' }}>
-                                                                    <strong>Manager Remarks:</strong> "{req.managerRemarks}"
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        {tasks.filter(t => t.quotation).length === 0 && (
-                            <div className="empty-state-card" style={{ padding: '4rem', textAlign: 'center', background: 'white', borderRadius: '16px' }}>
-                                <Package size={48} color="#cbd5e1" style={{ marginBottom: '1.5rem' }} />
-                                <h3>No Materials Allocated</h3>
-                                <p>You don't have any assigned projects with linked quotations yet.</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
 
             {activeTab === 'submissions' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -548,9 +473,9 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
                     {/* View for Approved/Finalized Tasks */}
                     <div className="project-detail-card" style={{ padding: '0', overflow: 'hidden' }}>
                         <div className="pd-header" style={{ padding: '1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', margin: 0 }}>
-                            <div className="pd-title">
-                                <strong style={{ color: '#15803d' }}><CheckCircle size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Approved & Finalized Tasks</strong>
-                                <span style={{ display: 'block', marginTop: '4px' }}>These tasks have been reviewed and accepted by your manager.</span>
+                        <div className="pd-title">
+                                <strong style={{ color: '#15803d' }}><CheckCircle size={18} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> Finalized Designs & Approvals</strong>
+                                <span style={{ display: 'block', marginTop: '4px' }}>Track your designs through Manager, Sales, and Superadmin review.</span>
                             </div>
                         </div>
                         <table className="tag-table" style={{ margin: 0 }}>
@@ -558,10 +483,10 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
                                 <tr><th>Task Title</th><th>Approved Date</th><th>Status</th><th>Designs</th><th>Notes</th></tr>
                             </thead>
                             <tbody>
-                                {tasks.filter(t => ['Approved', 'Completed', 'Pushed to Procurement'].includes(t.status)).length === 0 && (
-                                    <tr><td colSpan="5" className="empty-mini">No approved tasks yet.</td></tr>
+                                {tasks.filter(t => ['Approved', 'Completed', 'Pushed to Procurement', 'Pending Sales Review', 'Sales Approved', 'Pending Admin Review', 'Admin Rejected'].includes(t.status)).length === 0 && (
+                                    <tr><td colSpan="5" className="empty-mini">No designs in pipeline yet.</td></tr>
                                 )}
-                                {tasks.filter(t => ['Approved', 'Completed', 'Pushed to Procurement'].includes(t.status)).map(task => (
+                                {tasks.filter(t => ['Approved', 'Completed', 'Pushed to Procurement', 'Pending Sales Review', 'Sales Approved', 'Pending Admin Review', 'Admin Rejected'].includes(t.status)).map(task => (
                                     <tr key={task._id}>
                                         <td>
                                             <strong>{task.title}</strong>
@@ -572,7 +497,28 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
                                             )}
                                         </td>
                                         <td>{new Date(task.submissions[task.submissions.length - 1]?.submittedAt || task.updatedAt).toLocaleDateString()}</td>
-                                        <td><span className="status-pill" style={{ background: '#dcfce7', color: '#15803d' }}>{task.status}</span></td>
+                                        <td>
+                                            <span className="status-pill" style={{ 
+                                                background: task.status === 'Pending Sales Review' ? '#dbeafe' : 
+                                                           task.status === 'Sales Approved' ? '#f0fdf4' :
+                                                           task.status === 'Pending Admin Review' ? '#fef3c7' :
+                                                           task.status === 'Admin Rejected' ? '#fee2e2' :
+                                                           task.status === 'Pushed to Procurement' ? '#dcfce7' : 
+                                                           task.status === 'Approved' ? '#f0f9ff' : '#f1f5f9',
+                                                color: task.status === 'Pending Sales Review' ? '#1e40af' : 
+                                                       task.status === 'Sales Approved' ? '#15803d' :
+                                                       task.status === 'Pending Admin Review' ? '#92400e' :
+                                                       task.status === 'Admin Rejected' ? '#b91c1c' :
+                                                       task.status === 'Pushed to Procurement' ? '#15803d' : 
+                                                       task.status === 'Approved' ? '#0369a1' : '#475569'
+                                            }}>
+                                                {task.status === 'Pushed to Procurement' ? 'Procurement Ready' : 
+                                                 task.status === 'Pending Sales Review' ? 'Sales Review' : 
+                                                 task.status === 'Pending Admin Review' ? 'With Superadmin' :
+                                                 task.status === 'Sales Approved' ? 'Sales Approved' :
+                                                 task.status}
+                                            </span>
+                                        </td>
                                         <td>
                                             <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', maxWidth: '150px', padding: '5px 0' }}>
                                                 {task.submissions?.[task.submissions.length - 1]?.files?.map((f, idx) => (
@@ -683,10 +629,85 @@ const DesignStaffDashboard = ({ user, onLogout }) => {
                                     ))}
                                 </div>
                             </div>
-                            <div className="form-group">
-                                <label>Staff Notes</label>
+                            <div className="design-items-builder" style={{ marginTop: '1.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <label style={{ fontWeight: 800, fontSize: '0.95rem', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <Package size={18} color="#6366f1" /> Required Materials & Items
+                                    </label>
+                                    <button 
+                                        type="button" 
+                                        onClick={handleAddDesignItem}
+                                        style={{ background: '#f0f9ff', color: '#0ea5e9', border: '1px solid #bae6fd', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    >
+                                        <Plus size={14} /> Add Item
+                                    </button>
+                                </div>
+
+                                {uploadData.designItems.length > 0 ? (
+                                    <div style={{ display: 'grid', gap: '10px' }}>
+                                        {uploadData.designItems.map((item, idx) => (
+                                            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 40px', gap: '8px', alignItems: 'center', background: '#f8fafc', padding: '10px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                                {/* Item Name with Search/Autocomplete behavior */}
+                                                <div style={{ position: 'relative' }}>
+                                                    <input 
+                                                        list={`predefined-items-${idx}`}
+                                                        placeholder="Item Name..."
+                                                        value={item.name}
+                                                        onChange={e => handleDesignItemChange(idx, 'name', e.target.value)}
+                                                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                                                    />
+                                                    <datalist id={`predefined-items-${idx}`}>
+                                                        {PREDEFINED_ITEMS.map((pi, i) => (
+                                                            <option key={i} value={pi} />
+                                                        ))}
+                                                    </datalist>
+                                                </div>
+                                                
+                                                <input 
+                                                    placeholder="Size (e.g. 700cm)"
+                                                    value={item.size}
+                                                    onChange={e => handleDesignItemChange(idx, 'size', e.target.value)}
+                                                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                                                />
+
+                                                <select 
+                                                    value={item.unit}
+                                                    onChange={e => handleDesignItemChange(idx, 'unit', e.target.value)}
+                                                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', background: 'white' }}
+                                                >
+                                                    {ITEM_UNITS.map(u => (
+                                                        <option key={u} value={u}>{u}</option>
+                                                    ))}
+                                                </select>
+
+                                                <input 
+                                                    type="number"
+                                                    placeholder="Qty"
+                                                    value={item.quantity}
+                                                    onChange={e => handleDesignItemChange(idx, 'quantity', e.target.value)}
+                                                    style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                                                />
+
+                                                <button 
+                                                    onClick={() => handleRemoveDesignItem(idx)}
+                                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div style={{ textAlign: 'center', padding: '1.5rem', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1', color: '#94a3b8', fontSize: '0.85rem' }}>
+                                        No items added yet. Click "Add Item" to specify materials.
+                                    </div>
+                                )}
+                            </div>
+                            <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                                <label style={{ fontWeight: 800, fontSize: '0.9rem', marginBottom: '8px', display: 'block', color: '#1e293b' }}>Staff Notes</label>
                                 <textarea
-                                    placeholder="Add any notes about the design..."
+                                    placeholder="Add any additional notes about the design..."
+                                    style={{ height: '80px', borderRadius: '12px', padding: '12px' }}
                                     value={uploadData.staffNotes}
                                     onChange={e => setUploadData({ ...uploadData, staffNotes: e.target.value })}
                                 />

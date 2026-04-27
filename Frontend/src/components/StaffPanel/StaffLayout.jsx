@@ -28,15 +28,15 @@ const StaffLayout = ({ user, onLogout }) => {
     const { title, subtitle } = getPageDetails();
 
     const renderSidebar = () => {
-        const props = { user, onLogout, isCollapsed: !isSidebarOpen, toggleSidebar };
+        const props = { user, onLogout, isOpen: isSidebarOpen, toggleSidebar };
         if (department === 'Design' || department === 'Procurement' || department === 'Production') {
-            return <DeptSidebar role={user?.role} {...props} />;
+            return <DeptSidebar role={user?.role} {...props} isCollapsed={!isSidebarOpen} />;
         }
-        return <StaffHomeSidebar user={user} onLogout={onLogout} isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />;
+        return <StaffHomeSidebar {...props} />;
     };
 
     return (
-        <div className={`staff-layout ${!isSidebarOpen ? 'sidebar-collapsed' : ''}`}>
+        <div className="staff-layout">
             {renderSidebar()}
 
             <main className="staff-main-content">

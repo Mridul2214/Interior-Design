@@ -62,6 +62,7 @@ const StaffTasks = () => {
         Total: tasks.length,
         'To Do': tasks.filter(t => t.status === 'To Do').length,
         'In Progress': tasks.filter(t => t.status === 'In Progress').length,
+        'Review Required': tasks.filter(t => t.status === 'Pending Sales Review').length,
         Completed: tasks.filter(t => t.status === 'Completed').length
     };
 
@@ -89,7 +90,11 @@ const StaffTasks = () => {
                         <div
                             key={label}
                             className={`st-stat-card ${filterStatus === label ? 'selected' : ''}`}
-                            onClick={() => setFilterStatus(label === 'Total' ? 'All' : label)}
+                            onClick={() => {
+                                if (label === 'Total') setFilterStatus('All');
+                                else if (label === 'Review Required') setFilterStatus('Pending Sales Review');
+                                else setFilterStatus(label);
+                            }}
                         >
                             <div className="st-stat-info">
                                 <span className="st-stat-label">{label}</span>

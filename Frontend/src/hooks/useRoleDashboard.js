@@ -17,6 +17,7 @@ export const useRoleDashboard = (role) => {
         if (roleLower === 'site supervisor') return 'site_supervisor';
         if (roleLower === 'accounts manager') return 'accounts_manager';
         if (roleLower === 'accounts staff') return 'accounts_staff';
+        if (roleLower === 'sales') return 'staff';
 
         // General roles
         if (roleLower === 'super admin' || roleLower === 'admin' || roleLower === 'manager') {
@@ -175,14 +176,15 @@ export const isAdminLayout = (role) => {
     if (!role) return false;
     const roleLower = role.toLowerCase();
     // Super Admin, Admin, and any Manager role should use Admin layout
-    return isSuperAdmin(role) || roleLower.includes('manager');
+    // Sales is now treated as Staff Layout as per request
+    return isSuperAdmin(role) || (roleLower.includes('manager') && roleLower !== 'design staff');
 };
 
 // Check for Staff layout access
 export const isStaffLayout = (role) => {
     if (!role) return false;
     const roleLower = role.toLowerCase();
-    // Any Staff role should use Staff layout, UNLESS they are a Manager
-    return (roleLower.includes('staff') || roleLower.includes('designer')) && !roleLower.includes('manager');
+    // Any Staff role should use Staff layout, OR if it's Sales
+    return (roleLower.includes('staff') || roleLower.includes('designer') || roleLower === 'sales') && !roleLower.includes('manager');
 };
 

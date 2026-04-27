@@ -168,8 +168,9 @@ const DesignOverview = ({ stats, tasks, quotations, teamStats, materialRequests 
                 <div className="card-premium" style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', border: '1px solid #f1f5f9' }}>
                     <div className="card-header" style={{ border: 'none', padding: 0, marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <AlertCircle size={20} color="#f59e0b" /> Critical Design Reviews
+                            <Clock size={20} color="#f59e0b" /> Pending Manager Reviews
                         </h3>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Submissions awaiting your creative validation</p>
                     </div>
                     <div className="critical-list" style={{ display: 'grid', gap: '1rem' }}>
                         {pendingReviews.length > 0 ? pendingReviews.slice(0, 4).map(task => (
@@ -181,9 +182,7 @@ const DesignOverview = ({ stats, tasks, quotations, teamStats, materialRequests 
                                     <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b' }}>{task.title}</div>
                                     <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Assigned to {task.assignedTo?.map(s => s.name).join(', ')}</div>
                                 </div>
-                                <button className="btn-action-round" style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-                                    <ArrowRight size={14} color="#8b5cf6" />
-                                </button>
+                                <div style={{ fontSize: '0.7rem', fontWeight: 600, color: '#f59e0b', background: '#fffbeb', padding: '4px 8px', borderRadius: '12px' }}>Review</div>
                             </div>
                         )) : (
                             <div style={{ textAlign: 'center', padding: '2rem', background: '#f8fafc', borderRadius: '16px', color: '#94a3b8', fontSize: '0.9rem' }}>No pending reviews</div>
@@ -194,30 +193,44 @@ const DesignOverview = ({ stats, tasks, quotations, teamStats, materialRequests 
                 <div className="card-premium" style={{ background: 'white', borderRadius: '24px', padding: '1.5rem', border: '1px solid #f1f5f9' }}>
                     <div className="card-header" style={{ border: 'none', padding: 0, marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Package size={20} color="#6366f1" /> Material List Approvals
+                            <Activity size={20} color="#6366f1" /> Handoff Pipeline
                         </h3>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Design progression through Sales & Admin</p>
                     </div>
                     <div className="critical-list" style={{ display: 'grid', gap: '1rem' }}>
-                        {materialRequests && materialRequests.filter(r => r.status === 'Design Review').length > 0 ?
-                            materialRequests.filter(r => r.status === 'Design Review').slice(0, 4).map(req => (
-                                <div key={req._id} className="queue-item-premium" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: '#f8fafc', borderRadius: '16px' }}>
+                        {tasks && tasks.filter(t => ['Approved', 'Pending Sales Review', 'Sales Approved', 'Pending Admin Review'].includes(t.status)).length > 0 ?
+                            tasks.filter(t => ['Approved', 'Pending Sales Review', 'Sales Approved', 'Pending Admin Review'].includes(t.status)).slice(0, 4).map(task => (
+                                <div key={task._id} className="queue-item-premium" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: '#f8fafc', borderRadius: '16px' }}>
                                     <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-                                        <Tag size={18} color="#0284c7" />
+                                        {task.status === 'Approved' ? <Tag size={18} color="#f59e0b" /> : 
+                                         task.status === 'Sales Approved' ? <CheckCircle size={18} color="#10b981" /> : 
+                                         <Clock size={18} color="#6366f1" />}
                                     </div>
                                     <div style={{ flex: 1 }}>
-                                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b' }}>{req.requestNumber}</div>
-                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{req.items?.length || 0} items for {req.project?.name}</div>
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1e293b' }}>{task.title}</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Client: {task.project?.clientName || task.project?.projectName || task.quotation?.projectName || 'Private Client'}</div>
                                     </div>
-                                    <button
-                                        className="btn-action-round"
-                                        onClick={() => onApproveMaterial(req)}
-                                        style={{ width: '32px', height: '32px', borderRadius: '50%', border: 'none', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}
-                                    >
-                                        <ArrowRight size={14} color="#0284c7" />
-                                    </button>
+                                    <div style={{ marginTop: 'auto' }}>
+                                        <div style={{
+                                            textAlign: 'center',
+                                            padding: '10px',
+                                            background: task.status === 'Sales Approved' ? '#dcfce7' : '#f1f5f9',
+                                            borderRadius: '12px',
+                                            color: task.status === 'Sales Approved' ? '#166534' : '#475569',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 700,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '6px'
+                                        }}>
+                                            {task.status === 'Sales Approved' ? <CheckCircle size={14} /> : <Clock size={14} />}
+                                            {task.status}
+                                        </div>
+                                    </div>
                                 </div>
                             )) : (
-                                <div style={{ textAlign: 'center', padding: '2rem', background: '#f8fafc', borderRadius: '16px', color: '#94a3b8', fontSize: '0.9rem' }}>No pending approvals</div>
+                                <div style={{ textAlign: 'center', padding: '2rem', background: '#f8fafc', borderRadius: '16px', color: '#94a3b8', fontSize: '0.9rem' }}>No designs in pipeline</div>
                             )}
                     </div>
                 </div>

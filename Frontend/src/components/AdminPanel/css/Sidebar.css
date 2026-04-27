@@ -148,42 +148,50 @@
 .nav-link {
     display: flex;
     align-items: center;
-    padding: 0.65rem 1.5rem;
+    padding: 0.75rem 1.25rem;
+    margin: 0.2rem 0.75rem;
     color: #64748b;
-    /* Slate 500 */
     font-weight: 500;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
-    border-left: 3px solid transparent;
-    /* Prepare for active state */
-    overflow: hidden;
+    font-size: 0.875rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
     position: relative;
+    text-decoration: none;
 }
 
 .sidebar-container.collapsed .nav-link {
     justify-content: center;
     padding: 0.75rem;
-    border-left: none;
-    /* remove border when collapsed to keep icons centered */
+    margin: 0.2rem 0.5rem;
 }
 
-/* Active State - Modern Style */
+/* Active State - Modern Pill Style */
 .nav-link.active {
     background-color: #f1f5f9;
-    /* Soft background */
     color: #0f172a;
-    /* Slate 900 - dark text */
     font-weight: 600;
-    border-left-color: #3b82f6;
-    /* Default Blue accent line */
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+}
+
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    left: -0.75rem;
+    top: 25%;
+    height: 50%;
+    width: 4px;
+    background-color: #3b82f6;
+    border-radius: 0 4px 4px 0;
 }
 
 /* Department Specific Active States */
 .sidebar-container.design .nav-link.active {
     background-color: #f5f3ff;
-    border-left-color: #8b5cf6;
-    /* Purple */
     color: #4c1d95;
+}
+
+.sidebar-container.design .nav-link.active::after {
+    background-color: #8b5cf6;
 }
 
 .sidebar-container.design .nav-link.active .nav-icon {
@@ -192,9 +200,11 @@
 
 .sidebar-container.procurement .nav-link.active {
     background-color: #eff6ff;
-    border-left-color: #3b82f6;
-    /* Premium Blue */
     color: #1e40af;
+}
+
+.sidebar-container.procurement .nav-link.active::after {
+    background-color: #3b82f6;
 }
 
 .sidebar-container.procurement .nav-link.active .nav-icon {
@@ -203,9 +213,11 @@
 
 .sidebar-container.production .nav-link.active {
     background-color: #fff7ed;
-    border-left-color: #f97316;
-    /* Orange */
     color: #7c2d12;
+}
+
+.sidebar-container.production .nav-link.active::after {
+    background-color: #f97316;
 }
 
 .sidebar-container.production .nav-link.active .nav-icon {

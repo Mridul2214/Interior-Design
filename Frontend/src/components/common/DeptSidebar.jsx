@@ -17,7 +17,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, FileText, Users, CheckSquare, Package, Send,
     ShoppingCart, Building2, Box, ClipboardCheck, Target,
-    Wrench, Clock, Image, LogOut, Menu, Plus
+    Wrench, Clock, Image, LogOut, Menu, Plus, CheckCircle
 } from 'lucide-react';
 import { BASE_IMAGE_URL } from '../../config/api';
 import '../AdminPanel/css/Sidebar.css';
@@ -32,13 +32,11 @@ const NAV_CONFIG = {
         sidebarClass:  'design',
         basePath:      '/',
         items: [
-            { name: 'Overview',          icon: LayoutDashboard, path: '/?tab=overview',               tab: 'overview' },
-            { name: 'Quotations',        icon: FileText,        path: '/?tab=quotations',              tab: 'quotations' },
-            { name: 'Project Status',    icon: Clock,           path: '/?tab=project_status',          tab: 'project_status' },
+            { name: 'Dashboard',         icon: LayoutDashboard, path: '/?tab=dashboard',              tab: 'dashboard' },
+            { name: 'Project Status',    icon: Clock,           path: '/?tab=pipeline',               tab: 'pipeline' },
+            { name: 'Project Details',   icon: FileText,        path: '/?tab=project_details',        tab: 'project_details' },
             { name: 'Task Assignment',   icon: CheckSquare,     path: '/?tab=tasks',                   tab: 'tasks' },
             { name: 'Staff Overview',    icon: Users,           path: '/?tab=staff_overview',          tab: 'staff_overview' },
-            { name: 'Submissions',       icon: Image,           path: '/?tab=submissions',             tab: 'submissions' },
-            { name: 'To Procurement',    icon: Send,            path: '/?tab=ready_for_procurement',   tab: 'ready_for_procurement' },
             { name: 'Material Hub',      icon: Package,         path: '/material-review',              tab: null },
         ],
     },
@@ -50,7 +48,6 @@ const NAV_CONFIG = {
         items: [
             { name: 'My Dashboard',    icon: LayoutDashboard, path: '/staff/dashboard?tab=overview',    tab: 'overview' },
             { name: 'My Tasks',        icon: CheckSquare,     path: '/staff/dashboard?tab=tasks',        tab: 'tasks' },
-            { name: 'Materials Board', icon: Package,         path: '/staff/dashboard?tab=materials',    tab: 'materials' },
             { name: 'Revisions',       icon: Target,          path: '/staff/dashboard?tab=revisions',    tab: 'revisions' },
             { name: 'Submitted Tasks', icon: CheckSquare,     path: '/staff/dashboard?tab=submissions',  tab: 'submissions' },
         ],
@@ -66,6 +63,7 @@ const NAV_CONFIG = {
             { name: 'Material Requests', icon: Package,         path: '/?tab=requests',    tab: 'requests' },
             { name: 'Assignments',       icon: CheckSquare,     path: '/?tab=assignments', tab: 'assignments' },
             { name: 'Vendors',           icon: Building2,       path: '/?tab=vendors',     tab: 'vendors' },
+            { name: 'Completed & Handoff', icon: CheckCircle,   path: '/?tab=completed',   tab: 'completed' },
         ],
     },
 

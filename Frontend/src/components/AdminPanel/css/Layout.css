@@ -1,6 +1,17 @@
-.layout-container {
-    display: flex;
-    min-height: 100vh;
+.layout-container.admin-layout {
+    --bg-color: #fbfbfb;
+}
+
+.layout-container.design-layout {
+    --bg-color: #faf9ff; /* Subtle purple tint */
+}
+
+.layout-container.procurement-layout {
+    --bg-color: #f8fbff; /* Subtle blue tint */
+}
+
+.layout-container.production-layout {
+    --bg-color: #fffaf5; /* Subtle orange tint */
 }
 
 .main-content {

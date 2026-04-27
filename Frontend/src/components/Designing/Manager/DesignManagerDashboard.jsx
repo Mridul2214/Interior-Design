@@ -4,7 +4,7 @@ import {
     TrendingUp, Palette, Image, Package, Tag, Bell, List,
     ArrowRight, Send, AlertCircle, Loader, ChevronRight, Briefcase,
     Menu, LogOut, LayoutDashboard, ShoppingCart, CheckSquare,
-    AlertTriangle, RefreshCw, Play, UserPlus, Scissors
+    AlertTriangle, RefreshCw, Play, UserPlus, Scissors, Shield
 } from 'lucide-react';
 
 
@@ -17,7 +17,6 @@ import '../css/ManagerDashboard.css';
 
 import DesignOverview from './DesignOverview';
 import Projects from './Projects';
-import Quotations from './Quotations';
 import Clients from './Clients';
 import Inventory from './Inventory';
 import Tasks from './Tasks';
@@ -26,7 +25,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
-    const activeTab = searchParams.get('tab') || 'overview';
+    const activeTab = searchParams.get('tab') || 'pipeline';
 
     const getImageUrl = (url) => {
         if (!url) return '';
@@ -60,7 +59,6 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
     const [selectedTask, setSelectedTask] = useState(null);
     const [reviewStatus, setReviewStatus] = useState('Approved');
     const [managerFeedback, setManagerFeedback] = useState('');
-    const [submissionFilter, setSubmissionFilter] = useState('All');
 
     useEffect(() => { fetchData(); }, []);
 
@@ -101,7 +99,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
             const res = await endpoint;
             if (res.success) {
                 setShowAssignModal(false);
-                setTaskFormData({ title: '', description: '', assignedTo: [], priority: 'Medium', dueDate: '', project: '' });
+                setTaskFormData({ title: '', description: '', creativeRequirements: '', assignedTo: [], priority: 'Medium', dueDate: '', project: '' });
                 fetchData();
             }
         } catch (err) {
@@ -131,12 +129,27 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
         }
     };
 
+
+    const handleSendToAdmin = async (taskId) => {
+        if (!window.confirm('Sales has approved. Push this design and BOQ to Superadmin for final approval?')) return;
+        try {
+            const res = await taskAPI.sendToAdmin(taskId);
+            if (res.success) {
+                alert('Design and items pushed to Superadmin successfully!');
+                fetchData();
+            }
+        } catch (err) {
+            alert('Push failed: ' + err.message);
+        }
+    };
+
     const handlePushToProcurement = async (taskId) => {
-        if (!window.confirm('Are you sure you want to push this design to procurement?')) return;
+        // This is now the final step, usually triggered by Admin, but if Manager has rights:
+        if (!window.confirm('Are you sure you want to push this to Procurement?')) return;
         try {
             const res = await taskAPI.pushToProcurement(taskId);
             if (res.success) {
-                alert('Pushed to procurement successfully!');
+                alert('Design pushed to procurement successfully!');
                 fetchData();
             }
         } catch (err) {
@@ -223,23 +236,273 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
     };
 
     const renderContent = () => {
-        if (activeTab === 'overview') {
+        if (activeTab === 'pipeline' || activeTab === 'project_status') {
+            const submissions = tasks.filter(t => t.status === 'Review Pending' || t.status === 'Revision Required');
+            const salesReview = tasks.filter(t => t.status === 'Pending Sales Review');
+            const adminApproval = tasks
+                .filter(t => ['Sales Approved', 'Pending Admin Review', 'Admin Rejected', 'Pushed to Procurement', 'Admin Approved'].includes(t.status))
+                .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+            const getApprovalTime = (task, action) => {
+                const entry = task.timeline?.find(item => item.action === action);
+                return entry ? new Date(entry.timestamp).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' }) : null;
+            };
+
             return (
-                <DesignOverview
-                    stats={stats}
-                    tasks={tasks}
-                    quotations={quotations}
-                    teamStats={teamStats}
-                    materialRequests={materialRequests}
-                    onApproveMaterial={(req) => handleApproveMaterialRequest(req._id)}
-                />
+                <div className="design-pipeline-workflow" style={{ padding: '0 10px' }}>
+                    <div className="pipeline-header" style={{ marginBottom: '2rem' }}>
+                        <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>Project Status & Approvals</h2>
+                        <p style={{ color: '#64748b' }}>Track designs from designer submission to final procurement push.</p>
+                    </div>
+
+                    <div className="pipeline-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', alignItems: 'flex-start' }}>
+                        {/* ── COLUMN 1: STAFF SUBMISSIONS ── */}
+                        <div className="pipeline-column">
+                            <div className="col-header" style={{ borderLeft: '4px solid #6366f1' }}>
+                                <div className="col-title-box">
+                                    <Palette size={18} />
+                                    <span>Staff Submissions</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span className="col-count">{submissions.length}</span>
+                                    <button 
+                                        className="add-task-btn" 
+                                        onClick={() => {
+                                            setEditingTaskId(null);
+                                            setTaskFormData({ title: '', description: '', assignedTo: [], priority: 'Medium', dueDate: '', project: '' });
+                                            setShowAssignModal(true);
+                                        }}
+                                        style={{ border: 'none', background: '#6366f1', color: 'white', borderRadius: '6px', padding: '2px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    >
+                                        <Plus size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="col-body">
+                                {submissions.map(task => (
+                                    <div key={task._id} className="pipeline-card staff-card">
+                                        <div className="card-header">
+                                            <h4>{task.title}</h4>
+                                            <span className={`badge ${task.status.toLowerCase().replace(' ', '-')}`}>{task.status}</span>
+                                        </div>
+                                        
+                                        {task.submissions?.[task.submissions.length - 1]?.files?.some(f => f.url?.match(/\.(jpeg|jpg|gif|png|webp)$/i)) && (
+                                            <div className="card-preview" style={{ margin: '10px 0', borderRadius: '12px', overflow: 'hidden', height: '100px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                                                <img 
+                                                    src={getImageUrl(task.submissions[task.submissions.length - 1].files.find(f => f.url?.match(/\.(jpeg|jpg|gif|png|webp)$/i)).url)} 
+                                                    alt="Preview" 
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div className="card-info">
+                                            <p><Briefcase size={12} /> {task.project?.projectName || 'No Project'}</p>
+                                            <p><Users size={12} /> {task.submissions?.[task.submissions.length-1]?.submittedBy?.name || 'Staff'}</p>
+                                            <p className="time-stamp"><Clock size={12} /> Submitted: {new Date(task.submissions?.[task.submissions.length-1]?.submittedAt).toLocaleString()}</p>
+                                        </div>
+                                        <button className="card-btn primary" onClick={() => { setSelectedTask(task); setShowSubmissionModal(true); }}>Review Submission</button>
+                                    </div>
+                                ))}
+                                {submissions.length === 0 && <div className="empty-col">No designs to review</div>}
+                            </div>
+                        </div>
+
+                        {/* ── COLUMN 2: SALES PART ── */}
+                        <div className="pipeline-column">
+                            <div className="col-header" style={{ borderLeft: '4px solid #10b981' }}>
+                                <div className="col-title-box">
+                                    <Send size={18} />
+                                    <span>Sales Review</span>
+                                </div>
+                                <span className="col-count" style={{ background: '#d1fae5', color: '#059669' }}>{salesReview.length}</span>
+                            </div>
+                            <div className="col-body">
+                                {salesReview.map(task => (
+                                    <div key={task._id} className="pipeline-card sales-card">
+                                        <div className="card-header">
+                                            <h4>{task.title}</h4>
+                                            <div className="approval-marker mgr">
+                                                <CheckCircle size={10} /> 
+                                                <span>MGR APPROVED: {getApprovalTime(task, 'approved')}</span>
+                                            </div>
+                                        </div>
+
+                                        {task.submissions?.[task.submissions.length - 1]?.files?.some(f => f.url?.match(/\.(jpeg|jpg|gif|png|webp)$/i)) && (
+                                            <div className="card-preview" style={{ margin: '10px 0', borderRadius: '12px', overflow: 'hidden', height: '100px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                                                <img 
+                                                    src={getImageUrl(task.submissions[task.submissions.length - 1].files.find(f => f.url?.match(/\.(jpeg|jpg|gif|png|webp)$/i)).url)} 
+                                                    alt="Preview" 
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div className="card-info">
+                                            <p><Briefcase size={12} /> {task.project?.projectName || 'No Project'}</p>
+                                            <p className="pending-notice"><Clock size={12} /> Waiting for Sales/Client approval...</p>
+                                        </div>
+                                        <button className="card-btn secondary" onClick={() => { setSelectedTask(task); setShowSubmissionModal(true); }}>View Design</button>
+                                    </div>
+                                ))}
+                                {salesReview.length === 0 && <div className="empty-col">No designs with Sales</div>}
+                            </div>
+                        </div>
+
+                        {/* ── COLUMN 3: ADMIN SIDE ── */}
+                        <div className="pipeline-column">
+                            <div className="col-header" style={{ borderLeft: '4px solid #f59e0b' }}>
+                                <div className="col-title-box">
+                                    <Shield size={18} />
+                                    <span>Admin Approval</span>
+                                </div>
+                                <span className="col-count" style={{ background: '#fef3c7', color: '#b45309' }}>{adminApproval.length}</span>
+                            </div>
+                            <div className="col-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                
+                                {/* Section 1: Awaiting Final Review */}
+                                <div className="column-sub-section">
+                                    <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <Clock size={12} /> Awaiting Final Review
+                                    </p>
+                                    {adminApproval.filter(t => t.status !== 'Pushed to Procurement' && t.status !== 'Admin Approved').map(task => {
+                                        const isSalesApproved = task.status === 'Sales Approved';
+                                        return (
+                                            <div key={task._id} className="pipeline-card admin-card">
+                                                <div className="card-header">
+                                                    <h4>{task.title}</h4>
+                                                    <div className="approval-marker sales">
+                                                        <CheckCircle size={10} /> 
+                                                        <span>SALES APPROVED: {getApprovalTime(task, 'salesApproved')}</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="card-info" style={{ marginTop: '10px' }}>
+                                                    <p><Briefcase size={12} /> {task.project?.projectName || 'No Project'}</p>
+                                                    {task.status === 'Pending Admin Review' && (
+                                                        <div className="waiting-pill" style={{ marginTop: '10px', padding: '8px', background: '#fffbeb', color: '#b45309', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center', border: '1px solid #fef3c7' }}>Waiting for Admin Review...</div>
+                                                    )}
+                                                    {task.status === 'Admin Rejected' && (
+                                                        <div className="waiting-pill" style={{ marginTop: '10px', padding: '8px', background: '#fef2f2', color: '#b91c1c', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center', border: '1px solid #fee2e2' }}>Admin Requested Revision</div>
+                                                    )}
+                                                </div>
+
+                                                <div className="card-actions" style={{ marginTop: '15px' }}>
+                                                    {isSalesApproved && (
+                                                        <button 
+                                                            className="card-btn admin-push" 
+                                                            onClick={() => handleSendToAdmin(task._id)}
+                                                            style={{ width: '100%', background: '#f59e0b', color: 'white', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                                        >
+                                                            <ArrowRight size={14} /> Push to Admin
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {adminApproval.filter(t => t.status !== 'Pushed to Procurement' && t.status !== 'Admin Approved').length === 0 && (
+                                        <div className="empty-col" style={{ padding: '15px', fontSize: '0.8rem' }}>No designs pending admin</div>
+                                    )}
+                                </div>
+
+                                {/* Section 2: Finalized & Pushed */}
+                                <div className="column-sub-section" style={{ borderTop: '2px dashed #e2e8f0', paddingTop: '1.5rem' }}>
+                                    <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <CheckCircle size={12} /> Approved & Finalized
+                                    </p>
+                                    {adminApproval.filter(t => t.status === 'Pushed to Procurement' || t.status === 'Admin Approved').map(task => (
+                                        <div key={task._id} className="pipeline-card completed" style={{ background: '#f0fdf4', border: '1px solid #dcfce7', opacity: 0.85 }}>
+                                            <div className="card-header">
+                                                <h4>{task.title}</h4>
+                                                <div className="success-pill" style={{ background: '#dcfce7', color: '#15803d', padding: '4px 8px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 800 }}>
+                                                    <Check size={12} /> PUSHED
+                                                </div>
+                                            </div>
+                                            <div className="card-info" style={{ marginTop: '8px' }}>
+                                                <p style={{ color: '#64748b' }}><Briefcase size={12} /> {task.project?.projectName || 'No Project'}</p>
+                                                <p className="time-stamp" style={{ color: '#059669' }}>Finalized: {new Date(task.updatedAt).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {adminApproval.filter(t => t.status === 'Pushed to Procurement' || t.status === 'Admin Approved').length === 0 && (
+                                        <div className="empty-col" style={{ padding: '15px', fontSize: '0.8rem' }}>No finalized designs yet</div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             );
         }
-        if (activeTab === 'quotations') return <Quotations quotations={quotations} formatCurrency={formatCurrency} />;
-        if (activeTab === 'project_status') {
+        if (activeTab === 'project_details') {
+            const approvedQuotes = quotations.filter(q => q.status === 'Approved');
+            return (
+                <div className="section-card">
+                    <div className="section-header" style={{ marginBottom: '1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ padding: '10px', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '12px' }}>
+                                <FileText size={24} color="#6366f1" />
+                            </div>
+                            <div>
+                                <h3 style={{ margin: 0 }}>Approved Project Specifications</h3>
+                                <p style={{ color: '#64748b', fontSize: '0.85rem' }}>View client requirements and project scope from finalized quotations.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="project-details-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '1.5rem' }}>
+                        {approvedQuotes.length > 0 ? approvedQuotes.map(quote => (
+                            <div key={quote._id} className="detail-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '20px', padding: '1.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                    <div>
+                                        <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b' }}>{quote.projectName}</h4>
+                                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Quote #: {quote.quotationNumber}</span>
+                                    </div>
+                                    <span style={{ padding: '4px 12px', background: '#dcfce7', color: '#15803d', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700 }}>APPROVED</span>
+                                </div>
+
+                                <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                        <Tag size={14} color="#6366f1" />
+                                        <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Scope of Work:</span>
+                                    </div>
+                                    <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.85rem', color: '#475569' }}>
+                                        {quote.items?.map((item, i) => (
+                                            <li key={i} style={{ marginBottom: '6px' }}>
+                                                <strong>{item.itemName}</strong> - {item.description}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: '#64748b' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <Clock size={14} /> Approved {new Date(quote.updatedAt).toLocaleDateString()}
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <CheckCircle size={14} /> Verified Scope
+                                    </div>
+                                </div>
+                            </div>
+                        )) : (
+                            <div style={{ gridColumn: '1 / -1', padding: '4rem', textAlign: 'center', background: '#f8fafc', borderRadius: '20px' }}>
+                                <FileText size={48} color="#cbd5e1" style={{ marginBottom: '1rem' }} />
+                                <h4 style={{ color: '#64748b' }}>No Approved Projects Found</h4>
+                                <p style={{ color: '#94a3b8' }}>Once a quotation is approved by Superadmin, it will appear here for your review.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeTab === 'project_management') {
             return (
                 <Projects
                     projects={projects}
+                    tasks={tasks}
+                    getImageUrl={getImageUrl}
                     materialRequests={materialRequests}
                     onReviewRequest={(pid) => navigate(`/material-review?project=${pid}`)}
                     onUpdateStatus={(pid, stat) => projectAPI.update(pid, { status: stat }).then(fetchData)}
@@ -307,194 +570,30 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
             );
         }
 
-        if (activeTab === 'ready_for_procurement') {
-            const approvedDesigns = tasks.filter(t => t.status === 'Approved' && t.status !== 'Pushed to Procurement');
-            return (
-                <div className="section-card">
-                    <div className="section-header" style={{ marginBottom: '2rem' }}>
-                        <div>
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Send size={20} color="#10b981" /> Approved Designs Pipeline
-                            </h3>
-                            <p style={{ fontSize: '0.85rem', color: '#64748b' }}>Finalized designs ready for the procurement phase</p>
-                        </div>
+         return (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
+                <DesignOverview stats={stats} tasks={tasks} quotations={quotations} teamStats={teamStats} />
+                
+                <div className="card" style={{ marginTop: '1rem', background: '#fff', borderRadius: '24px', padding: '1.5rem', border: '1px solid #f1f5f9' }}>
+                    <div className="card-header" style={{ border: 'none', padding: 0, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Bell size={20} color="#6366f1" />
+                        <h3 style={{ margin: 0, fontWeight: 800, fontSize: '1.1rem' }}>Studio Activity Feed</h3>
                     </div>
-
-                    <div className="ready-designs-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
-                        {approvedDesigns.length > 0 ? approvedDesigns.map(task => {
-                            const latestSubmission = task.submissions?.[task.submissions.length - 1];
-                            return (
-                                <div key={task._id} className="submission-card" style={{ display: 'flex', flexDirection: 'column', border: '1px solid #e2e8f0', borderRadius: '16px', background: '#fff', padding: '1.5rem', transition: 'all 0.3s ease' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                                        <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>{task.title}</h4>
-                                        <span style={{ fontSize: '0.7rem', padding: '4px 10px', borderRadius: '20px', background: '#dcfce7', color: '#15803d', fontWeight: 700 }}>READY</span>
-                                    </div>
-
-                                    <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '12px', marginBottom: '1.5rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.85rem' }}>
-                                            <Briefcase size={14} color="#6366f1" />
-                                            <span style={{ fontWeight: 600, color: '#475569' }}>Project:</span>
-                                            <span style={{ color: '#1e293b' }}>{task.project?.projectName || 'Internal Project'}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
-                                            <Users size={14} color="#6366f1" />
-                                            <span style={{ fontWeight: 600, color: '#475569' }}>Design Team:</span>
-                                            <span style={{ color: '#1e293b', fontWeight: 500 }}>
-                                                {task.assignedTo?.map(s => s.name).join(', ') || latestSubmission?.submittedBy?.name || 'Assigned Staff'}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {latestSubmission?.files?.length > 0 && (
-                                        <div style={{ marginBottom: '1.5rem' }}>
-                                            <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>Final Assets</p>
-                                            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
-                                                {latestSubmission.files.map((file, idx) => (
-                                                    <div key={idx} style={{ width: '60px', height: '60px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', background: '#fff', flexShrink: 0 }}>
-                                                        {file.url?.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) ? (
-                                                            <img src={getImageUrl(file.url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                        ) : (
-                                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9' }}>
-                                                                <FileText size={20} color="#94a3b8" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div style={{ marginTop: 'auto' }}>
-                                        <button
-                                            className="action-btn primary"
-                                            style={{
-                                                width: '100%',
-                                                justifyContent: 'center',
-                                                height: '45px',
-                                                borderRadius: '12px',
-                                                backgroundColor: '#10b981',
-                                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '8px',
-                                                color: 'white',
-                                                fontWeight: 600
-                                            }}
-                                            onClick={() => handlePushToProcurement(task._id)}
-                                        >
-                                            <Send size={18} />
-                                            <span>Complete Department Handover</span>
-                                        </button>
-                                    </div>
+                    <div className="notifications-feed" style={{ display: 'grid', gap: '12px' }}>
+                        {notifications.length > 0 ? notifications.map(notif => (
+                            <div key={notif._id} className={`notif-item ${notif.notifRead ? 'read' : 'unread'}`} style={{ padding: '12px', background: notif.notifRead ? '#f8fafc' : '#f5f3ff', borderRadius: '16px', border: '1px solid', borderColor: notif.notifRead ? '#e2e8f0' : '#e0e7ff' }}>
+                                <div className="notif-content">
+                                    <p className="notif-title" style={{ margin: 0, fontWeight: 700, fontSize: '0.9rem', color: '#1e293b' }}>{notif.title}</p>
+                                    <p className="notif-desc" style={{ margin: '4px 0', fontSize: '0.85rem', color: '#64748b' }}>{notif.description}</p>
+                                    <span className="notif-time" style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600 }}>{new Date(notif.createdAt).toLocaleString()}</span>
                                 </div>
-                            );
-                        }) : (
-                            <div style={{ gridColumn: '1 / -1', padding: '5rem 2rem', textAlign: 'center', background: '#f8fafc', borderRadius: '24px', border: '2px dashed #e2e8f0' }}>
-                                <CheckSquare size={48} color="#cbd5e1" style={{ marginBottom: '1rem' }} />
-                                <h4 style={{ color: '#64748b', marginBottom: '0.5rem' }}>All Caught Up!</h4>
-                                <p style={{ color: '#94a3b8', fontSize: '0.9rem' }}>There are no approved designs waiting for procurement at the moment.</p>
                             </div>
+                        )) : (
+                            <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No recent activity</div>
                         )}
                     </div>
                 </div>
-            );
-        }
-
-        if (activeTab === 'submissions') {
-            // By default (All), only show tasks needing action — exclude already approved/pushed ones
-            const submissions = tasks.filter(t => {
-                if (!t.submissions?.length) return false;
-                if (submissionFilter === 'All') {
-                    return t.status === 'Review Pending' || t.status === 'Revision Required';
-                }
-                return t.status === submissionFilter;
-            });
-            return (
-                <div className="section-card">
-                    <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                        <h3>Staff Design Submissions</h3>
-                        <div className="board-filters" style={{ display: 'flex', gap: '0.5rem', background: '#f8fafc', padding: '0.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                            {['All', 'Review Pending', 'Revision Required', 'Approved', 'Rejected'].map(filter => (
-                                <button
-                                    key={filter}
-                                    style={{
-                                        padding: '0.5rem 1rem',
-                                        borderRadius: '8px',
-                                        border: 'none',
-                                        fontSize: '0.85rem',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                        background: submissionFilter === filter ? '#4f46e5' : 'transparent',
-                                        color: submissionFilter === filter ? 'white' : '#64748b'
-                                    }}
-                                    onClick={() => setSubmissionFilter(filter)}
-                                >
-                                    {filter}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="submissions-grid">
-                        {submissions.map(task => {
-                            const latest = task.submissions[task.submissions.length - 1];
-                            return (
-                                <div key={task._id} className="submission-card">
-                                    <div className="submission-header">
-                                        <h4>{task.title}</h4>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <span className="submission-time" style={{ display: 'block' }}>{new Date(latest.submittedAt).toLocaleDateString()}</span>
-                                            {task.submissions.length > 1 && (
-                                                <span style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 700 }}>
-                                                    Redo Count: {task.submissions.length - 1}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <p className="submission-staff">Submitted by: {latest.submittedBy?.name || 'Staff'}</p>
-                                    <div className="submission-files" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-                                        {latest.files?.map((f, i) => (
-                                            <a key={i} href={getImageUrl(f.url)} target="_blank" rel="noopener noreferrer" className="file-link" style={{ display: 'inline-block', position: 'relative', overflow: 'hidden', borderRadius: '8px', border: '1px solid #e2e8f0', width: '60px', height: '60px' }}>
-                                                {f.url?.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) || !f.url?.endsWith('.pdf') ? (
-                                                    <img src={getImageUrl(f.url)} alt={f.filename} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                ) : (
-                                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }} title={f.filename}>
-                                                        <FileText size={20} color="#64748b" />
-                                                    </div>
-                                                )}
-                                            </a>
-                                        ))}
-                                    </div>
-                                    <div className="submission-actions">
-                                        <button className="btn-view" onClick={() => { setSelectedTask(task); setShowSubmissionModal(true); }}>Review</button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            );
-        }
-
-        return (
-            <>
-                <DesignOverview stats={stats} tasks={tasks} quotations={quotations} teamStats={teamStats} />
-                <div className="card" style={{ gridColumn: 'span 2', marginTop: '1rem' }}>
-                    <div className="card-header"><h3><Bell size={18} /> Activity Feed</h3></div>
-                    <div className="notifications-feed">
-                        {notifications.map(notif => (
-                            <div key={notif._id} className={`notif-item ${notif.notifRead ? 'read' : 'unread'}`}>
-                                <div className="notif-content">
-                                    <p className="notif-title">{notif.title}</p>
-                                    <p className="notif-desc">{notif.description}</p>
-                                    <span className="notif-time">{new Date(notif.createdAt).toLocaleString()}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </>
+            </div>
         );
     };
 
@@ -547,6 +646,17 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                                 </select>
                                 <small>Hold Ctrl (Cmd on Mac) to select multiple staff</small>
                             </div>
+                             <div className="form-group">
+                                <label>Creative Requirements / Client Specifications (e.g. 800sqft, 4BHK)</label>
+                                <textarea
+                                    value={taskFormData.creativeRequirements}
+                                    onChange={e => setTaskFormData({ ...taskFormData, creativeRequirements: e.target.value })}
+                                    placeholder="Enter specific creative requirements for the designer..."
+                                    rows="3"
+                                    required
+                                />
+                            </div>
+
                             <div className="form-row">
                                 <div className="form-group">
                                     <label>Priority</label>
@@ -560,20 +670,12 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                                 </div>
                             </div>
                             <div className="form-group">
-                                <label>Relates to Approved Quotation</label>
+                                <label>Assign to Project</label>
                                 <select value={taskFormData.project} onChange={e => setTaskFormData({ ...taskFormData, project: e.target.value })} required>
-                                    <option value="">Select Quotation / Project</option>
-                                    {quotations.filter(q => {
-                                        // Filter out quotations already assigned to tasks
-                                        // Unless we are editing the current task and it's the one already assigned
-                                        const isAlreadyAssigned = tasks.some(t =>
-                                            (t.quotation?._id === q._id || t.quotation === q._id || t.project?._id === q._id || t.project === q._id) &&
-                                            (!editingTaskId || t._id !== editingTaskId)
-                                        );
-                                        return !isAlreadyAssigned;
-                                    }).map(q => (
+                                    <option value="">Select Project</option>
+                                    {quotations.map(q => (
                                         <option key={q._id} value={q._id}>
-                                            {q.quotationNumber} — {q.projectName}
+                                            {q.projectName}
                                         </option>
                                     ))}
                                 </select>
@@ -623,6 +725,41 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                                         </a>
                                     ))}
                                 </div>
+                                <div className="design-items" style={{ marginBottom: '1.5rem', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden' }}>
+                                    <div style={{ background: '#f8fafc', padding: '12px 16px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <Package size={18} color="#10b981" />
+                                        <h6 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>Required Items & Materials</h6>
+                                    </div>
+                                    <div style={{ padding: '0' }}>
+                                        {selectedTask.submissions[selectedTask.submissions.length - 1].designItems?.length > 0 ? (
+                                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                                                <thead>
+                                                    <tr style={{ textAlign: 'left', background: '#fcfdfe', borderBottom: '1px solid #f1f5f9' }}>
+                                                        <th style={{ padding: '10px 16px', color: '#64748b', fontWeight: 700 }}>Item Name</th>
+                                                        <th style={{ padding: '10px 16px', color: '#64748b', fontWeight: 700 }}>Size/Specs</th>
+                                                        <th style={{ padding: '10px 16px', color: '#64748b', fontWeight: 700 }}>Qty</th>
+                                                        <th style={{ padding: '10px 16px', color: '#64748b', fontWeight: 700 }}>Unit</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {selectedTask.submissions[selectedTask.submissions.length - 1].designItems.map((item, idx) => (
+                                                        <tr key={idx} style={{ borderBottom: idx === selectedTask.submissions[selectedTask.submissions.length - 1].designItems.length - 1 ? 'none' : '1px solid #f1f5f9' }}>
+                                                            <td style={{ padding: '10px 16px', color: '#1e293b', fontWeight: 600 }}>{item.name}</td>
+                                                            <td style={{ padding: '10px 16px', color: '#64748b' }}>{item.size || 'N/A'}</td>
+                                                            <td style={{ padding: '10px 16px', color: '#1e293b', fontWeight: 700 }}>{item.quantity}</td>
+                                                            <td style={{ padding: '10px 16px', color: '#64748b' }}><span style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem' }}>{item.unit}</span></td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        ) : (
+                                            <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontStyle: 'italic' }}>
+                                                No specific items listed in this submission.
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
                                 <div className="staff-notes" style={{ marginBottom: '1.5rem', padding: '12px', background: '#f1f5f9', borderRadius: '8px' }}>
                                     <h6 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', color: '#64748b' }}>Staff Notes:</h6>
                                     <p style={{ margin: 0, fontSize: '0.9rem' }}>{selectedTask.submissions[selectedTask.submissions.length - 1].staffNotes || 'No notes provided'}</p>
@@ -657,15 +794,15 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                                 )}
                             </div>
 
-                            <div className="review-form">
-                                <div className="form-group">
-                                    <label>Decision</label>
-                                    <select value={reviewStatus} onChange={e => setReviewStatus(e.target.value)}>
-                                        <option value="Approved">Approve Design</option>
-                                        <option value="Revision Required">Request Revision (Redo)</option>
-                                        <option value="Rejected">Reject</option>
-                                    </select>
-                                </div>
+                                <div className="review-form">
+                                    <div className="form-group">
+                                        <label>Decision</label>
+                                        <select value={reviewStatus} onChange={e => setReviewStatus(e.target.value)}>
+                                            <option value="Approved">Approve & Forward to Sales</option>
+                                            <option value="Revision Required">Request Revision (Redo)</option>
+                                            <option value="Rejected">Reject</option>
+                                        </select>
+                                    </div>
                                 <div className="form-group">
                                     <label>Feedback / Comments</label>
                                     <textarea
