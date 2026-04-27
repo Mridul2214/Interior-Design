@@ -1,14 +1,35 @@
 import React, { useState } from 'react';
-import { Search, Mail, Phone, MapPin, MoreVertical, Plus, Award, Briefcase, Activity } from 'lucide-react';
+import { Search, Mail, Phone, MapPin, MoreVertical, Plus, Award, Briefcase, Activity, Users } from 'lucide-react';
 import '../css/ProductionManagement.css';
 
 const MOCK_TEAM = [
-    { id: 'EMP-01', name: 'Rahul K.', role: 'Senior Site Engineer', email: 'rahul.k@interiortech.com', phone: '+91 98765 43210', location: 'Jubilee Hills', activeProjects: 3, capacity: 85, performance: 'Excellent' },
-    { id: 'EMP-02', name: 'Priya M.', role: 'Project Engineer', email: 'priya.m@interiortech.com', phone: '+91 98765 43211', location: 'HITEC City', activeProjects: 2, capacity: 60, performance: 'Good' },
-    { id: 'EMP-03', name: 'Vikram S.', role: 'Site Supervisor', email: 'vikram.s@interiortech.com', phone: '+91 98765 43212', location: 'Gachibowli', activeProjects: 4, capacity: 95, performance: 'Outstanding' },
-    { id: 'EMP-04', name: 'Anita R.', role: 'Design Coordinator', email: 'anita.r@interiortech.com', phone: '+91 98765 43213', location: 'Banjara Hills', activeProjects: 2, capacity: 40, performance: 'Good' },
-    { id: 'EMP-05', name: 'Suresh P.', role: 'Site Engineer', email: 'suresh.p@interiortech.com', phone: '+91 98765 43214', location: 'Kondapur', activeProjects: 1, capacity: 20, performance: 'Needs Improvement' },
-    { id: 'EMP-06', name: 'Ravi T.', role: 'Procurement Lead', email: 'ravi.t@interiortech.com', phone: '+91 98765 43215', location: 'Head Office', activeProjects: 6, capacity: 75, performance: 'Excellent' }
+    { 
+        id: 'EMP-01', name: 'Rahul K.', role: 'Project Engineer', email: 'rahul.k@interiortech.com', phone: '+91 98765 43210', location: 'Jubilee Hills', activeProjects: 3, capacity: 85, performance: 'Excellent',
+        subordinates: [
+            { name: 'Arjun M.', role: 'Site Engineer' },
+            { name: 'Neha S.', role: 'Supervisor' }
+        ]
+    },
+    { 
+        id: 'EMP-02', name: 'Priya M.', role: 'Project Engineer', email: 'priya.m@interiortech.com', phone: '+91 98765 43211', location: 'HITEC City', activeProjects: 2, capacity: 60, performance: 'Good',
+        subordinates: [
+            { name: 'Vikas R.', role: 'Site Engineer' }
+        ]
+    },
+    { 
+        id: 'EMP-03', name: 'Vikram S.', role: 'Project Engineer', email: 'vikram.s@interiortech.com', phone: '+91 98765 43212', location: 'Gachibowli', activeProjects: 4, capacity: 95, performance: 'Outstanding',
+        subordinates: [
+            { name: 'Rohan D.', role: 'Site Engineer' },
+            { name: 'Aditi T.', role: 'Supervisor' },
+            { name: 'Karan V.', role: 'Supervisor' }
+        ]
+    },
+    { 
+        id: 'EMP-04', name: 'Anita R.', role: 'Project Engineer', email: 'anita.r@interiortech.com', phone: '+91 98765 43213', location: 'Banjara Hills', activeProjects: 2, capacity: 40, performance: 'Good',
+        subordinates: [
+            { name: 'Tarun P.', role: 'Site Engineer' }
+        ]
+    }
 ];
 
 const TeamOverview = () => {
@@ -62,6 +83,7 @@ const TeamOverview = () => {
                             <tr>
                                 <th>Member Profile</th>
                                 <th>Contact Info</th>
+                                <th>Reporting Team</th>
                                 <th>Workload & Capacity</th>
                                 <th>Performance</th>
                                 <th></th>
@@ -89,6 +111,21 @@ const TeamOverview = () => {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Phone size={12} color="#64748b" /> {member.phone}</div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={12} color="#64748b" /> {member.location}</div>
                                         </div>
+                                    </td>
+                                    <td>
+                                        {member.subordinates && member.subordinates.length > 0 ? (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                {member.subordinates.map((sub, idx) => (
+                                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem' }}>
+                                                        <Users size={12} color="#94a3b8" />
+                                                        <span style={{ fontWeight: 600, color: '#334155' }}>{sub.name}</span>
+                                                        <span style={{ color: '#64748b', fontSize: '0.75rem' }}>({sub.role})</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>No direct reports</span>
+                                        )}
                                     </td>
                                     <td style={{ minWidth: '180px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
