@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import StaffHomeSidebar from './StaffSidebar';
-import DesigningStaffSidebar from '../Designing/Staff/StaffSidebar';
-import ProcurementStaffSidebar from '../Procurement/Staff/StaffSidebar';
-import ProductionStaffSidebar from '../Production/Staff/StaffSidebar';
+import DeptSidebar from '../common/DeptSidebar';
 import StaffHeader from './StaffHeader';
 import { getRoleDepartment } from '../../hooks/useRoleDashboard';
 import './css/StaffLayout.css';
@@ -31,9 +29,9 @@ const StaffLayout = ({ user, onLogout }) => {
 
     const renderSidebar = () => {
         const props = { user, onLogout, isCollapsed: !isSidebarOpen, toggleSidebar };
-        if (department === 'Design') return <DesigningStaffSidebar {...props} />;
-        if (department === 'Procurement') return <ProcurementStaffSidebar {...props} />;
-        if (department === 'Production') return <ProductionStaffSidebar {...props} />;
+        if (department === 'Design' || department === 'Procurement' || department === 'Production') {
+            return <DeptSidebar role={user?.role} {...props} />;
+        }
         return <StaffHomeSidebar user={user} onLogout={onLogout} isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />;
     };
 

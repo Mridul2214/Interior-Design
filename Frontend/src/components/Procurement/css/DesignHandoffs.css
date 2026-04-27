@@ -1,0 +1,250 @@
+.priority-header {
+    border-left: 4px solid #6366f1;
+    padding-left: 1rem;
+}
+
+.badge-priority {
+    background: #6366f1;
+    color: white;
+}
+
+.request-item-premium {
+    display: flex;
+    justify-content: space-between;
+    padding: 1.25rem;
+    border-radius: 16px;
+    margin-bottom: 1rem;
+}
+
+.request-item-task {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+}
+
+.request-item-mr {
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+}
+
+.request-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.request-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1e293b;
+}
+
+.request-type-badge {
+    font-size: 0.65rem;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 800;
+}
+
+.request-type-badge.task {
+    background: #64748b;
+}
+
+.request-type-badge.mr {
+    background: #6366f1;
+}
+
+.request-project-info {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.request-design-note {
+    padding: 8px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 8px;
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: #4338ca;
+}
+
+.request-actions-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-assign-primary {
+    background: #6366f1;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.btn-review-outline {
+    background: white;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.modal-backdrop-blur {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    backdrop-filter: blur(4px);
+}
+
+.modal-card-premium {
+    background: white;
+    width: 700px;
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    position: relative;
+}
+
+.modal-close-round {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    border: none;
+    background: #f1f5f9;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-project-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.modal-project-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6366f1;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.modal-project-title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 800;
+}
+
+.modal-project-client {
+    margin: 4px 0 0;
+    color: #64748b;
+}
+
+.modal-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.modal-info-box {
+    padding: 1.25rem;
+    background: #f8fafc;
+    border-radius: 16px;
+    border: 1px solid #f1f5f9;
+}
+
+.modal-info-title {
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.modal-info-list {
+    display: grid;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.modal-info-label {
+    color: #64748b;
+}
+
+.modal-info-val-highlight {
+    color: #6366f1;
+}
+
+.modal-notes-box {
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    padding: 1.5rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+}
+
+.modal-notes-title {
+    margin: 0 0 8px 0;
+    font-size: 0.9rem;
+    color: #92400e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-notes-text {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #b45309;
+    line-height: 1.6;
+}
+
+.modal-actions-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-modal-assign {
+    flex: 1;
+    padding: 14px;
+    background: #6366f1;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.btn-modal-close {
+    flex: 1;
+    padding: 14px;
+    background: #f1f5f9;
+    color: #475569;
+    border: none;
+    border-radius: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}

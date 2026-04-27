@@ -1,9 +1,7 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import DesigningManagerSidebar from '../Designing/Manager/ManagerSidebar';
-import ProcurementManagerSidebar from '../Procurement/Manager/ManagerSidebar';
-import ProductionManagerSidebar from '../Production/Manager/ManagerSidebar';
+import DeptSidebar from '../common/DeptSidebar';
 import Header from './Header';
 import { getRoleDepartment } from '../../hooks/useRoleDashboard';
 import './css/Layout.css';
@@ -19,9 +17,9 @@ const Layout = ({ user, onLogout }) => {
 
     const renderSidebar = () => {
         const props = { user, onLogout, isCollapsed, toggleSidebar };
-        if (department === 'Design') return <DesigningManagerSidebar {...props} />;
-        if (department === 'Procurement') return <ProcurementManagerSidebar {...props} />;
-        if (department === 'Production') return <ProductionManagerSidebar {...props} />;
+        if (department === 'Design' || department === 'Procurement' || department === 'Production') {
+            return <DeptSidebar role={user?.role} {...props} />;
+        }
         return <Sidebar {...props} />;
     };
 

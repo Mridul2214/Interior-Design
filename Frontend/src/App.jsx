@@ -25,7 +25,7 @@ import StaffTasks from './components/StaffPanel/StaffTasks';
 import StaffClients from './components/StaffPanel/StaffClients';
 import StaffQuotations from './components/StaffPanel/StaffQuotations';
 
-import RoleDashboard from './components/Dashboard/RoleDashboard';
+import RoleDashboard from './components/common/RoleDashboard';
 import MaterialReviewHub from './components/Designing/Manager/MaterialReviewHub';
 import { isAdminLayout, isStaffLayout, useRoleDashboard } from './hooks/useRoleDashboard';
 

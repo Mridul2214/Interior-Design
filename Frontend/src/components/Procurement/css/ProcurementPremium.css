@@ -1,0 +1,318 @@
+/* Procurement Elegant UI Dashboard Aesthetics */
+
+.procurement-premium-wrapper {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1c1917;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.procurement-premium-wrapper * {
+    box-sizing: border-box;
+}
+
+/* Elegant Banner */
+.premium-banner {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 3.5rem 4rem;
+    position: relative;
+    margin-bottom: 2.5rem;
+    border: 1px solid #f5f5f4;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+
+.banner-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid #e7e5e4;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #57534e;
+    margin-bottom: 1.5rem;
+    width: max-content;
+}
+
+.banner-title {
+    font-size: 2.75rem;
+    font-weight: 300; /* Thin, elegant weight */
+    letter-spacing: -0.04em;
+    margin: 0 0 1rem 0;
+    color: #1c1917;
+}
+
+.banner-subtitle {
+    font-size: 1.05rem;
+    color: #78716c;
+    max-width: 650px;
+    line-height: 1.6;
+    margin: 0;
+    font-weight: 300;
+}
+
+/* Elegant Stat Cards Grid */
+.glass-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.glass-stat-card {
+    background: #ffffff;
+    border: 1px solid #f5f5f4;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.4s ease;
+    min-width: 0;
+}
+
+.glass-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.06);
+    border-color: #e7e5e4;
+}
+
+.glass-stat-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%; /* Circular for elegance */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    background: #f5f5f4;
+    color: #44403c;
+    transition: all 0.4s ease;
+}
+
+.glass-stat-card:hover .glass-stat-icon-wrapper {
+    background: #1c1917;
+    color: #ffffff;
+}
+
+/* Override previous loud colors with elegant monochrome/muted tones */
+.icon-purple, .icon-blue, .icon-green, .icon-orange {
+    background: #fafaf9;
+    color: #57534e;
+    border: 1px solid #e7e5e4;
+}
+
+.glass-stat-value {
+    font-size: 2.25rem;
+    font-weight: 300;
+    color: #1c1917;
+    line-height: 1;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.03em;
+}
+
+.glass-stat-label {
+    font-size: 0.8rem;
+    color: #78716c;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Elegant Chart Area */
+.premium-chart-grid {
+    display: grid;
+    grid-template-columns: 1.7fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.premium-chart-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 2.25rem;
+    border: 1px solid #f5f5f4;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.02);
+    min-width: 0;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.chart-title {
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: #1c1917;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+/* Elegant Lists */
+.premium-list-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.list-panel {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 2.25rem;
+    border: 1px solid #f5f5f4;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.02);
+    min-width: 0;
+}
+
+.list-item-modern {
+    display: flex;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f5f5f4;
+    background: transparent;
+    transition: opacity 0.3s ease;
+}
+
+.list-item-modern:last-child {
+    border-bottom: none;
+}
+
+.list-item-modern:hover {
+    opacity: 0.8;
+}
+
+.item-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #fafaf9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.25rem;
+    border: 1px solid #e7e5e4;
+    color: #44403c;
+}
+
+.item-details {
+    flex: 1;
+}
+
+.item-title {
+    font-weight: 500;
+    color: #1c1917;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+
+.item-subtitle {
+    font-size: 0.8rem;
+    color: #78716c;
+    font-weight: 300;
+}
+
+.btn-arrow-hover {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid #e7e5e4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #78716c;
+}
+
+.list-item-modern:hover .btn-arrow-hover {
+    background: #1c1917;
+    border-color: #1c1917;
+    color: #ffffff;
+}
+
+/* ==================================================
+   📱 RESPONSIVE DESIGN (Tablets & Phones)
+   ================================================== */
+
+@media (max-width: 1200px) {
+    .premium-chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1024px) {
+    .glass-stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    .premium-list-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .premium-banner {
+        padding: 2.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .premium-banner {
+        padding: 1.5rem;
+        border-radius: 12px;
+    }
+
+    .banner-title {
+        font-size: 2rem;
+    }
+
+    .glass-stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
+    }
+
+    .glass-stat-card {
+        padding: 1.25rem;
+    }
+
+    .glass-stat-value {
+        font-size: 1.75rem;
+    }
+
+    .premium-chart-card, .list-panel {
+        padding: 1.25rem;
+        border-radius: 12px;
+    }
+    
+    .list-item-modern {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 1px solid #f5f5f4;
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
+        background: #ffffff;
+    }
+
+    .item-icon-box {
+        margin-right: 0;
+    }
+    
+    .btn-arrow-hover {
+        align-self: flex-end;
+        margin-top: -2rem;
+    }
+}
