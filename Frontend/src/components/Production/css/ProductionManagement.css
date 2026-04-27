@@ -91,15 +91,16 @@
 
 /* ── Welcome Header ───────────────────────────────────────────── */
 .pm-welcome-header {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    background: white;
     border-radius: 16px;
     padding: 2rem;
     margin-bottom: 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: white;
-    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3);
+    color: #0f172a;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
     position: relative;
     overflow: hidden;
 }
@@ -111,7 +112,7 @@
     right: 0;
     width: 300px;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05));
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.03));
     transform: skewX(-45deg);
 }
 
@@ -119,13 +120,14 @@
     font-size: 1.8rem;
     font-weight: 800;
     margin: 0 0 0.5rem 0;
+    color: #0f172a;
 }
 
 .pm-welcome-date {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: #94a3b8;
+    color: #64748b;
     margin: 0;
     font-size: 0.95rem;
 }
@@ -137,9 +139,8 @@
 }
 
 .pm-summary-pill {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
     padding: 0.5rem 1rem;
     border-radius: 99px;
     display: flex;
@@ -147,6 +148,7 @@
     gap: 0.5rem;
     font-size: 0.85rem;
     font-weight: 500;
+    color: #334155;
 }
 
 .pm-pill-dot {

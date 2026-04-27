@@ -43,20 +43,20 @@ const ProjectsList = () => {
                 
                 {/* Filters */}
                 <div style={{ display: 'flex', gap: '1rem', width: '100%', zIndex: 1 }}>
-                    <div className="pm-search-bar" style={{ flex: 1, display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.1)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }}>
-                        <Search size={16} color="rgba(255,255,255,0.7)" />
+                    <div className="pm-search-bar" style={{ flex: 1, display: 'flex', alignItems: 'center', background: '#f1f5f9', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <Search size={16} color="#64748b" />
                         <input 
                             type="text" 
                             placeholder="Search projects or clients..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ background: 'transparent', border: 'none', outline: 'none', color: 'white', paddingLeft: '0.5rem', width: '100%' }}
+                            style={{ background: 'transparent', border: 'none', outline: 'none', color: '#0f172a', paddingLeft: '0.5rem', width: '100%' }}
                         />
                     </div>
                     <select 
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', outline: 'none' }}
+                        style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#0f172a', padding: '0.5rem 1rem', borderRadius: '8px', outline: 'none' }}
                     >
                         <option value="All" style={{ color: '#0f172a' }}>All Statuses</option>
                         <option value="Active" style={{ color: '#0f172a' }}>Active</option>

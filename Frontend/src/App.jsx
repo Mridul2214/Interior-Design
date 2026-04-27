@@ -22,7 +22,7 @@ import ProductionDashboard from './components/Production/Manager/Dashboard';
 import ProductionProjectsList from './components/Production/Manager/ProjectsList';
 // import ProductionProjectDetail from './components/Production/Manager/ProjectDetail';
 import ProductionTasksBoard from './components/Production/Manager/TasksBoard';
-// import ProductionTeamOverview from './components/Production/Manager/TeamOverview';
+import ProductionTeamOverview from './components/Production/Manager/TeamOverview';
 import ProductionApprovals from './components/Production/Manager/Approvals';
 
 import EngineerDashboard from './components/Production/Engineer/EngineerDashboard';
@@ -157,7 +157,7 @@ function App() {
               <Route path="production-management/projects" element={<ProductionProjectsList />} />
               {/* <Route path="production-management/projects/:id" element={<ProductionProjectDetail />} /> */}
               <Route path="production-management/tasks" element={<ProductionTasksBoard user={user} />} />
-              {/* <Route path="production-management/team" element={<ProductionTeamOverview />} /> */}
+              <Route path="production-management/team" element={<ProductionTeamOverview />} />
               <Route path="production-management/approvals" element={<ProductionApprovals />} />
 
               {/* Engineer Routes (Project Engineer only) */}

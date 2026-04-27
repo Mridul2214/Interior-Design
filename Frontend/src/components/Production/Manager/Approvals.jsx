@@ -12,7 +12,7 @@ const MOCK_APPROVALS = [
 const Approvals = () => {
     return (
         <div className="pm-dashboard">
-            <div className="pm-welcome-header" style={{ padding: '1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' }}>
+            <div className="pm-welcome-header" style={{ padding: '1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div className="pm-welcome-text">
                     <h1 style={{ fontSize: '1.5rem' }}>Pending Approvals</h1>
                     <p className="pm-welcome-date">Review and authorize production requests</p>

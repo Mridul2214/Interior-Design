@@ -36,7 +36,7 @@ const TasksBoard = () => {
                     <p className="pm-welcome-date">Kanban view of all production tasks</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem', zIndex: 1 }}>
-                    <button className="pm-quick-action-btn" style={{ padding: '0.5rem 1rem', flexDirection: 'row', gap: '0.5rem', background: 'rgba(255,255,255,0.1)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }}>
+                    <button className="pm-quick-action-btn" style={{ padding: '0.5rem 1rem', flexDirection: 'row', gap: '0.5rem', background: '#f8fafc', color: '#334155', borderColor: '#e2e8f0' }}>
                         <Filter size={16} /> Filters
                     </button>
                     <button className="pm-quick-action-btn" style={{ padding: '0.5rem 1rem', flexDirection: 'row', gap: '0.5rem', background: '#3b82f6', color: 'white', borderColor: '#2563eb' }}>
