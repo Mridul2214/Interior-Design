@@ -53,10 +53,28 @@ exports.getProjects = async (req, res) => {
         
         // If not Admin/Super Admin, restrict to strictly projects where user is PM
         if (req.user.role !== 'Admin' && req.user.role !== 'Super Admin') {
-            query = { projectManager: req.user.id };
+            query.projectManager = req.user.id;
         }
 
-        const projects = await ProductionProject.find(query).populate('clientId', 'name').sort({ createdAt: -1 });
+        const { status, search } = req.query;
+        if (status && status !== 'All Statuses') {
+            query.status = status;
+        }
+
+        let projects = await ProductionProject.find(query)
+            .populate('clientId', 'name')
+            .populate('projectEngineer', 'fullName')
+            .populate('projectManager', 'fullName')
+            .populate('siteEngineer', 'fullName')
+            .sort({ createdAt: -1 });
+
+        if (search) {
+            const searchRegex = new RegExp(search, 'i');
+            projects = projects.filter(p => 
+                searchRegex.test(p.projectName) || 
+                (p.clientId && searchRegex.test(p.clientId.name))
+            );
+        }
 
         res.status(200).json({ success: true, data: projects });
     } catch (error) {
@@ -245,6 +263,72 @@ exports.getDashboardOverview = async (req, res) => {
                 recentActivity
             }
         });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.getUpcomingDeadlines = async (req, res) => {
+    try {
+        let query = {};
+        if (req.user.role !== 'Admin' && req.user.role !== 'Super Admin') {
+            query = { projectManager: req.user.id };
+        }
+        const projects = await ProductionProject.find(query);
+        const projectIds = projects.map(p => p._id);
+
+        const tasks = await ProductionTask.find({ 
+            projectId: { $in: projectIds },
+            status: { $nin: ['Completed', 'Approved'] },
+            dueDate: { $exists: true, $ne: null }
+        })
+        .populate('projectId', 'projectName')
+        .sort({ dueDate: 1 })
+        .limit(5);
+
+        const deadlines = tasks.map(t => {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const due = new Date(t.dueDate);
+            due.setHours(0,0,0,0);
+            const diffTime = due - today;
+            const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            let priority = 'low';
+            if (daysLeft < 0) priority = 'urgent'; // Overdue
+            else if (daysLeft <= 3) priority = 'urgent';
+            else if (daysLeft <= 7) priority = 'high';
+            else if (daysLeft <= 14) priority = 'medium';
+
+            return {
+                id: t._id,
+                task: t.title,
+                project: t.projectId ? t.projectId.projectName : 'Unknown',
+                daysLeft,
+                priority
+            };
+        });
+
+        res.status(200).json({ success: true, data: deadlines });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.getBudgetOverview = async (req, res) => {
+    try {
+        // Mocking the aggregated budget for now until financial models are fully linked
+        const budgetData = {
+            total: 13550000,
+            spent: 9214000,
+            categories: [
+                { name: 'Materials', amount: 4200000, color: '#3b82f6' },
+                { name: 'Labour', amount: 2800000, color: '#8b5cf6' },
+                { name: 'Equipment', amount: 1200000, color: '#f59e0b' },
+                { name: 'Overheads', amount: 1014000, color: '#10b981' },
+            ]
+        };
+        res.status(200).json({ success: true, data: budgetData });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

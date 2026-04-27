@@ -11,6 +11,11 @@ const ProductionProjectSchema = new mongoose.Schema({
         ref: 'Client',
         required: false // Optional if not linked to existing client
     },
+    projectType: {
+        type: String,
+        enum: ['Residential', 'Commercial', 'Corporate', 'Other'],
+        default: 'Residential'
+    },
     description: {
         type: String,
         trim: true

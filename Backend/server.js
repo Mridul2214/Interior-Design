@@ -93,6 +93,9 @@ app.use('/api/procurement', procurementRoutes);
 app.use('/api/production', productionRoutes);
 app.use('/api/production-management', require('./routes/productionManagementRoutes'));
 app.use('/api/design', designRoutes);
+app.use('/api/kanban-tasks', require('./routes/kanbanTaskRoutes'));
+app.use('/api/team', require('./routes/teamMemberRoutes'));
+app.use('/api/approvals', require('./routes/approvalRoutes'));
 
 app.use('/api/ai', aiRoutes);
 app.use('/api/upload', uploadRoutes);

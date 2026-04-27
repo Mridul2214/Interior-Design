@@ -765,6 +765,64 @@ export const engineerAPI = {
     getSiteTeam:     () => apiCall('/production-management/team/site'),
 };
 
+export const productionManagerAPI = {
+    getProjects: (filters = {}) => {
+        const queryParams = new URLSearchParams();
+        if (filters.status) queryParams.append('status', filters.status);
+        if (filters.search) queryParams.append('search', filters.search);
+        return apiCall(`/production-management/projects?${queryParams.toString()}`);
+    },
+    getDashboardOverview: () => apiCall('/production-management/dashboard/overview'),
+    getDashboardDeadlines: () => apiCall('/production-management/dashboard/deadlines'),
+    getDashboardBudget: () => apiCall('/production-management/dashboard/budget'),
+    getTeamOverview: () => apiCall('/production-management/team/all'),
+};
+
+export const kanbanAPI = {
+    getTasks: () => apiCall('/kanban-tasks'),
+    createTask: (data) => apiCall('/kanban-tasks', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+    updateTask: (id, data) => apiCall(`/kanban-tasks/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+    }),
+    deleteTask: (id) => apiCall(`/kanban-tasks/${id}`, {
+        method: 'DELETE'
+    })
+};
+
+export const teamMemberAPI = {
+    getMembers: () => apiCall('/team'),
+    createMember: (data) => apiCall('/team', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+    updateMember: (id, data) => apiCall(`/team/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+    }),
+    deleteMember: (id) => apiCall(`/team/${id}`, {
+        method: 'DELETE'
+    })
+};
+
+export const approvalAPI = {
+    getApprovals: () => apiCall('/approvals'),
+    createApproval: (data) => apiCall('/approvals', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+    updateApproval: (id, data) => apiCall(`/approvals/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+    }),
+    deleteApproval: (id) => apiCall(`/approvals/${id}`, {
+        method: 'DELETE'
+    })
+};
+
 export default {
     auth: authAPI,
     clients: clientAPI,
@@ -781,6 +839,9 @@ export default {
 
     ai: aiAPI,
     staff: staffAPI,
+    kanban: kanbanAPI,
+    teamMember: teamMemberAPI,
+    approvals: approvalAPI,
     settings: settingsAPI,
     projects: projectAPI,
     vendors: vendorAPI,
@@ -789,5 +850,6 @@ export default {
     accounts: accountsAPI,
     checklists: checklistAPI,
     designDashboard: designDashboardAPI,
-    engineer: engineerAPI
+    engineer: engineerAPI,
+    productionManager: productionManagerAPI
 };

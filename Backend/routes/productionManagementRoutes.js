@@ -18,6 +18,8 @@ const {
     getPendingApprovals,
     getAllTasks,
     getTeamOverview,
+    getUpcomingDeadlines,
+    getBudgetOverview,
     // Engineer APIs
     getMyProjects,
     getEngineerDashboard,
@@ -58,6 +60,8 @@ router.post('/tasks/:taskId/comment', addComment);
 router.put('/tasks/:taskId/approve', isProjectManager, approveTask);
 router.get('/approvals/pending', getPendingApprovals);
 router.get('/dashboard/overview', getDashboardOverview);
+router.get('/dashboard/deadlines', getUpcomingDeadlines);
+router.get('/dashboard/budget', getBudgetOverview);
 
 // =======================
 // TEAM
