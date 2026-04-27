@@ -18,6 +18,25 @@ import QuotationView from './components/AdminPanel/QuotationView';
 import Projects from './components/AdminPanel/Projects';
 import Login from './components/Login';
 
+import ProductionDashboard from './components/Production/Manager/Dashboard';
+import ProductionProjectsList from './components/Production/Manager/ProjectsList';
+// import ProductionProjectDetail from './components/Production/Manager/ProjectDetail';
+import ProductionTasksBoard from './components/Production/Manager/TasksBoard';
+import ProductionTeamOverview from './components/Production/Manager/TeamOverview';
+import ProductionApprovals from './components/Production/Manager/Approvals';
+
+import EngineerDashboard from './components/Production/Engineer/EngineerDashboard';
+import EngineerTasks from './components/Production/Engineer/EngineerTasks';
+import EngineerProjects from './components/Production/Engineer/EngineerProjects';
+import ProjectDetail from './components/Production/Engineer/ProjectDetail';
+import TaskDetail from './components/Production/Engineer/TaskDetail';
+import LeaveRequest from './components/Production/Engineer/LeaveRequest';
+
+import SiteDashboard from './components/Production/Site/SiteDashboard';
+import SiteTasks from './components/Production/Site/SiteTasks';
+import SiteReports from './components/Production/Site/SiteReports';
+import SiteLeave from './components/Production/Site/SiteLeave';
+
 import StaffLayout from './components/StaffPanel/StaffLayout';
 import StaffDashboard from './components/StaffPanel/StaffDashboard';
 import SiteVisit from './components/StaffPanel/SiteVisit';
@@ -115,8 +134,10 @@ function App() {
   }
 
   const userRole = user?.role;
-  const shouldUseAdminLayout = isAdminLayout(userRole);
-  const shouldUseStaffLayout = isStaffLayout(userRole);
+  // Project Engineers, Site Engineers, and Site Supervisors use the Admin Layout (with Engineer sidebar)
+  const isProductionEngineer = ['Project Engineer', 'Site Engineer', 'Site Supervisor'].includes(userRole);
+  const shouldUseAdminLayout = isAdminLayout(userRole) || isProductionEngineer;
+  const shouldUseStaffLayout = isStaffLayout(userRole) && !isProductionEngineer;
 
   return (
     <ToastProvider>
@@ -143,6 +164,29 @@ function App() {
               <Route path="projects" element={<Projects />} />
               <Route path="projects/:id" element={<Projects />} />
               <Route path="material-review" element={<MaterialReviewHub user={user} />} />
+
+              {/* Production Management Routes (Project Manager) */}
+              <Route path="production-management/dashboard" element={<ProductionDashboard />} />
+              <Route path="production-management/projects" element={<ProductionProjectsList />} />
+              {/* <Route path="production-management/projects/:id" element={<ProductionProjectDetail />} /> */}
+              <Route path="production-management/tasks" element={<ProductionTasksBoard user={user} />} />
+              <Route path="production-management/team" element={<ProductionTeamOverview />} />
+              <Route path="production-management/approvals" element={<ProductionApprovals />} />
+
+              {/* Engineer Routes (Project Engineer only) */}
+              <Route path="engineer/dashboard" element={<EngineerDashboard user={user} />} />
+              <Route path="engineer/projects" element={<EngineerProjects user={user} />} />
+              <Route path="engineer/projects/:id" element={<ProjectDetail user={user} />} />
+              <Route path="engineer/tasks" element={<EngineerTasks user={user} />} />
+              <Route path="engineer/tasks/:id" element={<TaskDetail user={user} />} />
+              <Route path="engineer/leave" element={<LeaveRequest user={user} />} />
+
+              {/* Site Portal Routes (Site Engineer & Site Supervisor) */}
+              <Route path="site/dashboard" element={<SiteDashboard user={user} />} />
+              <Route path="site/tasks" element={<SiteTasks user={user} />} />
+              <Route path="site/reports" element={<SiteReports user={user} />} />
+              <Route path="site/leave" element={<SiteLeave user={user} />} />
+
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           )}
@@ -165,9 +209,10 @@ function App() {
           )}
 
           {/* Fallback routing - Redirect unknown paths to appropriate dashboard */}
-          {/* Catch-all for undefined roles or routing errors */}
           <Route path="*" element={
-            shouldUseAdminLayout ? (
+            isProductionEngineer ? (
+              <Navigate to="/engineer/dashboard" replace />
+            ) : shouldUseAdminLayout ? (
               <Navigate to="/" replace />
             ) : shouldUseStaffLayout ? (
               <Navigate to="/staff/dashboard" replace />

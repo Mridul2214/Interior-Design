@@ -6,22 +6,21 @@ export const useRoleDashboard = (role) => {
 
         const roleLower = role.toLowerCase();
 
-        // Departmental Role Mapping
-        if (roleLower.includes('design')) {
-            if (roleLower.includes('manager')) return 'design_manager';
-            return 'design_staff';
-        }
-        if (roleLower.includes('procurement')) {
-            if (roleLower.includes('manager')) return 'procurement_manager';
-            return 'procurement_staff';
-        }
-        if (roleLower.includes('production')) {
-            if (roleLower.includes('manager')) return 'production_manager';
-            return 'production_staff';
-        }
-        if (roleLower.includes('accounts')) {
-            if (roleLower.includes('manager')) return 'accounts_manager';
-            return 'accounts_staff';
+        // Check for specific department managers (not general admin)
+        if (roleLower === 'design manager') return 'design_manager';
+        if (roleLower === 'design staff') return 'design_staff';
+        if (roleLower === 'procurement manager') return 'procurement_manager';
+        if (roleLower === 'procurement staff') return 'procurement_staff';
+        if (roleLower === 'project manager') return 'project_manager';
+        if (roleLower === 'project engineer') return 'project_engineer';
+        if (roleLower === 'site engineer') return 'site_engineer';
+        if (roleLower === 'site supervisor') return 'site_supervisor';
+        if (roleLower === 'accounts manager') return 'accounts_manager';
+        if (roleLower === 'accounts staff') return 'accounts_staff';
+
+        // General roles
+        if (roleLower === 'super admin' || roleLower === 'admin' || roleLower === 'manager') {
+            return 'admin';
         }
 
         // General roles fallback
@@ -124,11 +123,11 @@ export const getRoleDepartment = (role) => {
     
     const roleLower = role.toLowerCase();
     
-    if (roleLower.includes('design')) return 'Design';
-    if (roleLower.includes('procurement')) return 'Procurement';
-    if (roleLower.includes('production')) return 'Production';
-    if (roleLower.includes('accounts')) return 'Accounts';
-    if (roleLower.includes('sales')) return 'Sales';
+    if (roleLower === 'design manager' || roleLower === 'design staff') return 'Design';
+    if (roleLower === 'procurement manager' || roleLower === 'procurement staff') return 'Procurement';
+    if (roleLower === 'project manager' || roleLower === 'project engineer' || roleLower === 'site engineer' || roleLower === 'site supervisor') return 'Production';
+    if (roleLower === 'accounts manager' || roleLower === 'accounts staff') return 'Accounts';
+    if (roleLower === 'sales manager' || roleLower === 'sales staff') return 'Sales';
     
     return 'Admin';
 };
@@ -136,15 +135,28 @@ export const getRoleDepartment = (role) => {
 // Check if user is a department manager (goes to Admin layout)
 export const isDepartmentManager = (role) => {
     if (!role) return false;
-    const roleLower = role.toLowerCase();
-    return roleLower.includes('manager') || roleLower.includes('admin');
+    const roleLower = role.toLowerCase().replace(/\s+/g, '');
+    return (
+        roleLower === 'designmanager' ||
+        roleLower === 'procurementmanager' ||
+        roleLower === 'projectmanager' ||
+        roleLower === 'accountsmanager'
+    );
 };
 
 // Check if user is department staff (goes to Staff layout)
 export const isDepartmentStaff = (role) => {
     if (!role) return false;
-    const roleLower = role.toLowerCase();
-    return roleLower.includes('staff') || roleLower.includes('designer') || roleLower.includes('employee');
+    const roleLower = role.toLowerCase().replace(/\s+/g, '');
+    return (
+        roleLower === 'designstaff' ||
+        roleLower === 'procurementstaff' ||
+        roleLower === 'projectengineer' ||
+        roleLower === 'siteengineer' ||
+        roleLower === 'sitesupervisor' ||
+        roleLower === 'accountsstaff' ||
+        roleLower === 'staff'
+    );
 };
 
 // Check if user is super admin/admin (full access to Admin layout)
@@ -173,3 +185,4 @@ export const isStaffLayout = (role) => {
     // Any Staff role should use Staff layout, UNLESS they are a Manager
     return (roleLower.includes('staff') || roleLower.includes('designer')) && !roleLower.includes('manager');
 };
+

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useRoleDashboard } from '../../hooks/useRoleDashboard';
 import DesignManagerDashboard from '../Designing/Manager/DesignManagerDashboard';
 import DesignStaffDashboard from '../Designing/Staff/DesignStaffDashboard';
@@ -19,6 +20,13 @@ const RoleDashboard = ({ user, onLogout }) => {
             return <ProcurementManagerDashboard user={user} onLogout={onLogout} />;
         case 'procurement_staff':
             return <ProcurementStaffDashboard user={user} onLogout={onLogout} />;
+        case 'project_manager':
+            return <Navigate to="/production-management/dashboard" replace />;
+        case 'project_engineer':
+            return <Navigate to="/engineer/dashboard" replace />;
+        case 'site_engineer':
+        case 'site_supervisor':
+            return <Navigate to="/site/dashboard" replace />;
         case 'staff':
             return <StaffDashboard user={user} onLogout={onLogout} />;
         case 'admin':
