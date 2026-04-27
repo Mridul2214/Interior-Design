@@ -7,13 +7,20 @@
     margin-left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
     padding: 0;
-    background-color: var(--bg-color);
+    background-color: #f8fafc;
     min-height: 100vh;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: margin-left, width;
+    display: flex;
+    flex-direction: column;
 }
 
 .layout-container.sidebar-collapsed .main-content {
     margin-left: 80px;
     width: calc(100% - 80px);
+}
+
+/* Remove the gap line between header and content */
+.main-content > .page-header {
+    flex-shrink: 0;
 }

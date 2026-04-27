@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-    LayoutDashboard, Wrench, ClipboardCheck, Box, CheckSquare, Target, LogOut, Menu, Users
+    LayoutDashboard, Wrench, ClipboardCheck, Box, CheckSquare, Target, LogOut, Menu, Users, Settings
 } from 'lucide-react';
 import { BASE_IMAGE_URL } from '../../../config/api';
 import '../../AdminPanel/css/Sidebar.css';
@@ -16,6 +16,12 @@ const ManagerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
                 { name: 'Tasks', icon: CheckSquare, path: '/production-management/tasks' },
                 { name: 'Team', icon: Users, path: '/production-management/team' },
                 { name: 'Approvals', icon: ClipboardCheck, path: '/production-management/approvals' },
+            ]
+        },
+        {
+            title: "System",
+            items: [
+                { name: 'Settings', icon: Settings, path: '/production-management/settings' },
             ]
         }
     ];

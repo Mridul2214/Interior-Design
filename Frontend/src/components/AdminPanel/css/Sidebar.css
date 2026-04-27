@@ -3,9 +3,7 @@
     width: var(--sidebar-width);
     height: 100vh;
     background-color: #ffffff;
-    /* Pure white */
-    border-right: 1px solid #e2e8f0;
-    /* Soft border */
+    border-right: 1px solid #e8edf2;
     position: fixed;
     left: 0;
     top: 0;
