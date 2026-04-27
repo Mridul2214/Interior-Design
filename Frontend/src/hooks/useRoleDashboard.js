@@ -11,8 +11,10 @@ export const useRoleDashboard = (role) => {
         if (roleLower === 'design staff') return 'design_staff';
         if (roleLower === 'procurement manager') return 'procurement_manager';
         if (roleLower === 'procurement staff') return 'procurement_staff';
-        if (roleLower === 'production manager') return 'production_manager';
-        if (roleLower === 'production staff') return 'production_staff';
+        if (roleLower === 'project manager') return 'project_manager';
+        if (roleLower === 'project engineer') return 'project_engineer';
+        if (roleLower === 'site engineer') return 'site_engineer';
+        if (roleLower === 'site supervisor') return 'site_supervisor';
         if (roleLower === 'accounts manager') return 'accounts_manager';
         if (roleLower === 'accounts staff') return 'accounts_staff';
 
@@ -119,7 +121,7 @@ export const getRoleDepartment = (role) => {
     
     if (roleLower === 'design manager' || roleLower === 'design staff') return 'Design';
     if (roleLower === 'procurement manager' || roleLower === 'procurement staff') return 'Procurement';
-    if (roleLower === 'production manager' || roleLower === 'production staff') return 'Production';
+    if (roleLower === 'project manager' || roleLower === 'project engineer' || roleLower === 'site engineer' || roleLower === 'site supervisor') return 'Production';
     if (roleLower === 'accounts manager' || roleLower === 'accounts staff') return 'Accounts';
     if (roleLower === 'sales manager' || roleLower === 'sales staff') return 'Sales';
     
@@ -133,7 +135,7 @@ export const isDepartmentManager = (role) => {
     return (
         roleLower === 'designmanager' ||
         roleLower === 'procurementmanager' ||
-        roleLower === 'productionmanager' ||
+        roleLower === 'projectmanager' ||
         roleLower === 'accountsmanager'
     );
 };
@@ -145,7 +147,9 @@ export const isDepartmentStaff = (role) => {
     return (
         roleLower === 'designstaff' ||
         roleLower === 'procurementstaff' ||
-        roleLower === 'productionstaff' ||
+        roleLower === 'projectengineer' ||
+        roleLower === 'siteengineer' ||
+        roleLower === 'sitesupervisor' ||
         roleLower === 'accountsstaff' ||
         roleLower === 'staff'
     );

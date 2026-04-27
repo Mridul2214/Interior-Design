@@ -57,6 +57,14 @@ const Sidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
             { name: 'Settings', icon: Settings, path: '/settings' },
         ];
 
+        const productionManagementItems = [
+            { name: 'Dashboard', icon: LayoutDashboard, path: '/production-management/dashboard' },
+            { name: 'Projects', icon: Target, path: '/production-management/projects' },
+            { name: 'Tasks', icon: CheckSquare, path: '/production-management/tasks' },
+            { name: 'Team', icon: Users, path: '/production-management/team' },
+            { name: 'Approvals', icon: ClipboardCheck, path: '/production-management/approvals' },
+        ];
+
         // Add role-specific items
         let roleSpecificItems = [];
         
@@ -104,8 +112,12 @@ const Sidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
         // Filter groups based on role/department if not a Super Admin
         const roleLower = user?.role?.toLowerCase() || '';
         const isSuperAdmin = roleLower === 'super admin' || roleLower === 'admin';
+        const isProductionRole = ['project manager', 'project engineer', 'site engineer', 'site supervisor'].includes(roleLower);
 
         if (isSuperAdmin) return groups;
+
+        // Production roles get their own dedicated sidebar — not this one
+        if (isProductionRole) return [];
 
         // Departmet-based filtering
         return groups.map(group => {
@@ -121,14 +133,14 @@ const Sidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
                 if (roleLower.includes('procurement')) {
                     return ['/inventory', '/purchase-orders', '/po-inventory', '/tasks'].includes(path);
                 }
-                if (roleLower.includes('production')) {
-                    return ['/tasks', '/inventory', '/projects'].includes(path);
+                if (roleLower.includes('production') || isProductionRole) {
+                    return path.startsWith('/production-management');
                 }
                 if (roleLower.includes('accounts')) {
                     return ['/invoice', '/reports', '/clients', '/projects'].includes(path);
                 }
                 if (roleLower === 'manager') {
-                    return ['/quotations', '/clients', '/tasks', '/projects', '/reports'].includes(path);
+                    return ['/quotations', '/clients', '/tasks', '/projects', '/reports'].includes(path) || path.startsWith('/production-management');
                 }
 
                 return true; // Default

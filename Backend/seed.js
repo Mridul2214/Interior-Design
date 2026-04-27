@@ -14,7 +14,7 @@ const seedData = async () => {
                 $in: [
                     'Design Manager', 'Design Staff',
                     'Procurement Manager', 'Procurement Staff',
-                    'Production Manager', 'Production Staff',
+                    'Project Manager', 'Project Engineer', 'Site Engineer', 'Site Supervisor',
                     'Accounts Manager', 'Accounts Staff',
                     'Super Admin', 'Admin', 'Manager'
                 ]
@@ -102,37 +102,37 @@ const seedData = async () => {
             // Production Department
             {
                 fullName: 'Suresh Rao',
-                email: 'production.manager@interiordesign.com',
+                email: 'project.manager@interiordesign.com',
                 phone: '9876543218',
                 password: 'password123',
-                role: 'Production Manager',
+                role: 'Project Manager',
                 department: 'Production',
                 status: 'Active'
             },
             {
                 fullName: 'Kavita Reddy',
-                email: 'production.staff@interiordesign.com',
+                email: 'project.engineer@interiordesign.com',
                 phone: '9876543219',
                 password: 'password123',
-                role: 'Production Staff',
+                role: 'Project Engineer',
                 department: 'Production',
                 status: 'Active'
             },
             {
                 fullName: 'Ravi Kumar',
-                email: 'production1@interiordesign.com',
+                email: 'site.engineer@interiordesign.com',
                 phone: '9876543220',
                 password: 'password123',
-                role: 'Production Staff',
+                role: 'Site Engineer',
                 department: 'Production',
                 status: 'Active'
             },
             {
                 fullName: 'Deepak Nair',
-                email: 'production2@interiordesign.com',
+                email: 'site.supervisor@interiordesign.com',
                 phone: '9876543221',
                 password: 'password123',
-                role: 'Production Staff',
+                role: 'Site Supervisor',
                 department: 'Production',
                 status: 'Active'
             },
@@ -221,16 +221,18 @@ const seedData = async () => {
 
         console.log('🔧 PRODUCTION DEPARTMENT');
         console.log('─────────────────────────────────────────────────────────────────────');
-        console.log('  Production Manager (Production Dashboard):');
-        console.log('    Email:    production.manager@interiordesign.com');
-        console.log('    Password: password123\n');
-        console.log('  Production Staff:');
-        console.log('    Email:    production.staff@interiordesign.com');
-        console.log('    Password: password123\n');
-        console.log('    Email:    production1@interiordesign.com');
-        console.log('    Password: password123\n');
-        console.log('    Email:    production2@interiordesign.com');
-        console.log('    Password: password123\n');
+        console.log('  Project Manager (PM Dashboard → /production-management/dashboard):');
+        console.log('    Email:    project.manager@interiordesign.com');
+        console.log('    Password: admin123\n');
+        console.log('  Project Engineer (Engineer Dashboard → /engineer/dashboard):');
+        console.log('    Email:    project.engineer@interiordesign.com');
+        console.log('    Password: admin123\n');
+        console.log('  Site Engineer:');
+        console.log('    Email:    site.engineer@interiordesign.com');
+        console.log('    Password: admin123\n');
+        console.log('  Site Supervisor:');
+        console.log('    Email:    site.supervisor@interiordesign.com');
+        console.log('    Password: admin123\n');
 
         console.log('💰 ACCOUNTS DEPARTMENT');
         console.log('─────────────────────────────────────────────────────────────────────');

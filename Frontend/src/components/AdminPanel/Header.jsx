@@ -145,6 +145,27 @@ const Header = ({ user }) => {
         if (path === '/users') return { title: 'Team Access', subtitle: 'Manage staff accounts and administrative permissions.' };
         if (path === '/invoice') return { title: 'Billing Manager', subtitle: 'Generate and track professional client invoices.' };
 
+        // Production Management Routes
+        if (path.startsWith('/production-management/dashboard')) return { title: 'Production Dashboard', subtitle: 'Overview of your production operations' };
+        if (path.startsWith('/production-management/projects')) return { title: 'Projects', subtitle: 'Manage production projects' };
+        if (path.startsWith('/production-management/tasks')) return { title: 'Tasks Board', subtitle: 'Track production tasks' };
+        if (path.startsWith('/production-management/team')) return { title: 'Team Overview', subtitle: 'Manage production team' };
+        if (path.startsWith('/production-management/approvals')) return { title: 'Pending Approvals', subtitle: 'Review submitted tasks' };
+
+        // Engineer Portal Routes
+        if (path === '/engineer/dashboard')          return { title: 'Dashboard',       subtitle: 'Overview of your assigned tasks and activity' };
+        if (path === '/engineer/projects')           return { title: 'My Projects',     subtitle: 'Projects you are assigned to' };
+        if (path.startsWith('/engineer/projects/')) return { title: 'Project Detail',   subtitle: 'Overview, tasks and activity for this project' };
+        if (path === '/engineer/tasks')              return { title: 'My Tasks',        subtitle: 'All tasks assigned to you' };
+        if (path.startsWith('/engineer/tasks/'))    return { title: 'Task Detail',     subtitle: 'Full task view, status updates and comments' };
+        if (path === '/engineer/leave')              return { title: 'Leave Request',   subtitle: 'Submit and track your leave applications' };
+
+        // Site Engineer / Site Supervisor Portal
+        if (path === '/site/dashboard') return { title: 'Dashboard',     subtitle: 'Your site tasks and daily progress at a glance' };
+        if (path === '/site/tasks')     return { title: 'My Tasks',      subtitle: 'Tasks assigned to you from the Project Engineer' };
+        if (path === '/site/reports')   return { title: 'Site Reports',  subtitle: 'Submit and review daily site progress reports' };
+        if (path === '/site/leave')     return { title: 'Leave Request', subtitle: 'Submit and track your leave applications' };
+
         // Fallback for unknown routes
         return {
             title: path.replace('/', '').split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),

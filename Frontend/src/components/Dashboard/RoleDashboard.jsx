@@ -1,11 +1,12 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useRoleDashboard } from '../../hooks/useRoleDashboard';
 import DesignManagerDashboard from '../Designing/Manager/DesignManagerDashboard';
 import DesignStaffDashboard from '../Designing/Staff/DesignStaffDashboard';
 import ProcurementManagerDashboard from '../Procurement/Manager/ProcurementManagerDashboard';
 import ProcurementStaffDashboard from '../Procurement/Staff/ProcurementStaffDashboard';
 import ProductionManagerDashboard from '../Production/Manager/ProductionManagerDashboard';
-import ProductionStaffDashboard from '../Production/Staff/ProductionStaffDashboard';
+import EngineerDashboard from '../Production/Engineer/EngineerDashboard';
 import AccountsManagerDashboard from './AccountsManagerDashboard';
 import AccountsStaffDashboard from './AccountsStaffDashboard';
 import WorkflowDashboard from './WorkflowDashboard';
@@ -23,10 +24,13 @@ const RoleDashboard = ({ user, onLogout }) => {
             return <ProcurementManagerDashboard user={user} onLogout={onLogout} />;
         case 'procurement_staff':
             return <ProcurementManagerDashboard user={user} onLogout={onLogout} />;
-        case 'production_manager':
-            return <ProductionManagerDashboard user={user} onLogout={onLogout} />;
-        case 'production_staff':
-            return <ProductionStaffDashboard user={user} onLogout={onLogout} />;
+        case 'project_manager':
+            return <Navigate to="/production-management/dashboard" replace />;
+        case 'project_engineer':
+            return <Navigate to="/engineer/dashboard" replace />;
+        case 'site_engineer':
+        case 'site_supervisor':
+            return <Navigate to="/site/dashboard" replace />;
         case 'accounts_manager':
             return <AccountsManagerDashboard user={user} onLogout={onLogout} />;
         case 'accounts_staff':

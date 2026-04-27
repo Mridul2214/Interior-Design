@@ -52,8 +52,10 @@ const UserSchema = new mongoose.Schema({
             'Design Staff',
             'Procurement Manager',
             'Procurement Staff',
-            'Production Manager',
-            'Production Staff',
+            'Project Manager',
+            'Project Engineer',
+            'Site Engineer',
+            'Site Supervisor',
             'Accounts Manager',
             'Accounts Staff',
             'Manager',
@@ -110,17 +112,17 @@ UserSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 UserSchema.methods.isManager = function () {
-    return ['Super Admin', 'Admin', 'Design Manager', 'Procurement Manager', 'Production Manager', 'Accounts Manager', 'Manager'].includes(this.role);
+    return ['Super Admin', 'Admin', 'Design Manager', 'Procurement Manager', 'Project Manager', 'Accounts Manager', 'Manager'].includes(this.role);
 };
 
 UserSchema.methods.isStaff = function () {
-    return ['Design Staff', 'Procurement Staff', 'Production Staff', 'Accounts Staff', 'Staff'].includes(this.role);
+    return ['Design Staff', 'Procurement Staff', 'Project Engineer', 'Site Engineer', 'Site Supervisor', 'Accounts Staff', 'Staff'].includes(this.role);
 };
 
 UserSchema.methods.getDepartment = function () {
     if (this.role.includes('Design')) return 'Design';
     if (this.role.includes('Procurement')) return 'Procurement';
-    if (this.role.includes('Production')) return 'Production';
+    if (this.role.includes('Production') || this.role === 'Project Manager' || this.role === 'Project Engineer' || this.role === 'Site Engineer' || this.role === 'Site Supervisor') return 'Production';
     if (this.role.includes('Accounts')) return 'Accounts';
     return 'Admin';
 };

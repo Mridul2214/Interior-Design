@@ -1,0 +1,112 @@
+/* ===========================
+   DateRangePicker – custom styles
+   (overrides react-day-picker defaults)
+   =========================== */
+
+/* ── Wrapper ── */
+.drp-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/* ── Trigger button ── */
+.drp-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: white;
+    font-size: 13px;
+    color: #374151;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+}
+.drp-trigger:hover { border-color: #94a3b8; }
+.drp-trigger.open  { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.drp-icon  { color: #94a3b8; flex-shrink: 0; }
+.drp-trigger.open .drp-icon { color: #3b82f6; }
+.drp-label       { flex: 1; color: #1e293b; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.drp-placeholder { flex: 1; color: #94a3b8; }
+.drp-clear {
+    display: flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #f1f5f9; color: #64748b;
+    flex-shrink: 0; transition: background 0.15s;
+}
+.drp-clear:hover { background: #e2e8f0; color: #374151; }
+
+/* ── Popover ── */
+.drp-popover {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 500;
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+    padding: 12px;
+    animation: drp-pop 0.15s ease;
+}
+@keyframes drp-pop {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── react-day-picker overrides ── */
+.drp-popover .rdp {
+    --rdp-accent-color: #3b82f6;
+    --rdp-accent-background-color: #eff6ff;
+    --rdp-selected-border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+}
+/* Nav buttons */
+.drp-popover .rdp-button_previous,
+.drp-popover .rdp-button_next {
+    border-radius: 8px;
+    color: #64748b;
+}
+.drp-popover .rdp-button_previous:hover,
+.drp-popover .rdp-button_next:hover { background: #f1f5f9; color: #1e293b; }
+
+/* Day cells */
+.drp-popover .rdp-day {
+    border-radius: 8px;
+}
+/* Range start / end */
+.drp-popover .rdp-day_button[aria-selected="true"] {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border-radius: 8px;
+}
+/* Range in-between days */
+.drp-popover .rdp-range_middle .rdp-day_button {
+    background-color: #eff6ff !important;
+    color: #1e293b !important;
+    border-radius: 0;
+}
+.drp-popover .rdp-range_start .rdp-day_button { border-radius: 8px 0 0 8px !important; }
+.drp-popover .rdp-range_end   .rdp-day_button { border-radius: 0 8px 8px 0 !important; }
+
+/* Month caption */
+.drp-popover .rdp-month_caption { font-weight: 700; color: #0f172a; font-size: 14px; }
+
+/* Weekday labels */
+.drp-popover .rdp-weekday { color: #94a3b8; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+
+/* Disabled days */
+.drp-popover .rdp-day[aria-disabled="true"] .rdp-day_button { color: #d1d5db !important; cursor: not-allowed; }
+
+/* Today indicator */
+.drp-popover .rdp-today:not([aria-selected="true"]) .rdp-day_button {
+    border: 1.5px solid #3b82f6;
+    color: #3b82f6;
+    font-weight: 700;
+}

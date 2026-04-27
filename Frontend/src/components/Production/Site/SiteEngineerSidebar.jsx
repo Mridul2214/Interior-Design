@@ -1,21 +1,23 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-    LayoutDashboard, Wrench, ClipboardCheck, Box, CheckSquare, Target, LogOut, Menu, Users
+    LayoutDashboard, CheckSquare, LogOut, Menu,
+    HardHat, ClipboardList, CalendarOff, Wrench
 } from 'lucide-react';
 import { BASE_IMAGE_URL } from '../../../config/api';
 import '../../AdminPanel/css/Sidebar.css';
 
-const ManagerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
+const SiteEngineerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
+    const isSupervisor = user?.role === 'Site Supervisor';
+
     const navGroups = [
         {
-            title: "Production",
+            title: 'Site Portal',
             items: [
-                { name: 'Dashboard', icon: LayoutDashboard, path: '/production-management/dashboard' },
-                { name: 'Projects', icon: Target, path: '/production-management/projects' },
-                { name: 'Tasks', icon: CheckSquare, path: '/production-management/tasks' },
-                { name: 'Team', icon: Users, path: '/production-management/team' },
-                { name: 'Approvals', icon: ClipboardCheck, path: '/production-management/approvals' },
+                { name: 'Dashboard',    icon: LayoutDashboard, path: '/site/dashboard' },
+                { name: 'My Tasks',     icon: CheckSquare,     path: '/site/tasks' },
+                { name: 'Site Reports', icon: ClipboardList,   path: '/site/reports' },
+                { name: 'Leave Request',icon: CalendarOff,     path: '/site/leave' },
             ]
         }
     ];
@@ -34,7 +36,12 @@ const ManagerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
         <div className={`sidebar-container production ${isCollapsed ? 'collapsed' : ''}`}>
             <div className="sidebar-header">
                 <div className="brand-wrapper">
-                    <h1 className="brand-title">Project Manager</h1>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <Wrench size={20} style={{ color: isSupervisor ? '#a78bfa' : '#34d399' }} />
+                        <h1 className="brand-title">
+                            {isSupervisor ? 'Supervisor Portal' : 'Site Portal'}
+                        </h1>
+                    </div>
                 </div>
                 <button className="btn-toggle-sidebar" onClick={toggleSidebar}>
                     <Menu size={20} />
@@ -42,11 +49,13 @@ const ManagerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
             </div>
 
             <nav className="sidebar-nav">
-                {navGroups.map((group) => (
+                {navGroups.map(group => (
                     <div key={group.title} className="nav-group">
-                        <h3 className="nav-group-title" style={{ fontSize: '11px', textTransform: 'uppercase', color: '#94a3b8', margin: '15px 0 5px 15px', fontWeight: '600' }}>{group.title}</h3>
+                        <h3 className="nav-group-title" style={{ fontSize:'11px', textTransform:'uppercase', color:'#94a3b8', margin:'15px 0 5px 15px', fontWeight:'600' }}>
+                            {group.title}
+                        </h3>
                         <ul className="nav-list">
-                            {group.items.map((item) => (
+                            {group.items.map(item => (
                                 <li key={item.name} className="nav-item">
                                     <NavLink to={item.path} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                                         <item.icon size={18} className="nav-icon" />
@@ -77,4 +86,4 @@ const ManagerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
     );
 };
 
-export default ManagerSidebar;
+export default SiteEngineerSidebar;

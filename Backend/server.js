@@ -91,6 +91,7 @@ app.use('/api/checklists', checklistRoutes);
 app.use('/api/accounts', accountsRoutes);
 app.use('/api/procurement', procurementRoutes);
 app.use('/api/production', productionRoutes);
+app.use('/api/production-management', require('./routes/productionManagementRoutes'));
 app.use('/api/design', designRoutes);
 
 app.use('/api/ai', aiRoutes);

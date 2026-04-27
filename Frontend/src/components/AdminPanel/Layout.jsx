@@ -4,6 +4,8 @@ import Sidebar from './Sidebar';
 import DesigningManagerSidebar from '../Designing/Manager/ManagerSidebar';
 import ProcurementManagerSidebar from '../Procurement/Manager/ManagerSidebar';
 import ProductionManagerSidebar from '../Production/Manager/ManagerSidebar';
+import EngineerSidebar from '../Production/Engineer/EngineerSidebar';
+import SiteEngineerSidebar from '../Production/Site/SiteEngineerSidebar';
 import Header from './Header';
 import { getRoleDepartment } from '../../hooks/useRoleDashboard';
 import './css/Layout.css';
@@ -21,7 +23,12 @@ const Layout = ({ user, onLogout }) => {
         const props = { user, onLogout, isCollapsed, toggleSidebar };
         if (department === 'Design') return <DesigningManagerSidebar {...props} />;
         if (department === 'Procurement') return <ProcurementManagerSidebar {...props} />;
-        if (department === 'Production') return <ProductionManagerSidebar {...props} />;
+        if (department === 'Production') {
+            if (user?.role === 'Project Manager')  return <ProductionManagerSidebar {...props} />;
+            if (user?.role === 'Project Engineer') return <EngineerSidebar {...props} />;
+            // Site Engineer & Site Supervisor get dedicated sidebar
+            return <SiteEngineerSidebar {...props} />;
+        }
         return <Sidebar {...props} />;
     };
 

@@ -62,7 +62,7 @@ const ProductionManagerDashboard = ({ user }) => {
                         <Wrench size={24} />
                     </div>
                     <div>
-                        <h1>Production Manager Dashboard</h1>
+                        <h1>Project Manager Dashboard</h1>
                         <p>Welcome back, {user?.fullName?.split(' ')[0]}</p>
                     </div>
                 </div>

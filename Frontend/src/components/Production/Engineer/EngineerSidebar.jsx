@@ -1,21 +1,20 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-    LayoutDashboard, Wrench, ClipboardCheck, Box, CheckSquare, Target, LogOut, Menu, Users
+    LayoutDashboard, CheckSquare, LogOut, Menu, HardHat, FolderOpen, CalendarOff
 } from 'lucide-react';
 import { BASE_IMAGE_URL } from '../../../config/api';
 import '../../AdminPanel/css/Sidebar.css';
 
-const ManagerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
+const EngineerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
     const navGroups = [
         {
-            title: "Production",
+            title: "Engineer Portal",
             items: [
-                { name: 'Dashboard', icon: LayoutDashboard, path: '/production-management/dashboard' },
-                { name: 'Projects', icon: Target, path: '/production-management/projects' },
-                { name: 'Tasks', icon: CheckSquare, path: '/production-management/tasks' },
-                { name: 'Team', icon: Users, path: '/production-management/team' },
-                { name: 'Approvals', icon: ClipboardCheck, path: '/production-management/approvals' },
+                { name: 'Dashboard',     icon: LayoutDashboard, path: '/engineer/dashboard' },
+                { name: 'Projects',      icon: FolderOpen,      path: '/engineer/projects' },
+                { name: 'My Tasks',      icon: CheckSquare,     path: '/engineer/tasks' },
+                { name: 'Leave Request', icon: CalendarOff,     path: '/engineer/leave' },
             ]
         }
     ];
@@ -34,7 +33,10 @@ const ManagerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
         <div className={`sidebar-container production ${isCollapsed ? 'collapsed' : ''}`}>
             <div className="sidebar-header">
                 <div className="brand-wrapper">
-                    <h1 className="brand-title">Project Manager</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <HardHat size={20} style={{ color: '#f59e0b' }} />
+                        <h1 className="brand-title">Engineer Portal</h1>
+                    </div>
                 </div>
                 <button className="btn-toggle-sidebar" onClick={toggleSidebar}>
                     <Menu size={20} />
@@ -77,4 +79,4 @@ const ManagerSidebar = ({ user, onLogout, isCollapsed, toggleSidebar }) => {
     );
 };
 
-export default ManagerSidebar;
+export default EngineerSidebar;
