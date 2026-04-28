@@ -51,6 +51,28 @@ const StaffTasks = () => {
         }
     };
 
+    const handleSalesReview = async (taskId, approved) => {
+        try {
+            const notes = prompt(approved ? 'Add approval notes (optional):' : 'Reason for rejection:');
+            if (!approved && !notes) {
+                alert('Rejection reason is required');
+                return;
+            }
+            
+            setUpdatingTaskId(taskId);
+            const response = await taskAPI.salesApprove(taskId, { approved, salesNotes: notes });
+            if (response.success) {
+                alert(approved ? 'Design approved successfully!' : 'Design sent back for revision');
+                fetchTasks();
+            }
+        } catch (err) {
+            console.error('Failed to review:', err);
+            alert('Action failed: ' + err.message);
+        } finally {
+            setUpdatingTaskId(null);
+        }
+    };
+
     const filteredTasks = tasks.filter(task => {
         const matchesSearch = task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             task.description?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -127,6 +149,7 @@ const StaffTasks = () => {
                                     <th>Progress</th>
                                     <th>Priority</th>
                                     <th>Deadline</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -177,6 +200,28 @@ const StaffTasks = () => {
                                                 <Calendar size={12} />
                                                 <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}</span>
                                             </div>
+                                        </td>
+                                        <td data-label="Actions">
+                                            {task.status === 'Pending Sales Review' ? (
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <button 
+                                                        onClick={() => handleSalesReview(task._id, true)}
+                                                        disabled={updatingTaskId === task._id}
+                                                        style={{ background: '#10b981', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                                                    >
+                                                        Approve
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleSalesReview(task._id, false)}
+                                                        disabled={updatingTaskId === task._id}
+                                                        style={{ background: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No pending actions</span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

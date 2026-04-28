@@ -98,7 +98,7 @@ const StaffQuotations = () => {
                                         </td>
                                         <td data-label="Status">
                                             <span className={`sq-status-badge sq-status-${(q.status || 'pending').toLowerCase()}`}>
-                                                {q.status || 'Pending'}
+                                                {q.status || 'Under Review'}
                                             </span>
                                         </td>
                                         <td data-label="Actions">

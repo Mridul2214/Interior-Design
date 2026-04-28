@@ -199,7 +199,7 @@ const Dashboard = ({ user }) => {
     // Prepare Pie Data
     const quotationPieData = stats ? [
         { name: 'Approved', value: stats.quotations.approved || 0, color: '#10b981' },
-        { name: 'Pending', value: stats.quotations.pending || 0, color: '#f59e0b' }
+        { name: 'Under Review', value: stats.quotations.pending || 0, color: '#f59e0b' }
     ] : [];
 
     const financialPieData = stats ? [
@@ -257,7 +257,7 @@ const Dashboard = ({ user }) => {
                         trend={{ type: 'positive', value: '12%' }}
                         sparkData={sparkData}
                         details={[
-                            { label: 'Pending', value: stats?.quotations?.pending || 0, color: '#f59e0b' },
+                            { label: 'Under Review', value: stats?.quotations?.pending || 0, color: '#f59e0b' },
                             { label: 'Approved', value: stats?.quotations?.approved || 0, color: '#10b981' }
                         ]}
                     />

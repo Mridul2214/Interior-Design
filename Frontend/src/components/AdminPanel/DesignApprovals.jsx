@@ -14,13 +14,15 @@ import {
     ArrowRight,
     Sparkles
 } from 'lucide-react';
-import { taskAPI, BASE_IMAGE_URL } from '../../config/api';
+import { taskAPI, procurementAPI, notificationAPI, BASE_IMAGE_URL } from '../../config/api';
 import { useToast } from '../../context/ToastContext';
 import './css/Tasks.css'; // Reusing some base styles
 
 const DesignApprovals = () => {
     const { showToast } = useToast();
+    const [activeTab, setActiveTab] = useState('design');
     const [tasks, setTasks] = useState([]);
+    const [procurementItems, setProcurementItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedTask, setSelectedTask] = useState(null);
     const [showDesignModal, setShowDesignModal] = useState(false);
@@ -32,12 +34,23 @@ const DesignApprovals = () => {
     const fetchPendingApprovals = async () => {
         try {
             setLoading(true);
-            const response = await taskAPI.getAll();
-            // The API returns { success: true, data: tasks }
-            const tasksArray = Array.isArray(response) ? response : (response.data || []);
-            const pending = tasksArray.filter(t => t.status === 'Pending Admin Review');
-            setTasks(pending);
+            const [taskRes, mrRes] = await Promise.all([
+                taskAPI.getAll({ status: 'Pending Admin Review,Pending Procurement Admin Review' }),
+                procurementAPI.getMaterialRequests({ status: 'Pending Admin Review' })
+            ]);
+            
+            const tasksArray = Array.isArray(taskRes) ? taskRes : (taskRes?.data || []);
+            const designPending = tasksArray.filter(t => t.status === 'Pending Admin Review');
+            const procPendingTasks = tasksArray.filter(t => t.status === 'Pending Procurement Admin Review').map(t => ({ ...t, type: 'Task' }));
+            
+            setTasks(designPending);
+            
+            const mrsArray = Array.isArray(mrRes) ? mrRes : (mrRes?.data || []);
+            const procPendingMRs = mrsArray.map(m => ({ ...m, type: 'MaterialRequest' }));
+            
+            setProcurementItems([...procPendingTasks, ...procPendingMRs]);
         } catch (err) {
+            console.error(err);
             showToast('Failed to fetch approvals', 'error');
         } finally {
             setLoading(false);
@@ -45,20 +58,54 @@ const DesignApprovals = () => {
     };
 
     const handleAdminReview = async (taskId, approved) => {
-        const promptMsg = approved 
-            ? 'Add an optional approval note (e.g., "Ready for procurement"):' 
-            : 'Enter the reason for rejection (this will be sent to the designer):';
+        let note = null;
+        let budget = 0;
         
-        const note = window.prompt(promptMsg);
-        if (!approved && !note) return; // Rejection requires a reason
+        if (approved) {
+            const confirmPayment = window.confirm('Have you verified that the client has made the necessary initial payments? Click OK to proceed to Procurement.');
+            if (!confirmPayment) return;
+            
+            const budgetPrompt = window.prompt('Enter an Approved Budget limit in ₹ (or leave blank for no limit):');
+            if (budgetPrompt === null) return; // User clicked Cancel
+            budget = Number(budgetPrompt) || 0;
+            
+            const optionalNote = window.prompt('Add an optional approval note (e.g., "Ready for procurement"):');
+            if (optionalNote) note = optionalNote;
+        } else {
+            note = window.prompt('Enter the reason for rejection (this will be sent to the designer):');
+            if (!note) return; // Rejection requires a reason
+        }
 
         try {
-            const response = await taskAPI.adminReview(taskId, { approved, rejectionReason: note });
+            const response = await taskAPI.adminReview(taskId, { approved, rejectionReason: note, approvedBudget: budget });
             if (response.success) {
                 setTasks(prev => prev.filter(t => t._id !== taskId));
                 showToast(approved ? 'Design approved and pushed to procurement' : 'Design sent back for revisions');
             }
         } catch (err) {
+            showToast('Action failed', 'error');
+        }
+    };
+
+    const handleProcurementApprove = async (item) => {
+        try {
+            if (item.type === 'Task') {
+                await taskAPI.update(item._id, { status: 'Procurement Approved' });
+            } else {
+                await procurementAPI.updateMaterialRequest(item._id, { status: 'Procurement Approved' });
+            }
+            await notificationAPI.create({
+                recipientRole: 'Procurement Manager',
+                title: 'Procurement Approved',
+                message: `Super Admin has approved the procurement for ${item.project?.name || item.requestNumber}. You may now hand off to production.`,
+                type: 'success',
+                relatedId: item.project?._id,
+                relatedModel: 'Project'
+            });
+            setProcurementItems(prev => prev.filter(t => t._id !== item._id));
+            showToast('Procurement approved successfully');
+        } catch (err) {
+            console.error(err);
             showToast('Action failed', 'error');
         }
     };
@@ -85,12 +132,12 @@ const DesignApprovals = () => {
                             </div>
                             <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: '#1e293b' }}>Approval Hub</h2>
                         </div>
-                        <p style={{ margin: 0, color: '#64748b', fontSize: '1rem' }}>Authorizing high-fidelity designs for final procurement and production.</p>
+                        <p style={{ margin: 0, color: '#64748b', fontSize: '1rem' }}>Authorizing high-fidelity designs and procurement materials.</p>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '12px 20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
                         <div style={{ textAlign: 'right' }}>
                             <span style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Queue Strength</span>
-                            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#4f46e5' }}>{tasks.length} Pending</span>
+                            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#4f46e5' }}>{tasks.length + procurementItems.length} Pending</span>
                         </div>
                         <div style={{ width: '40px', height: '40px', background: '#eef2ff', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4f46e5' }}>
                             <Clock size={20} />
@@ -98,13 +145,32 @@ const DesignApprovals = () => {
                     </div>
                 </div>
 
+                {/* Tabs */}
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '2px solid #e2e8f0' }}>
+                    <button 
+                        style={{ padding: '12px 24px', background: 'none', border: 'none', borderBottom: activeTab === 'design' ? '3px solid #6366f1' : '3px solid transparent', color: activeTab === 'design' ? '#4f46e5' : '#64748b', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}
+                        onClick={() => setActiveTab('design')}
+                    >
+                        <ImageIcon size={18} /> Design Pipeline ({tasks.length})
+                    </button>
+                    <button 
+                        style={{ padding: '12px 24px', background: 'none', border: 'none', borderBottom: activeTab === 'procurement' ? '3px solid #6366f1' : '3px solid transparent', color: activeTab === 'procurement' ? '#4f46e5' : '#64748b', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}
+                        onClick={() => setActiveTab('procurement')}
+                    >
+                        <Package size={18} /> Procurement Pipeline ({procurementItems.length})
+                    </button>
+                </div>
+
+                {activeTab === 'design' && (
+                    <>
+
                 {tasks.length === 0 ? (
                     <div style={{ background: 'white', borderRadius: '24px', padding: '5rem 2rem', textAlign: 'center', border: '1px dashed #cbd5e1' }}>
                         <div style={{ width: '80px', height: '80px', background: '#f0fdf4', color: '#16a34a', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
                             <CheckCircle size={40} />
                         </div>
                         <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>All Caught Up!</h3>
-                        <p style={{ color: '#64748b', maxWidth: '400px', margin: '0 auto' }}>There are no designs currently awaiting your review. Great job maintaining the pipeline!</p>
+                        <p style={{ color: '#64748b', maxWidth: '400px', margin: '0 auto' }}>There are no designs currently awaiting your review.</p>
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem' }}>
@@ -175,6 +241,75 @@ const DesignApprovals = () => {
                             </div>
                         ))}
                     </div>
+                )}
+                </>
+                )}
+
+                {activeTab === 'procurement' && (
+                    <>
+                    {procurementItems.length === 0 ? (
+                        <div style={{ background: 'white', borderRadius: '24px', padding: '5rem 2rem', textAlign: 'center', border: '1px dashed #cbd5e1' }}>
+                            <div style={{ width: '80px', height: '80px', background: '#f0fdf4', color: '#16a34a', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                                <CheckCircle size={40} />
+                            </div>
+                            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>All Caught Up!</h3>
+                            <p style={{ color: '#64748b', maxWidth: '400px', margin: '0 auto' }}>There are no procurement requests currently awaiting your review.</p>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem' }}>
+                            {procurementItems.map((item) => (
+                                <div key={item._id} className="approval-card" style={{ background: 'white', borderRadius: '24px', border: '1px solid #e2e8f0', overflow: 'hidden', transition: 'all 0.3s ease', position: 'relative' }}>
+                                    <div style={{ padding: '1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                            <div>
+                                                <h3 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', fontWeight: 800, color: '#1e293b' }}>{item.requestNumber || item.title}</h3>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.85rem' }}>
+                                                    <Package size={14} />
+                                                    <span>{item.project?.name || 'N/A'}</span>
+                                                </div>
+                                            </div>
+                                            <span style={{ padding: '6px 12px', background: '#fef08a', color: '#a16207', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                Pending Admin Review
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '0.85rem' }}>
+                                            <User size={14} />
+                                            <span>Sourced by: {item.assignedTo?.name || item.assignedTo?.fullName || 'Procurement Team'}</span>
+                                        </div>
+                                    </div>
+    
+                                    <div style={{ padding: '1.5rem' }}>
+                                        <div style={{ marginBottom: '1.5rem' }}>
+                                            <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#1e293b' }}>Items to Approve:</h4>
+                                            <div style={{ background: '#f1f5f9', padding: '1rem', borderRadius: '12px', maxHeight: '150px', overflowY: 'auto' }}>
+                                                {item.items && item.items.length > 0 ? (
+                                                    item.items.map((i, idx) => (
+                                                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: idx < item.items.length - 1 ? '1px solid #e2e8f0' : 'none', padding: '0.5rem 0' }}>
+                                                            <span style={{ fontSize: '0.85rem', color: '#475569' }}>{i.itemName}</span>
+                                                            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{i.quantity} {i.unit}</span>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Check materials in details.</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+                                            <button 
+                                                onClick={() => handleProcurementApprove(item)}
+                                                style={{ padding: '14px', background: '#10b981', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s', width: '100%' }}
+                                                className="approve-btn"
+                                            >
+                                                <CheckCircle size={18} /> Approve Procurement
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    </>
                 )}
             </div>
 

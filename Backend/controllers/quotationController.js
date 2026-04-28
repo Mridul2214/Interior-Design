@@ -372,7 +372,7 @@ exports.approveQuotation = async (req, res) => {
 exports.getQuotationStats = async (req, res) => {
     try {
         const total = await Quotation.countDocuments();
-        const pending = await Quotation.countDocuments({ status: 'Pending' });
+        const pending = await Quotation.countDocuments({ status: 'Under Review' });
         const approved = await Quotation.countDocuments({ status: 'Approved' });
         const rejected = await Quotation.countDocuments({ status: 'Rejected' });
 

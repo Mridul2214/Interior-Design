@@ -30,7 +30,17 @@ const DesignHandoffs = ({
                                 <div className="request-project-info">
                                     Project: <strong>{item.project?.name}</strong> • {item.type === 'MaterialRequest' ? `${item.items?.length || 0} items` : 'Needs Material Verification'}
                                 </div>
-                                <div className="request-design-note">
+                                {item.type === 'MaterialRequest' && item.approvedBudget > 0 && (
+                                    <div style={{ fontSize: '0.85rem', color: '#10b981', marginTop: '6px', fontWeight: 600 }}>
+                                        Approved Budget Limit: {formatCurrency(item.approvedBudget)}
+                                    </div>
+                                )}
+                                {item.type === 'MaterialRequest' && item.assignedTo && (
+                                    <div style={{ fontSize: '0.85rem', color: '#4f46e5', marginTop: '4px', fontWeight: 600 }}>
+                                        Auto-Assigned To: {item.assignedTo.fullName || 'Staff'}
+                                    </div>
+                                )}
+                                <div className="request-design-note" style={{ marginTop: '6px' }}>
                                     <strong>Design Note:</strong> {item.type === 'MaterialRequest' ? (item.notes || 'Final design approved and pushed for procurement.') : (item.description || 'Pushed from design stage. Please check drawings and create material list.')}
                                 </div>
                             </div>

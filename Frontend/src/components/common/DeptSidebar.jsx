@@ -17,7 +17,8 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, FileText, Users, CheckSquare, Package, Send,
     ShoppingCart, Building2, Box, ClipboardCheck, Target,
-    Wrench, Clock, Image, LogOut, Menu, Plus, CheckCircle
+    Wrench, Clock, Image, LogOut, Menu, Plus, CheckCircle,
+    FolderOpen, CalendarOff
 } from 'lucide-react';
 import { BASE_IMAGE_URL } from '../../config/api';
 import '../AdminPanel/css/Sidebar.css';
@@ -33,6 +34,7 @@ const NAV_CONFIG = {
         basePath:      '/',
         items: [
             { name: 'Dashboard',         icon: LayoutDashboard, path: '/?tab=dashboard',              tab: 'dashboard' },
+            { name: 'Quotations',        icon: FileText,        path: '/quotations',                  tab: null },
             { name: 'Project Status',    icon: Clock,           path: '/?tab=pipeline',               tab: 'pipeline' },
             { name: 'Project Details',   icon: FileText,        path: '/?tab=project_details',        tab: 'project_details' },
             { name: 'Task Assignment',   icon: CheckSquare,     path: '/?tab=tasks',                   tab: 'tasks' },
@@ -80,16 +82,52 @@ const NAV_CONFIG = {
         ],
     },
 
-    'Production Manager': {
-        brandTitle:   'Production Manager',
+    'Project Manager': {
+        brandTitle:   'Project Manager',
         sidebarClass: 'production',
-        basePath:     '/',
+        basePath:     '/production-management/dashboard',
         items: [
-            { name: 'Production Pipeline', icon: LayoutDashboard, path: '/' },
-            { name: 'Active Projects',      icon: Target,          path: '/projects' },
-            { name: 'Checklists',           icon: ClipboardCheck,  path: '/checklists' },
-            { name: 'Production Tasks',     icon: CheckSquare,     path: '/tasks' },
-            { name: 'Inventory Usage',      icon: Box,             path: '/inventory' },
+            { name: 'Dashboard', icon: LayoutDashboard, path: '/production-management/dashboard' },
+            { name: 'Projects',  icon: Target,          path: '/production-management/projects' },
+            { name: 'Tasks',     icon: CheckSquare,     path: '/production-management/tasks' },
+            { name: 'Team',      icon: Users,           path: '/production-management/team' },
+            { name: 'Approvals', icon: ClipboardCheck,  path: '/production-management/approvals' },
+        ],
+    },
+
+    'Project Engineer': {
+        brandTitle:   'Engineer Portal',
+        sidebarClass: 'production',
+        basePath:     '/engineer/dashboard',
+        items: [
+            { name: 'Dashboard',     icon: LayoutDashboard, path: '/engineer/dashboard' },
+            { name: 'Projects',      icon: FolderOpen,      path: '/engineer/projects' },
+            { name: 'My Tasks',      icon: CheckSquare,     path: '/engineer/tasks' },
+            { name: 'Leave Request', icon: CalendarOff,     path: '/engineer/leave' },
+        ],
+    },
+
+    'Site Engineer': {
+        brandTitle:   'Site Portal',
+        sidebarClass: 'production',
+        basePath:     '/site/dashboard',
+        items: [
+            { name: 'Dashboard',     icon: LayoutDashboard, path: '/site/dashboard' },
+            { name: 'Tasks',         icon: CheckSquare,     path: '/site/tasks' },
+            { name: 'Reports',       icon: FileText,        path: '/site/reports' },
+            { name: 'Leave Request', icon: CalendarOff,     path: '/site/leave' },
+        ],
+    },
+
+    'Site Supervisor': {
+        brandTitle:   'Site Portal',
+        sidebarClass: 'production',
+        basePath:     '/site/dashboard',
+        items: [
+            { name: 'Dashboard',     icon: LayoutDashboard, path: '/site/dashboard' },
+            { name: 'Tasks',         icon: CheckSquare,     path: '/site/tasks' },
+            { name: 'Reports',       icon: FileText,        path: '/site/reports' },
+            { name: 'Leave Request', icon: CalendarOff,     path: '/site/leave' },
         ],
     },
 

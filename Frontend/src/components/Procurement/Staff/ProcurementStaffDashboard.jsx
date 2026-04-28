@@ -6,7 +6,7 @@ import {
     Calendar, Save, X, History, Trash2, MapPin, CheckSquare
 } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { projectAPI, vendorAPI, procurementAPI, notificationAPI } from '../../../config/api';
+import { projectAPI, vendorAPI, procurementAPI, notificationAPI, taskAPI } from '../../../config/api';
 import '../css/StaffDashboard.css';
 import StaffOverview from './StaffOverview';
 import SourcingHub from './SourcingHub';
@@ -196,12 +196,39 @@ const ProcurementStaffDashboard = ({ user, onLogout }) => {
         }
     };
 
+    const handleCompleteTask = async (task) => {
+        try {
+            if (task.type === 'Task') {
+                await taskAPI.update(task._id, { status: 'Pending Manager Review' });
+            } else {
+                await procurementAPI.updateMaterialRequest(task._id, { status: 'Pending Manager Review', completedAt: new Date() });
+            }
+            
+            // Notify the manager
+            await notificationAPI.create({
+                recipientRole: 'Procurement Manager',
+                title: `Task Submitted for Review: ${task.requestNumber || task.title}`,
+                message: `Staff member ${user?.fullName || 'A staff member'} has submitted sourcing for project ${task.project?.name || 'N/A'}.`,
+                type: 'info',
+                relatedId: task.project?._id,
+                relatedModel: 'Project'
+            });
+            
+            setShowTaskDetailsModal(false);
+            fetchData();
+            alert('Task submitted to manager for review!');
+        } catch (err) {
+            console.error('Error completing task:', err);
+            alert('Failed to submit task.');
+        }
+    };
+
     const recordPurchase = async (purchaseData) => {
         try {
             await procurementAPI.createVendorPurchase(purchaseData);
             setShowPurchaseModal(false);
             await procurementAPI.updateMaterialRequest(selectedTask._id, {
-                status: 'Completed',
+                status: 'Pending Manager Review',
                 completedAt: new Date()
             });
             fetchData();
@@ -216,9 +243,9 @@ const ProcurementStaffDashboard = ({ user, onLogout }) => {
         return `₹${amount.toLocaleString()}`;
     };
 
-    const pendingTasks = tasks.filter(t => t.status === 'Assigned');
+    const pendingTasks = tasks.filter(t => t.status === 'Assigned' || t.status === 'Assigned to Procurement');
     const inProgressTasks = tasks.filter(t => t.status === 'In Progress' || t.status === 'Purchasing');
-    const completedTasks = tasks.filter(t => t.status === 'Completed');
+    const completedTasks = tasks.filter(t => ['Completed', 'Pending Manager Review', 'Pending Admin Review', 'Pending Procurement Admin Review', 'Procurement Approved'].includes(t.status));
 
     const vendorPurchaseCounts = (vendorStats || []).reduce((acc, v) => {
         const vid = v.vendor?._id || v.vendor;
@@ -365,6 +392,15 @@ const ProcurementStaffDashboard = ({ user, onLogout }) => {
                                     </div>
                                 )}
                             </div>
+
+                            {!['Completed', 'Pending Manager Review', 'Pending Admin Review', 'Pending Procurement Admin Review', 'Procurement Approved'].includes(selectedTask?.status) && (
+                                <button 
+                                    style={{ marginTop: '1.5rem', width: '100%', padding: '12px', background: '#10b981', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                    onClick={() => handleCompleteTask(selectedTask)}
+                                >
+                                    <CheckSquare size={18} /> Submit to Manager for Review
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -23,7 +23,13 @@ exports.getMaterialRequests = async (req, res) => {
         }
 
         if (project) query.project = project;
-        if (status && !query.status) query.status = status;
+        if (status && !query.status) {
+            if (status.includes(',')) {
+                query.status = { $in: status.split(',').map(s => s.trim()) };
+            } else {
+                query.status = status;
+            }
+        }
         if (priority) query.priority = priority;
 
         const skip = (page - 1) * limit;
@@ -408,15 +414,39 @@ exports.getStaffTasks = async (req, res) => {
     try {
         const staffId = req.user.id;
         
-        const tasks = await MaterialRequest.find({ assignedTo: staffId })
+        // 1. Get assigned MaterialRequests
+        const mrs = await MaterialRequest.find({ assignedTo: staffId })
             .populate('project', 'name projectNumber stage')
             .populate('requestedBy', 'fullName')
-            .sort({ priority: -1, createdAt: -1 });
+            .sort({ priority: -1, createdAt: -1 })
+            .lean();
+
+        // 2. Get assigned Tasks (e.g., 'Design Pushed' without MR)
+        const Task = require('../models/Task');
+        const tasks = await Task.find({ 
+                assignedTo: { $in: [staffId] },
+                status: { $in: ['Assigned to Procurement', 'In Progress', 'Completed'] }
+            })
+            .populate('project', 'name projectNumber stage')
+            .populate('createdBy', 'fullName')
+            .sort({ priority: -1, createdAt: -1 })
+            .lean();
+
+        // 3. Format and combine them
+        const formattedMrs = mrs.map(m => ({ ...m, type: 'MaterialRequest' }));
+        const formattedTasks = tasks.map(t => ({ 
+            ...t, 
+            type: 'Task',
+            requestNumber: t.title, // Map title to requestNumber for UI consistency
+            items: t.submissions?.[t.submissions?.length - 1]?.designItems || []
+        }));
+        
+        const combined = [...formattedMrs, ...formattedTasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         res.status(200).json({
             success: true,
-            count: tasks.length,
-            data: tasks
+            count: combined.length,
+            data: combined
         });
     } catch (error) {
         res.status(500).json({

@@ -111,6 +111,36 @@ exports.deleteNotification = async (req, res) => {
 exports.createNotification = async (req, res) => {
     try {
         req.body.createdBy = req.user.id;
+        
+        // Handle frontend payload aliases
+        if (req.body.message && !req.body.description) {
+            req.body.description = req.body.message;
+        }
+        
+        // Handle case-sensitive enum type
+        if (req.body.type) {
+            req.body.type = req.body.type.charAt(0).toUpperCase() + req.body.type.slice(1).toLowerCase();
+        }
+
+        // Handle role-based notifications
+        if (req.body.recipientRole && !req.body.recipient) {
+            const User = require('../models/User');
+            const users = await User.find({ role: req.body.recipientRole, status: 'Active' });
+            
+            if (users.length > 0) {
+                // Create a notification for every active user with that role
+                const notifications = await Promise.all(users.map(user => {
+                    return Notification.create({
+                        ...req.body,
+                        recipient: user._id
+                    });
+                }));
+                return res.status(201).json({ success: true, data: notifications[0] });
+            } else {
+                 return res.status(404).json({ success: false, message: `No active users found with role ${req.body.recipientRole}` });
+            }
+        }
+
         const notification = await Notification.create(req.body);
         res.status(201).json({ success: true, data: notification });
     } catch (error) {

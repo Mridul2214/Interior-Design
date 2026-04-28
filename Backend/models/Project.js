@@ -108,7 +108,7 @@ const ProjectSchema = new mongoose.Schema({
     timestamps: true
 });
 
-ProjectSchema.pre('save', async function (next) {
+ProjectSchema.pre('validate', async function (next) {
     if (!this.projectNumber) {
         const count = await mongoose.model('Project').countDocuments();
         const year = new Date().getFullYear();

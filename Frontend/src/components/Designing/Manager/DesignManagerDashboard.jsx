@@ -237,6 +237,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
 
     const renderContent = () => {
         if (activeTab === 'pipeline' || activeTab === 'project_status') {
+            const activeDesign = tasks.filter(t => t.status === 'To Do' || t.status === 'In Progress');
             const submissions = tasks.filter(t => t.status === 'Review Pending' || t.status === 'Revision Required');
             const salesReview = tasks.filter(t => t.status === 'Pending Sales Review');
             const adminApproval = tasks
@@ -255,16 +256,17 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                         <p style={{ color: '#64748b' }}>Track designs from designer submission to final procurement push.</p>
                     </div>
 
-                    <div className="pipeline-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', alignItems: 'flex-start' }}>
-                        {/* ── COLUMN 1: STAFF SUBMISSIONS ── */}
+                    <div className="pipeline-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', alignItems: 'flex-start' }}>
+                        
+                        {/* ── COLUMN 1: ACTIVE DESIGN ── */}
                         <div className="pipeline-column">
-                            <div className="col-header" style={{ borderLeft: '4px solid #6366f1' }}>
+                            <div className="col-header" style={{ borderLeft: '4px solid #3b82f6' }}>
                                 <div className="col-title-box">
                                     <Palette size={18} />
-                                    <span>Staff Submissions</span>
+                                    <span>Active Design</span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span className="col-count">{submissions.length}</span>
+                                    <span className="col-count" style={{ background: '#dbeafe', color: '#1d4ed8' }}>{activeDesign.length}</span>
                                     <button 
                                         className="add-task-btn" 
                                         onClick={() => {
@@ -272,10 +274,40 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                                             setTaskFormData({ title: '', description: '', assignedTo: [], priority: 'Medium', dueDate: '', project: '' });
                                             setShowAssignModal(true);
                                         }}
-                                        style={{ border: 'none', background: '#6366f1', color: 'white', borderRadius: '6px', padding: '2px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        style={{ border: 'none', background: '#3b82f6', color: 'white', borderRadius: '6px', padding: '2px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        title="Assign New Task"
                                     >
                                         <Plus size={14} />
                                     </button>
+                                </div>
+                            </div>
+                            <div className="col-body">
+                                {activeDesign.map(task => (
+                                    <div key={task._id} className="pipeline-card staff-card" style={{ borderLeftColor: '#3b82f6' }}>
+                                        <div className="card-header">
+                                            <h4>{task.title}</h4>
+                                            <span className="badge" style={{ background: '#eff6ff', color: '#2563eb' }}>{task.status}</span>
+                                        </div>
+                                        <div className="card-info" style={{ marginTop: '10px' }}>
+                                            <p><Briefcase size={12} /> {task.project?.projectName || 'No Project'}</p>
+                                            <p><Users size={12} /> {task.assignedTo?.map(s => s.name).join(', ') || 'Unassigned'}</p>
+                                            <p className="time-stamp" style={{ marginTop: '8px' }}><Clock size={12} /> Assigned: {new Date(task.createdAt).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                {activeDesign.length === 0 && <div className="empty-col">No designs currently in progress</div>}
+                            </div>
+                        </div>
+
+                        {/* ── COLUMN 2: STAFF SUBMISSIONS ── */}
+                        <div className="pipeline-column">
+                            <div className="col-header" style={{ borderLeft: '4px solid #6366f1' }}>
+                                <div className="col-title-box">
+                                    <CheckSquare size={18} />
+                                    <span>Staff Submissions</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span className="col-count">{submissions.length}</span>
                                 </div>
                             </div>
                             <div className="col-body">
@@ -308,7 +340,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                             </div>
                         </div>
 
-                        {/* ── COLUMN 2: SALES PART ── */}
+                        {/* ── COLUMN 3: SALES PART ── */}
                         <div className="pipeline-column">
                             <div className="col-header" style={{ borderLeft: '4px solid #10b981' }}>
                                 <div className="col-title-box">
@@ -349,7 +381,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                             </div>
                         </div>
 
-                        {/* ── COLUMN 3: ADMIN SIDE ── */}
+                        {/* ── COLUMN 4: ADMIN SIDE ── */}
                         <div className="pipeline-column">
                             <div className="col-header" style={{ borderLeft: '4px solid #f59e0b' }}>
                                 <div className="col-title-box">
@@ -380,7 +412,7 @@ const DesignManagerDashboard = ({ user, onLogout }) => {
                                                 <div className="card-info" style={{ marginTop: '10px' }}>
                                                     <p><Briefcase size={12} /> {task.project?.projectName || 'No Project'}</p>
                                                     {task.status === 'Pending Admin Review' && (
-                                                        <div className="waiting-pill" style={{ marginTop: '10px', padding: '8px', background: '#fffbeb', color: '#b45309', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center', border: '1px solid #fef3c7' }}>Waiting for Admin Review...</div>
+                                                        <div className="waiting-pill" style={{ marginTop: '10px', padding: '8px', background: '#fffbeb', color: '#b45309', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center', border: '1px solid #fef3c7' }}>Under Review</div>
                                                     )}
                                                     {task.status === 'Admin Rejected' && (
                                                         <div className="waiting-pill" style={{ marginTop: '10px', padding: '8px', background: '#fef2f2', color: '#b91c1c', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, textAlign: 'center', border: '1px solid #fee2e2' }}>Admin Requested Revision</div>

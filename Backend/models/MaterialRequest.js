@@ -96,7 +96,7 @@ const MaterialRequestSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Design Review', 'Pending', 'Approved', 'Rejected', 'In Progress', 'Completed', 'Cancelled', 'Assigned', 'Purchasing'],
+        enum: ['Design Review', 'Pending', 'Approved', 'Rejected', 'In Progress', 'Completed', 'Cancelled', 'Assigned', 'Purchasing', 'Pending Manager Review', 'Pending Admin Review', 'Procurement Approved'],
         default: 'Pending'
     },
     managerRemarks: {
@@ -136,6 +136,10 @@ const MaterialRequestSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+    approvedBudget: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true

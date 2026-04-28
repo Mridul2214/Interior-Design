@@ -16,7 +16,13 @@ exports.getTasks = async (req, res) => {
                 { description: { $regex: search, $options: 'i' } }
             ];
         }
-        if (status) query.status = status;
+        if (status) {
+            if (status.includes(',')) {
+                query.status = { $in: status.split(',') };
+            } else {
+                query.status = status;
+            }
+        }
         if (priority) query.priority = priority;
         if (assignedTo) query.assignedTo = assignedTo;
         if (includeOverdue === 'true') query.isOverdue = true;
@@ -696,7 +702,7 @@ exports.managerSendToAdmin = async (req, res) => {
 // Superadmin reviews and approves/rejects design
 exports.adminReviewDesign = async (req, res) => {
     try {
-        const { approved, rejectionReason } = req.body;
+        const { approved, rejectionReason, approvedBudget } = req.body;
         const task = await Task.findById(req.params.id).populate('quotation');
         if (!task) return res.status(404).json({ success: false, message: 'Task not found' });
 
@@ -756,17 +762,42 @@ exports.adminReviewDesign = async (req, res) => {
 
         let materialRequest = null;
         if (task.project) {
+            // Auto-assign to a procurement staff
+            const User = require('../models/User');
+            const procStaff = await User.find({ role: 'Procurement Staff', status: 'Active' });
+            let assignedTo = null;
+            let mrStatus = 'Pending';
+            
+            if (procStaff && procStaff.length > 0) {
+                // Round-robin or simple first assignment
+                assignedTo = procStaff[Math.floor(Math.random() * procStaff.length)]._id;
+                mrStatus = 'Assigned';
+            }
+
             materialRequest = await MaterialRequest.create({
                 project: task.project,
                 quotation: task.quotation ? task.quotation._id : null,
                 items: materialRequestItems,
                 priority: 'Medium',
-                status: 'Pending',
+                status: mrStatus,
                 requestedBy: req.user.id,
                 createdBy: req.user.id,
+                assignedTo: assignedTo,
+                approvedBudget: approvedBudget || 0,
                 isPushedFromDesign: true,
                 notes: `Admin-approved design handoff from task: ${task.title}.`
             });
+
+            if (assignedTo) {
+                const { notifyUser } = require('../utils/notificationHelper');
+                notifyUser(assignedTo, {
+                    title: 'New Auto-Assigned Handoff',
+                    description: `You have been auto-assigned to handle procurement for "${task.title}".`,
+                    type: 'Info',
+                    relatedModel: 'MaterialRequest',
+                    relatedId: materialRequest._id
+                });
+            }
 
             const Project = require('../models/Project');
             await Project.findByIdAndUpdate(task.project, { stage: 'Procurement', designComplete: true });

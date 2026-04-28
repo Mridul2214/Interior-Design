@@ -9,7 +9,7 @@ exports.getDashboardStats = async (req, res) => {
     try {
         // Quotation stats
         const totalQuotations = await Quotation.countDocuments();
-        const pendingQuotations = await Quotation.countDocuments({ status: 'Pending' });
+        const pendingQuotations = await Quotation.countDocuments({ status: 'Under Review' });
         const approvedQuotations = await Quotation.countDocuments({ status: 'Approved' });
 
         // Revenue stats

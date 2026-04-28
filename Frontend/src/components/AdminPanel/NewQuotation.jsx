@@ -48,7 +48,7 @@ const NewQuotation = ({ isEdit, isStaff }) => {
     const [globalSearchQuery, setGlobalSearchQuery] = useState('');
     const [globalSearchResults, setGlobalSearchResults] = useState([]);
     const [showBillPreview, setShowBillPreview] = useState(false);
-    const [pendingStatus, setPendingStatus] = useState('Pending');
+    const [pendingStatus, setPendingStatus] = useState('Under Review');
     const [isSaving, setIsSaving] = useState(false);
     const [clientSearchQuery, setClientSearchQuery] = useState('');
     const [showClientSuggestions, setShowClientSuggestions] = useState(false);
@@ -216,7 +216,7 @@ const NewQuotation = ({ isEdit, isStaff }) => {
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
-    const handlePreview = (e, status = 'Pending') => {
+    const handlePreview = (e, status = 'Under Review') => {
         if (e) e.preventDefault();
         if (!formData.client || !formData.projectName || lineItems.length === 0) {
             setError('Please fill in required fields and add items.');

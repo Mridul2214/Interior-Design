@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Trash2, Edit, CheckCircle, XCircle, FileText, User, IndianRupee, Clock, Loader, LayoutGrid, List, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { quotationAPI } from '../../config/api';
+import { getRolePermissions } from '../../hooks/useRoleDashboard';
 import './css/Quotations.css';
 
 const Quotations = ({ isStaff, user }) => {
@@ -12,8 +13,8 @@ const Quotations = ({ isStaff, user }) => {
     const [activeTab, setActiveTab] = useState('All');
     const [submitting, setSubmitting] = useState(false);
 
-    // Only Super Admin and Admin can approve/delete quotations
-    const canApprove = ['Super Admin', 'Admin'].includes(user?.role);
+    // Use role permissions to determine if user can approve
+    const canApprove = getRolePermissions(user?.role).canApproveQuotations;
 
     useEffect(() => {
         fetchQuotations();
@@ -74,7 +75,7 @@ const Quotations = ({ isStaff, user }) => {
 
         const matchesTab = (
             activeTab === 'All' ||
-            (activeTab === 'Pending' && q.status === 'Pending') ||
+            (activeTab === 'Under Review' && q.status === 'Under Review') ||
             (activeTab === 'Approved' && q.status === 'Approved')
         );
 
@@ -84,7 +85,7 @@ const Quotations = ({ isStaff, user }) => {
     const getStatusClass = (status) => {
         switch (status?.toLowerCase()) {
             case 'approved': return 'q-status-approved';
-            case 'pending': return 'q-status-pending';
+            case 'under review': return 'q-status-pending';
             case 'rejected': return 'q-status-rejected';
             default: return 'q-status-default';
         }
@@ -97,7 +98,7 @@ const Quotations = ({ isStaff, user }) => {
                     <div className="q-header-left">
                         <h2>Quotations</h2>
                         <div className="q-tabs-list">
-                            {['All', 'Pending', 'Approved'].map(tab => (
+                            {['All', 'Under Review', 'Approved'].map(tab => (
                                 <button
                                     key={tab}
                                     className={`q-tab-item ${activeTab === tab ? 'active' : ''}`}
@@ -176,7 +177,7 @@ const Quotations = ({ isStaff, user }) => {
                                                 <Link to={`/quotations/view/${q._id}`} className="btn-icon view" title="View">
                                                     <Eye size={18} />
                                                 </Link>
-                                                {!isStaff && canApprove && q.status === 'Pending' && (
+                                                {!isStaff && canApprove && q.status === 'Under Review' && (
                                                     <button
                                                         className="btn-icon approve"
                                                         onClick={() => handleApprove(q._id)}

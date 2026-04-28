@@ -53,8 +53,8 @@ const ProcurementManagerDashboard = ({ user, onLogout }) => {
             const [vendorList, staffRes, requestsRes, taskRes] = await Promise.all([
                 vendorAPI.getAll(),
                 procurementAPI.getProcurementStaff(),
-                procurementAPI.getMaterialRequests({ limit: 100, sort: '-createdAt' }),
-                taskAPI.getAll({ status: 'Pushed to Procurement', limit: 100 })
+                procurementAPI.getMaterialRequests({ limit: 500, sort: '-createdAt' }),
+                taskAPI.getAll({ status: 'Pushed to Procurement,Assigned to Procurement,Pending Manager Review,Pending Procurement Admin Review,Procurement Approved', limit: 500 })
             ]);
 
             if (vendorList.success) setVendors(vendorList.data);
@@ -80,13 +80,36 @@ const ProcurementManagerDashboard = ({ user, onLogout }) => {
         }
     };
 
+    const handleApproveToAdmin = async (request) => {
+        try {
+            if (request.type === 'Task') {
+                await taskAPI.update(request._id, { status: 'Pending Procurement Admin Review' });
+            } else {
+                await procurementAPI.updateMaterialRequest(request._id, { status: 'Pending Admin Review' });
+            }
+            await notificationAPI.create({
+                recipientRole: 'Super Admin',
+                title: 'Procurement Ready for Approval',
+                message: `Procurement for ${request.project?.name || request.requestNumber || request.title} is ready for final admin approval.`,
+                type: 'info',
+                relatedId: request.project?._id,
+                relatedModel: 'Project'
+            });
+            fetchData();
+            alert('Sent to Admin for final approval!');
+        } catch (err) {
+            console.error(err);
+            alert('Failed to send to admin.');
+        }
+    };
+
     const handleHandoff = async (request) => {
         try {
             // 1. Create a task for Production
             const prodRes = await productionAPI.createTask({
                 project: request.project?._id,
-                title: `Production Start: ${request.requestNumber}`,
-                description: `Materials procured and ready for production. Items: ${request.items?.map(i => i.itemName).join(', ')}`,
+                title: `Production Start: ${request.requestNumber || request.title}`,
+                description: `Materials procured and ready for production. Items: ${request.items?.map(i => i.itemName).join(', ') || 'See details'}`,
                 priority: 'High',
                 status: 'To Do',
                 materialRequest: request._id
@@ -94,16 +117,20 @@ const ProcurementManagerDashboard = ({ user, onLogout }) => {
 
             if (prodRes.success) {
                 // 2. Update MR status to reflected it's been handed off
-                await procurementAPI.updateMaterialRequest(request._id, {
-                    status: 'Handed Off',
-                    handoffDate: new Date()
-                });
+                if (request.type === 'Task') {
+                    await taskAPI.update(request._id, { status: 'Handed Off' });
+                } else {
+                    await procurementAPI.updateMaterialRequest(request._id, {
+                        status: 'Handed Off',
+                        handoffDate: new Date()
+                    });
+                }
                 
                 // 3. Notify Production Manager
                 await notificationAPI.create({
                     recipientRole: 'Production Manager',
                     title: 'New Production Handoff',
-                    message: `Materials for ${request.requestNumber} are ready. Production task created.`,
+                    message: `Materials for ${request.requestNumber || request.title} are ready. Production task created.`,
                     type: 'success',
                     relatedId: prodRes.data._id,
                     relatedModel: 'ProductionTask'
@@ -203,14 +230,21 @@ const ProcurementManagerDashboard = ({ user, onLogout }) => {
     
     // Combine MRs from design and pushed tasks (prioritizing MRs)
     const handoffMRs = materialRequests.filter(r => (r.status === 'Pending' || r.status === 'Approved') && r.isPushedFromDesign);
-    const handoffTasks = pushedTasks.filter(t => !handoffMRs.some(mr => mr.quotation === t.quotation?._id || mr.notes?.includes(t.title)));
+    const handoffTasks = pushedTasks.filter(t => !handoffMRs.some(mr => mr.quotation === t.quotation?._id || mr.notes?.includes(t.title)) && t.status === 'Pushed to Procurement');
     
     const designHandoffs = [
         ...handoffMRs.map(r => ({ ...r, type: 'MaterialRequest' })),
         ...handoffTasks.map(t => ({ ...t, type: 'Task' }))
     ];
-    const assignedRequests = materialRequests.filter(r => r.status === 'Assigned' || r.status === 'In Progress' || r.status === 'Purchasing');
-    const completedRequests = materialRequests.filter(r => r.status === 'Completed');
+    
+    const allAssigned = [
+        ...materialRequests.filter(r => ['Assigned', 'In Progress', 'Purchasing', 'Pending Manager Review', 'Pending Admin Review', 'Pending Procurement Admin Review', 'Procurement Approved'].includes(r.status)).map(r => ({ ...r, type: 'MaterialRequest' })),
+        ...pushedTasks.filter(t => ['Assigned to Procurement', 'In Progress', 'Pending Manager Review', 'Pending Procurement Admin Review', 'Procurement Approved'].includes(t.status)).map(t => ({ ...t, type: 'Task' }))
+    ];
+
+    const pendingReviews = allAssigned.filter(r => r.status === 'Pending Manager Review');
+    const assignedRequests = allAssigned.filter(r => ['Assigned', 'In Progress', 'Purchasing', 'Assigned to Procurement'].includes(r.status));
+    const completedRequests = allAssigned.filter(r => r.status === 'Procurement Approved');
     const extensionRequests = materialRequests.filter(r => r.timeExtension && r.timeExtension.status === 'Pending');
 
     if (loading) return <div className="loading-state">Initializing Procurement Manager Workspace...</div>;
@@ -248,6 +282,9 @@ const ProcurementManagerDashboard = ({ user, onLogout }) => {
             case 'assignments':
                 return <Assignments 
                     assignedRequests={assignedRequests} 
+                    pendingReviews={pendingReviews}
+                    handleApproveToAdmin={handleApproveToAdmin}
+ 
                 />;
 
             case 'vendors':

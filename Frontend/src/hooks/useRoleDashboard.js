@@ -37,6 +37,23 @@ export const useRoleDashboard = (role) => {
 };
 
 export const getRolePermissions = (role) => {
+    const normalizeRole = (r) => {
+        if (!r) return 'default';
+        const roleLower = r.toLowerCase();
+        if (roleLower === 'design manager') return 'design_manager';
+        if (roleLower === 'design staff') return 'design_staff';
+        if (roleLower === 'procurement manager') return 'procurement_manager';
+        if (roleLower === 'procurement staff') return 'procurement_staff';
+        if (roleLower === 'project manager') return 'production_manager';
+        if (roleLower === 'project engineer' || roleLower === 'site engineer' || roleLower === 'site supervisor') return 'production_staff';
+        if (roleLower === 'accounts manager') return 'accounts_manager';
+        if (roleLower === 'accounts staff') return 'accounts_staff';
+        if (roleLower === 'super admin' || roleLower === 'admin' || roleLower === 'manager') return 'admin';
+        return 'default';
+    };
+    
+    const roleKey = normalizeRole(role);
+    
     const permissions = {
         design_manager: {
             canApproveQuotations: true,
@@ -116,7 +133,7 @@ export const getRolePermissions = (role) => {
         }
     };
 
-    return permissions[role] || permissions.default;
+    return permissions[roleKey] || permissions.default;
 };
 
 export const getRoleDepartment = (role) => {
