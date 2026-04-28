@@ -14,6 +14,45 @@ The application is built using a modern MERN stack:
 
 The system is designed around a strict sequential pipeline that guarantees accountability and structured handoffs between departments.
 
+### Workflow Flowchart
+
+```mermaid
+graph TD
+    %% Quotation Phase
+    A[Sales / Staff<br/>Generates Quotation] --> B[Client<br/>Approves Quotation]
+    B --> C[Super Admin<br/>Reviews & Creates Project]
+    
+    %% Design Pipeline
+    C --> D[Design Manager<br/>Assigns Design Tasks]
+    D --> E[Design Staff<br/>Submits Visual Assets]
+    E --> F{Design Manager<br/>Review}
+    F -->|Reject| E
+    F -->|Approve| G{Super Admin<br/>Design Approval Hub}
+    G -->|Reject| E
+    
+    %% Procurement Pipeline
+    G -->|Approve| H[Procurement Staff<br/>Sources Vendors & Materials]
+    H --> I{Procurement Manager<br/>Review Pricing}
+    I -->|Reject| H
+    I -->|Approve| J{Super Admin<br/>Procurement Approval Hub}
+    J -->|Reject| H
+    
+    %% Production Pipeline
+    J -->|Approve| K[Procurement Manager<br/>Hands off to Production]
+    K --> L[Production Manager<br/>Assigns Factory/Site Tasks]
+    L --> M[Production Team<br/>Execution & Updates]
+
+    classDef admin fill:#4f46e5,stroke:#312e81,stroke-width:2px,color:#fff;
+    classDef manager fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff;
+    classDef staff fill:#f8fafc,stroke:#94a3b8,stroke-width:2px,color:#1e293b;
+    classDef client fill:#f59e0b,stroke:#b45309,stroke-width:2px,color:#fff;
+
+    class A,E,H,M staff;
+    class D,F,I,K,L manager;
+    class C,G,J admin;
+    class B client;
+```
+
 ### 1. Quotation & Initiation Phase
 - **Sales / Staff:** Generates a quotation for a prospective client.
 - **Client Approval:** Once the client approves the quotation, the project officially begins.
