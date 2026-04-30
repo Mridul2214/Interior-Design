@@ -648,6 +648,13 @@ export const procurementAPI = {
     approveMaterialRequest: (id, data = {}) => apiCall(`/procurement/material-requests/${id}/approve-release`, {
         method: 'PUT',
         body: JSON.stringify(data)
+    }),
+
+    getProductionManagers: () => apiCall('/procurement/production-managers'),
+
+    adminApproveProcurement: (id, data) => apiCall(`/procurement/admin-approve/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
     })
 };
 
@@ -675,7 +682,15 @@ export const productionAPI = {
 
     getPipeline: () => apiCall('/production/pipeline'),
 
-    getStats: () => apiCall('/production/stats')
+    getStats: () => apiCall('/production/stats'),
+
+    // PM Handoff
+    getHandoffProjects: () => apiCall('/production-management/projects/handoff'),
+    getProductionStaff: () => apiCall('/production-management/projects/staff'),
+    acceptHandoff: (id, data) => apiCall(`/production-management/projects/${id}/accept-handoff`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    })
 };
 
 // Accounts APIs

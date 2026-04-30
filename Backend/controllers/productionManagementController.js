@@ -649,3 +649,118 @@ exports.getSiteTeam = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// =======================
+// PROJECT HANDOFF APIs
+// =======================
+
+// Get projects pending PM handoff (status = 'Planning', assigned to this PM)
+exports.getHandoffProjects = async (req, res) => {
+    try {
+        let query = { status: 'Planning' };
+        
+        // Non-admin users only see their own projects
+        if (req.user.role !== 'Admin' && req.user.role !== 'Super Admin') {
+            query.projectManager = req.user.id;
+        }
+
+        const projects = await ProductionProject.find(query)
+            .populate('clientId', 'name email phone')
+            .populate('projectManager', 'fullName email')
+            .populate('sourceProject', 'name stage')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({ success: true, data: projects });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Get all available production staff (PE, SE, SS) for dropdown
+exports.getProductionStaff = async (req, res) => {
+    try {
+        const User = require('../models/User');
+        const staff = await User.find({
+            role: { $in: ['Project Engineer', 'Site Engineer', 'Site Supervisor'] },
+            status: 'Active'
+        }).select('fullName email role');
+
+        res.status(200).json({ success: true, data: staff });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// PM accepts handoff: assigns team (any combo of PE, SE, SS) and activates the project
+exports.acceptHandoff = async (req, res) => {
+    try {
+        const { projectEngineer, siteEngineer, siteSupervisor } = req.body;
+        const project = await ProductionProject.findById(req.params.id);
+
+        if (!project) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+
+        if (project.status !== 'Planning') {
+            return res.status(400).json({ success: false, message: 'Project has already been activated' });
+        }
+
+        // Assign team (any combination allowed)
+        if (projectEngineer) project.projectEngineer = projectEngineer;
+        if (siteEngineer) project.siteEngineer = siteEngineer;
+        if (siteSupervisor) project.siteSupervisor = siteSupervisor;
+
+        project.status = 'Active';
+        await project.save();
+
+        await logActivity(project._id, req.user.id, 'ACCEPT_HANDOFF', 'Project accepted and team assigned by Production Manager.');
+
+        // Notify each assigned team member
+        const { notifyUser } = require('../utils/notificationHelper');
+        const User = require('../models/User');
+        const assignedRoles = [
+            { userId: projectEngineer, role: 'Project Engineer' },
+            { userId: siteEngineer, role: 'Site Engineer' },
+            { userId: siteSupervisor, role: 'Site Supervisor' }
+        ];
+
+        for (const assignee of assignedRoles) {
+            if (assignee.userId) {
+                const user = await User.findById(assignee.userId);
+                if (user) {
+                    await notifyUser(assignee.userId, {
+                        title: `🏗️ Assigned as ${assignee.role}`,
+                        description: `You have been assigned as ${assignee.role} for project "${project.projectName}". The project is now active.`,
+                        type: 'Info',
+                        relatedModel: 'ProductionProject',
+                        relatedId: project._id
+                    });
+                }
+            }
+        }
+
+        // Also update the source project stage if linked
+        if (project.sourceProject) {
+            const Project = require('../models/Project');
+            await Project.findByIdAndUpdate(project.sourceProject, {
+                stage: 'Production'
+            });
+        }
+
+        const populated = await ProductionProject.findById(project._id)
+            .populate('projectManager', 'fullName')
+            .populate('projectEngineer', 'fullName')
+            .populate('siteEngineer', 'fullName')
+            .populate('siteSupervisor', 'fullName')
+            .populate('clientId', 'name');
+
+        res.status(200).json({ 
+            success: true, 
+            data: populated, 
+            message: 'Project activated and team assigned successfully' 
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+

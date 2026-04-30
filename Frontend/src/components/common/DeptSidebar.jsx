@@ -88,7 +88,8 @@ const NAV_CONFIG = {
         basePath:     '/production-management/dashboard',
         items: [
             { name: 'Dashboard', icon: LayoutDashboard, path: '/production-management/dashboard' },
-            { name: 'Projects',  icon: Target,          path: '/production-management/projects' },
+            { name: 'Project Handoff', icon: Target,    path: '/production-management/handoff' },
+            { name: 'Projects',  icon: Box,             path: '/production-management/projects' },
             { name: 'Tasks',     icon: CheckSquare,     path: '/production-management/tasks' },
             { name: 'Team',      icon: Users,           path: '/production-management/team' },
             { name: 'Approvals', icon: ClipboardCheck,  path: '/production-management/approvals' },

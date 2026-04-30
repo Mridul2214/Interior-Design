@@ -313,7 +313,7 @@ exports.createPOFromComparison = async (req, res) => {
         comparison.status = 'PO Created';
         await comparison.save();
 
-        await notifyByRole('Production Manager', {
+        await notifyByRole('Project Manager', {
             title: 'Purchase Order Created',
             description: `PO "${po.poNumber}" has been created. Materials will be delivered soon.`,
             type: 'PO',
@@ -827,6 +827,166 @@ exports.updatePurchaseStatus = async (req, res) => {
         res.status(200).json({
             success: true,
             data: purchase
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Admin approves procurement: assign production manager + send quotation to accounts
+exports.adminApproveProcurement = async (req, res) => {
+    try {
+        const { productionManagerId, sendToAccounts, itemType } = req.body;
+        const itemId = req.params.id;
+
+        // Determine whether we're approving a Task or a MaterialRequest
+        const type = itemType || 'MaterialRequest';
+        let item, project, quotation;
+
+        if (type === 'Task') {
+            const Task = require('../models/Task');
+            item = await Task.findById(itemId)
+                .populate('project')
+                .populate('quotation');
+            if (!item) {
+                return res.status(404).json({ success: false, message: 'Task not found' });
+            }
+            project = item.project;
+            quotation = item.quotation;
+        } else {
+            item = await MaterialRequest.findById(itemId)
+                .populate('project')
+                .populate('quotation');
+            if (!item) {
+                return res.status(404).json({ success: false, message: 'Material request not found' });
+            }
+            project = item.project;
+            quotation = item.quotation;
+        }
+
+        // If we don't have quotation from the item, try to get it from the project
+        if (!quotation && project?.quotation) {
+            const Quotation = require('../models/Quotation');
+            quotation = await Quotation.findById(project.quotation);
+        }
+
+        // 1) Assign Production Manager to the project
+        if (productionManagerId && project) {
+            const pm = await User.findOne({ _id: productionManagerId, status: 'Active' });
+            if (!pm) {
+                return res.status(400).json({ success: false, message: 'Invalid production manager' });
+            }
+
+            await Project.findByIdAndUpdate(project._id, {
+                assignedProductionManager: productionManagerId
+            });
+
+            // Auto-create a ProductionProject for PM handoff
+            const ProductionProject = require('../models/ProductionProject');
+            const existingPP = await ProductionProject.findOne({ sourceProject: project._id });
+            
+            if (!existingPP) {
+                await ProductionProject.create({
+                    projectName: project.name,
+                    clientId: project.client,
+                    description: `Production handoff from procurement approval for "${project.name}".`,
+                    projectManager: productionManagerId,
+                    createdBy: req.user.id,
+                    sourceProject: project._id,
+                    status: 'Planning'
+                });
+            } else {
+                if (existingPP.projectManager.toString() !== productionManagerId) {
+                    existingPP.projectManager = productionManagerId;
+                    await existingPP.save();
+                }
+            }
+
+            // Notify the assigned production manager
+            await notifyUser(productionManagerId, {
+                title: '📋 New Project Handoff — Assign Your Team',
+                description: `You have been assigned as the Project Manager for project "${project.name}". Please go to Project Handoff to assign your team.`,
+                type: 'Info',
+                relatedModel: 'Project',
+                relatedId: project._id
+            });
+        }
+
+
+        // 2) Send quotation to accounts for fund collection
+        if (sendToAccounts && quotation) {
+            const Quotation = require('../models/Quotation');
+            await Quotation.findByIdAndUpdate(quotation._id, {
+                status: 'Sent to Accounts'
+            });
+
+            // Notify Accounts Manager
+            await notifyByRole('Accounts Manager', {
+                title: '💰 New Quotation for Fund Collection',
+                description: `Quotation "${quotation.quotationNumber}" for project "${project?.name || 'N/A'}" (₹${quotation.totalAmount?.toLocaleString('en-IN') || '0'}) has been forwarded by Admin. Please collect the required funds from the client.`,
+                type: 'Invoice',
+                relatedModel: 'Quotation',
+                relatedId: quotation._id
+            });
+
+            // Also notify Accounts Staff
+            await notifyByRole('Accounts Staff', {
+                title: '💰 Quotation Forwarded for Collection',
+                description: `Quotation "${quotation.quotationNumber}" for project "${project?.name || 'N/A'}" needs fund collection from client. Amount: ₹${quotation.totalAmount?.toLocaleString('en-IN') || '0'}.`,
+                type: 'Invoice',
+                relatedModel: 'Quotation',
+                relatedId: quotation._id
+            });
+        }
+
+        // 3) Approve the procurement item
+        if (type === 'Task') {
+            const Task = require('../models/Task');
+            await Task.findByIdAndUpdate(itemId, { status: 'Procurement Approved' });
+        } else {
+            await MaterialRequest.findByIdAndUpdate(itemId, { status: 'Procurement Approved' });
+        }
+
+        // Notify Procurement Manager
+        await notifyByRole('Procurement Manager', {
+            title: 'Procurement Approved by Admin',
+            description: `Admin has approved procurement for ${project?.name || item.requestNumber || 'the project'}.${productionManagerId ? ' A Production Manager has been assigned.' : ''}${sendToAccounts ? ' Quotation sent to Accounts for fund collection.' : ''}`,
+            type: 'Success',
+            relatedModel: 'Project',
+            relatedId: project?._id
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Procurement approved successfully',
+            data: {
+                productionManagerAssigned: !!productionManagerId,
+                sentToAccounts: !!sendToAccounts
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// Get all production managers (Project Managers)
+exports.getProductionManagers = async (req, res) => {
+    try {
+        const managers = await User.find({ 
+            role: 'Project Manager', 
+            status: 'Active' 
+        }).select('fullName email phone');
+
+        res.status(200).json({
+            success: true,
+            count: managers.length,
+            data: managers
         });
     } catch (error) {
         res.status(500).json({

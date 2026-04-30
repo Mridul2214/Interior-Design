@@ -291,7 +291,7 @@ const Users = () => {
                                         <option value="Procurement Staff">Procurement Staff</option>
                                     </optgroup>
                                     <optgroup label="Production Department">
-                                        <option value="Production Manager">Production Manager</option>
+                                        <option value="Project Manager">Project Manager</option>
                                         <option value="Production Staff">Production Staff</option>
                                     </optgroup>
                                     <optgroup label="Sales Department">

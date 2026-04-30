@@ -79,7 +79,7 @@ exports.updateProductionTask = async (req, res) => {
         if (task.status === 'Completed' && oldStatus !== 'Completed') {
             const project = await Project.findById(task.project);
             
-            await notifyByRole('Production Manager', {
+            await notifyByRole('Project Manager', {
                 title: 'Task Completed',
                 description: `Task "${task.title}" has been marked as completed.`,
                 type: 'Task',
@@ -192,7 +192,7 @@ exports.reportIssue = async (req, res) => {
         task.notes = (task.notes || '') + `\n[ISSUE - ${new Date().toLocaleString()}]: ${req.body.description}`;
         await task.save();
         
-        await notifyByRole('Production Manager', {
+        await notifyByRole('Project Manager', {
             title: 'Issue Reported',
             description: `Issue reported on task "${task.title}": ${req.body.description}`,
             type: 'Error',

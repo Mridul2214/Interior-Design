@@ -25,6 +25,7 @@ import ProductionProjectsList from './components/Production/Manager/ProjectsList
 import ProductionTasksBoard from './components/Production/Manager/TasksBoard';
 import ProductionTeamOverview from './components/Production/Manager/TeamOverview';
 import ProductionApprovals from './components/Production/Manager/Approvals';
+import ProjectHandoff from './components/Production/Manager/ProjectHandoff';
 
 import EngineerDashboard from './components/Production/Engineer/EngineerDashboard';
 import EngineerTasks from './components/Production/Engineer/EngineerTasks';
@@ -169,6 +170,7 @@ function App() {
 
               {/* Production Management Routes (Project Manager) */}
               <Route path="production-management/dashboard" element={<ProductionDashboard />} />
+              <Route path="production-management/handoff" element={<ProjectHandoff />} />
               <Route path="production-management/projects" element={<ProductionProjectsList />} />
               {/* <Route path="production-management/projects/:id" element={<ProductionProjectDetail />} /> */}
               <Route path="production-management/tasks" element={<ProductionTasksBoard user={user} />} />

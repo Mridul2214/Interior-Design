@@ -8,7 +8,7 @@ const repairDB = async () => {
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('Connected to MongoDB for Repair');
 
-        const users = await User.find({ role: { $in: ['Design Manager', 'Design Staff', 'Procurement Manager', 'Procurement Staff', 'Production Manager', 'Production Staff', 'Accounts Manager', 'Accounts Staff'] } });
+        const users = await User.find({ role: { $in: ['Design Manager', 'Design Staff', 'Procurement Manager', 'Procurement Staff', 'Project Manager', 'Production Staff', 'Accounts Manager', 'Accounts Staff'] } });
         
         let repaired = 0;
         for (let user of users) {

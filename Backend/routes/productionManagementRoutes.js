@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 const { isProjectManager, isAssignedUser } = require('../middleware/productionAuth');
 
 const {
@@ -28,7 +28,10 @@ const {
     addComment,
     createSubtask,
     getProjectActivity,
-    getSiteTeam
+    getSiteTeam,
+    getHandoffProjects,
+    getProductionStaff,
+    acceptHandoff
 } = require('../controllers/productionManagementController');
 
 // All routes require authentication
@@ -39,6 +42,9 @@ router.use(protect);
 // =======================
 router.post('/projects/create', createProject);
 router.get('/projects', getProjects);
+router.get('/projects/handoff', authorize('Project Manager', 'Admin', 'Super Admin'), getHandoffProjects);
+router.get('/projects/staff', authorize('Project Manager', 'Admin', 'Super Admin'), getProductionStaff);
+router.put('/projects/:id/accept-handoff', isProjectManager, acceptHandoff);
 router.get('/projects/:id', isAssignedUser, getProjectById);
 router.put('/projects/:id/update', isProjectManager, updateProject);
 router.put('/projects/:id/assign-team', isProjectManager, assignTeam);

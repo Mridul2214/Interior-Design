@@ -127,7 +127,7 @@ const QuotationSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Draft', 'Under Review', 'Revision', 'Design Approved', 'Material Approved', 'Sent to Procurement', 'Approved', 'Rejected', 'Expired'],
+        enum: ['Draft', 'Under Review', 'Revision', 'Design Approved', 'Material Approved', 'Sent to Procurement', 'Sent to Accounts', 'Approved', 'Rejected', 'Expired'],
         default: 'Draft'
     },
     validUntil: {

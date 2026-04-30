@@ -53,6 +53,10 @@ const ProductionProjectSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
+    sourceProject: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Project'
+    },
     progress: {
         type: Number,
         min: 0,

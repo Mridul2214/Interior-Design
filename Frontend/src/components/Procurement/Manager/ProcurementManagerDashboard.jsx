@@ -126,9 +126,9 @@ const ProcurementManagerDashboard = ({ user, onLogout }) => {
                     });
                 }
                 
-                // 3. Notify Production Manager
+                // 3. Notify Project Manager
                 await notificationAPI.create({
-                    recipientRole: 'Production Manager',
+                    recipientRole: 'Project Manager',
                     title: 'New Production Handoff',
                     message: `Materials for ${request.requestNumber || request.title} are ready. Production task created.`,
                     type: 'success',
@@ -137,7 +137,7 @@ const ProcurementManagerDashboard = ({ user, onLogout }) => {
                 });
 
                 fetchData();
-                alert('Project handed off to Production Manager!');
+                alert('Project handed off to Project Manager!');
             }
         } catch (err) {
             console.error('Handoff error:', err);

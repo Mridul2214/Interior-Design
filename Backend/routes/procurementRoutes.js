@@ -19,7 +19,9 @@ const {
     compareVendorPrices,
     getProcurementStaff,
     updatePurchaseStatus,
-    approveMaterialRequest
+    approveMaterialRequest,
+    adminApproveProcurement,
+    getProductionManagers
 } = require('../controllers/procurementController');
 
 router.use(protect);
@@ -59,6 +61,13 @@ router.route('/staff-tasks')
 
 router.route('/staff')
     .get(getProcurementStaff);
+
+// Admin procurement approval routes
+router.route('/production-managers')
+    .get(getProductionManagers);
+
+router.route('/admin-approve/:id')
+    .put(authorize('Super Admin', 'Admin'), adminApproveProcurement);
 
 router.route('/vendor-purchases')
     .post(createVendorPurchase)

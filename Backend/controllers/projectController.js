@@ -374,7 +374,7 @@ exports.updateProjectStage = async (req, res) => {
                     await project.save();
                     notificationTitle = 'Materials Ready - Production Started';
                     notificationDesc = `Project "${project.name}" materials are ready. Production can begin.`;
-                    await notifyByRole('Production Manager', {
+                    await notifyByRole('Project Manager', {
                         title: notificationTitle,
                         description: notificationDesc,
                         type: 'Info',
