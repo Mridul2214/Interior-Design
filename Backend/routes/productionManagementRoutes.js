@@ -31,7 +31,15 @@ const {
     getSiteTeam,
     getHandoffProjects,
     getProductionStaff,
-    acceptHandoff
+    acceptHandoff,
+    createReplacementRequest,
+    getReplacementRequests,
+    actionReplacementRequest,
+    // PM Analytics
+    getDashboardCharts,
+    getBudgetAnalytics,
+    getKPIMetrics,
+    getGanttData
 } = require('../controllers/productionManagementController');
 
 // All routes require authentication
@@ -68,6 +76,10 @@ router.get('/approvals/pending', getPendingApprovals);
 router.get('/dashboard/overview', getDashboardOverview);
 router.get('/dashboard/deadlines', getUpcomingDeadlines);
 router.get('/dashboard/budget', getBudgetOverview);
+router.get('/dashboard/charts', getDashboardCharts);
+router.get('/dashboard/budget-analytics', getBudgetAnalytics);
+router.get('/dashboard/kpi', getKPIMetrics);
+router.get('/gantt/:projectId', getGanttData);
 
 // =======================
 // TEAM
@@ -83,5 +95,12 @@ router.get('/engineer/projects',  getMyProjects);
 router.get('/engineer/tasks',     getEngineerTasks);
 router.post('/engineer/subtask',  createSubtask);
 router.get('/projects/:id/activity', getProjectActivity);
+
+// =======================
+// STAFF REPLACEMENT
+// =======================
+router.post('/projects/:projectId/replacement-request', authorize('Project Engineer'), createReplacementRequest);
+router.get('/staff-replacement/requests', authorize('Project Manager', 'Admin', 'Super Admin'), getReplacementRequests);
+router.put('/staff-replacement/requests/:requestId/action', authorize('Project Manager', 'Admin', 'Super Admin'), actionReplacementRequest);
 
 module.exports = router;

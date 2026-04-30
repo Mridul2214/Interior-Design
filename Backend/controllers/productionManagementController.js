@@ -1,6 +1,7 @@
 const ProductionProject = require('../models/ProductionProject');
 const ProductionTask = require('../models/ProductionTask');
 const ProductionActivityLog = require('../models/ProductionActivityLog');
+const StaffReplacementRequest = require('../models/StaffReplacementRequest');
 
 // Helper for Activity Log
 const logActivity = async (projectId, userId, action, message) => {
@@ -764,3 +765,335 @@ exports.acceptHandoff = async (req, res) => {
     }
 };
 
+
+// =======================
+// STAFF REPLACEMENT APIs
+// =======================
+
+// Create replacement request (Project Engineer)
+exports.createReplacementRequest = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const { staffType, currentStaffId, reason } = req.body;
+
+        if (!['Project Engineer', 'Site Engineer'].includes(req.user.role)) {
+            return res.status(403).json({ success: false, message: 'Unauthorized to request staff replacement.' });
+        }
+
+        if (req.user.role === 'Site Engineer' && staffType !== 'Site Supervisor') {
+            return res.status(403).json({ success: false, message: 'Site Engineers can only request replacement for Site Supervisors.' });
+        }
+
+        const project = await ProductionProject.findById(projectId);
+        if (!project) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+
+        const request = await StaffReplacementRequest.create({
+            projectId,
+            requestedBy: req.user.id,
+            staffType,
+            currentStaffId,
+            reason
+        });
+
+        await logActivity(projectId, req.user.id, 'STAFF_REPLACEMENT_REQUEST', `Requested replacement for ${staffType}`);
+
+        res.status(201).json({ success: true, data: request });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Get all replacement requests (Project Manager)
+exports.getReplacementRequests = async (req, res) => {
+    try {
+        let query = {};
+        
+        // PM only sees requests for their own projects
+        if (req.user.role === 'Project Manager') {
+            const projects = await ProductionProject.find({ projectManager: req.user.id }).select('_id');
+            const projectIds = projects.map(p => p._id);
+            query.projectId = { $in: projectIds };
+        } else if (req.user.role !== 'Admin' && req.user.role !== 'Super Admin') {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+
+        const requests = await StaffReplacementRequest.find(query)
+            .populate('projectId', 'projectName')
+            .populate('requestedBy', 'fullName')
+            .populate('currentStaffId', 'fullName')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({ success: true, data: requests });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Action replacement request (Approve/Reject by Project Manager)
+exports.actionReplacementRequest = async (req, res) => {
+    try {
+        const { requestId } = req.params;
+        const { status, adminRemarks } = req.body;
+
+        if (req.user.role !== 'Project Manager' && req.user.role !== 'Admin' && req.user.role !== 'Super Admin') {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+
+        const request = await StaffReplacementRequest.findById(requestId);
+        if (!request) {
+            return res.status(404).json({ success: false, message: 'Request not found' });
+        }
+
+        request.status = status;
+        request.adminRemarks = adminRemarks;
+        request.actionedBy = req.user.id;
+        request.actionedAt = Date.now();
+        await request.save();
+
+        // If approved, we don't auto-replace (the PM should do it manually via Assign Team)
+        // Or we could have a "Replace & Assign" step. For now, just mark as approved.
+        
+        await logActivity(request.projectId, req.user.id, 'STAFF_REPLACEMENT_ACTION', `Replacement request ${status}`);
+
+        res.status(200).json({ success: true, data: request });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ═══════════════════════════════════════════
+// PM DASHBOARD ANALYTICS
+// ═══════════════════════════════════════════
+
+// GET /dashboard/charts — aggregate data for PM dashboard charts
+exports.getDashboardCharts = async (req, res) => {
+    try {
+        const projects = await ProductionProject.find({ projectManager: req.user.id });
+        const projectIds = projects.map(p => p._id);
+        const tasks = await ProductionTask.find({ projectId: { $in: projectIds } });
+
+        // Task status distribution
+        const tasksByStatus = { Pending: 0, 'In Progress': 0, Completed: 0, Approved: 0 };
+        tasks.forEach(t => { tasksByStatus[t.status] = (tasksByStatus[t.status] || 0) + 1; });
+
+        // Task priority distribution
+        const tasksByPriority = { Low: 0, Medium: 0, High: 0, Urgent: 0 };
+        tasks.forEach(t => { tasksByPriority[t.priority] = (tasksByPriority[t.priority] || 0) + 1; });
+
+        // Project status distribution
+        const projectsByStatus = { Planning: 0, Active: 0, 'On Hold': 0, Completed: 0 };
+        projects.forEach(p => { projectsByStatus[p.status] = (projectsByStatus[p.status] || 0) + 1; });
+
+        // Tasks by stage (PM → PE → SE → SS)
+        const tasksByStage = { PM: 0, PE: 0, SE: 0, SS: 0 };
+        tasks.forEach(t => { tasksByStage[t.stage] = (tasksByStage[t.stage] || 0) + 1; });
+
+        // Weekly task completion trend (last 8 weeks)
+        const weeklyTrend = [];
+        for (let i = 7; i >= 0; i--) {
+            const weekStart = new Date();
+            weekStart.setDate(weekStart.getDate() - (i * 7));
+            weekStart.setHours(0, 0, 0, 0);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 7);
+
+            const completed = tasks.filter(t =>
+                t.status === 'Completed' &&
+                new Date(t.updatedAt) >= weekStart &&
+                new Date(t.updatedAt) < weekEnd
+            ).length;
+
+            const created = tasks.filter(t =>
+                new Date(t.createdAt) >= weekStart &&
+                new Date(t.createdAt) < weekEnd
+            ).length;
+
+            weeklyTrend.push({
+                week: `W${8 - i}`,
+                label: weekStart.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+                completed,
+                created
+            });
+        }
+
+        // Project progress overview
+        const projectProgress = projects.map(p => ({
+            name: p.projectName,
+            progress: p.progress || 0,
+            status: p.status,
+            budget: p.budget || 0,
+            spent: p.spent || 0
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: {
+                tasksByStatus,
+                tasksByPriority,
+                projectsByStatus,
+                tasksByStage,
+                weeklyTrend,
+                projectProgress,
+                totalTasks: tasks.length,
+                totalProjects: projects.length
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// GET /dashboard/budget — budget analytics for PM
+exports.getBudgetAnalytics = async (req, res) => {
+    try {
+        const projects = await ProductionProject.find({ projectManager: req.user.id });
+
+        const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
+        const totalSpent = projects.reduce((sum, p) => sum + (p.spent || 0), 0);
+        const totalEstimated = projects.reduce((sum, p) => sum + (p.estimatedCost || 0), 0);
+
+        const projectBudgets = projects.map(p => ({
+            id: p._id,
+            name: p.projectName,
+            status: p.status,
+            budget: p.budget || 0,
+            spent: p.spent || 0,
+            estimated: p.estimatedCost || 0,
+            utilization: p.budget ? Math.round((p.spent / p.budget) * 100) : 0,
+            variance: (p.budget || 0) - (p.spent || 0),
+            riskLevel: p.riskLevel || 'Low'
+        }));
+
+        // Budget by status
+        const budgetByStatus = {};
+        projects.forEach(p => {
+            if (!budgetByStatus[p.status]) budgetByStatus[p.status] = { budget: 0, spent: 0 };
+            budgetByStatus[p.status].budget += p.budget || 0;
+            budgetByStatus[p.status].spent += p.spent || 0;
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalBudget,
+                totalSpent,
+                totalEstimated,
+                utilization: totalBudget ? Math.round((totalSpent / totalBudget) * 100) : 0,
+                variance: totalBudget - totalSpent,
+                projectBudgets,
+                budgetByStatus
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// GET /dashboard/kpi — KPI metrics for PM
+exports.getKPIMetrics = async (req, res) => {
+    try {
+        const projects = await ProductionProject.find({ projectManager: req.user.id });
+        const projectIds = projects.map(p => p._id);
+        const tasks = await ProductionTask.find({ projectId: { $in: projectIds } });
+
+        const totalTasks = tasks.length;
+        const completedTasks = tasks.filter(t => t.status === 'Completed' || t.status === 'Approved').length;
+        const overdueTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && !['Completed', 'Approved'].includes(t.status)).length;
+        const inProgressTasks = tasks.filter(t => t.status === 'In Progress').length;
+
+        // On-time delivery rate
+        const tasksWithDueDate = tasks.filter(t => t.dueDate && ['Completed', 'Approved'].includes(t.status));
+        const onTimeTasks = tasksWithDueDate.filter(t => new Date(t.updatedAt) <= new Date(t.dueDate));
+        const onTimeRate = tasksWithDueDate.length ? Math.round((onTimeTasks.length / tasksWithDueDate.length) * 100) : 100;
+
+        // Average project progress
+        const avgProgress = projects.length ? Math.round(projects.reduce((sum, p) => sum + (p.progress || 0), 0) / projects.length) : 0;
+
+        // Task completion rate
+        const completionRate = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+        // Risk distribution
+        const riskDistribution = { Low: 0, Medium: 0, High: 0, Critical: 0 };
+        projects.forEach(p => { riskDistribution[p.riskLevel || 'Low']++; });
+
+        // Workforce utilization (unique assignees)
+        const assignees = new Set(tasks.filter(t => t.assignedTo).map(t => t.assignedTo.toString()));
+        const activeAssignees = new Set(tasks.filter(t => t.assignedTo && t.status === 'In Progress').map(t => t.assignedTo.toString()));
+
+        // Milestone progress
+        let totalMilestones = 0;
+        let completedMilestones = 0;
+        projects.forEach(p => {
+            if (p.milestones) {
+                totalMilestones += p.milestones.length;
+                completedMilestones += p.milestones.filter(m => m.completed).length;
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                onTimeRate,
+                completionRate,
+                avgProgress,
+                totalTasks,
+                completedTasks,
+                overdueTasks,
+                inProgressTasks,
+                riskDistribution,
+                workforce: {
+                    total: assignees.size,
+                    active: activeAssignees.size,
+                    utilization: assignees.size ? Math.round((activeAssignees.size / assignees.size) * 100) : 0
+                },
+                milestones: {
+                    total: totalMilestones,
+                    completed: completedMilestones,
+                    rate: totalMilestones ? Math.round((completedMilestones / totalMilestones) * 100) : 0
+                }
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// GET /gantt/:projectId — timeline data for Gantt chart
+exports.getGanttData = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+
+        let query = {};
+        if (projectId && projectId !== 'all') {
+            query.projectId = projectId;
+        } else {
+            const projects = await ProductionProject.find({ projectManager: req.user.id });
+            query.projectId = { $in: projects.map(p => p._id) };
+        }
+
+        const tasks = await ProductionTask.find(query)
+            .populate('assignedTo', 'fullName')
+            .populate('projectId', 'projectName startDate endDate')
+            .sort({ createdAt: 1 });
+
+        const ganttItems = tasks.map(t => ({
+            id: t._id,
+            title: t.title,
+            project: t.projectId?.projectName || '—',
+            projectId: t.projectId?._id,
+            assignee: t.assignedTo?.fullName || 'Unassigned',
+            start: t.startDate || t.createdAt,
+            end: t.dueDate || new Date(new Date(t.startDate || t.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000),
+            status: t.status,
+            priority: t.priority,
+            stage: t.stage,
+            progress: t.progress || 0
+        }));
+
+        res.status(200).json({ success: true, data: ganttItems });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

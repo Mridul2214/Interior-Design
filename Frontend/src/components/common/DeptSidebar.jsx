@@ -114,6 +114,7 @@ const NAV_CONFIG = {
         basePath:     '/site/dashboard',
         items: [
             { name: 'Dashboard',     icon: LayoutDashboard, path: '/site/dashboard' },
+            { name: 'Projects',      icon: FolderOpen,      path: '/site/projects' },
             { name: 'Tasks',         icon: CheckSquare,     path: '/site/tasks' },
             { name: 'Reports',       icon: FileText,        path: '/site/reports' },
             { name: 'Leave Request', icon: CalendarOff,     path: '/site/leave' },
@@ -126,6 +127,7 @@ const NAV_CONFIG = {
         basePath:     '/site/dashboard',
         items: [
             { name: 'Dashboard',     icon: LayoutDashboard, path: '/site/dashboard' },
+            { name: 'Projects',      icon: FolderOpen,      path: '/site/projects' },
             { name: 'Tasks',         icon: CheckSquare,     path: '/site/tasks' },
             { name: 'Reports',       icon: FileText,        path: '/site/reports' },
             { name: 'Leave Request', icon: CalendarOff,     path: '/site/leave' },

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     FolderOpen, ArrowLeft, Calendar, Users, CheckSquare,
-    Activity, ClipboardList, Info, Plus, X, Loader2
+    Activity, ClipboardList, Info, Plus, X, Loader2, UserX
 } from 'lucide-react';
 import { engineerAPI } from '../../../config/api';
 import './Engineer.css';
@@ -25,6 +25,8 @@ const ProjectDetail = ({ user }) => {
     const [showSubtaskModal, setShowSubtaskModal] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
     const [subtask, setSubtask] = useState({ title:'', description:'', assignedTo:'', priority:'Medium', dueDate:'' });
+    const [showReplaceModal, setShowReplaceModal] = useState(false);
+    const [replaceData, setReplaceData] = useState({ staffType: '', currentStaffId: '', currentStaffName: '', reason: '' });
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState(null);
 
@@ -65,8 +67,29 @@ const ProjectDetail = ({ user }) => {
         finally { setSaving(false); }
     };
 
+    const handleReplaceRequest = async (e) => {
+        e.preventDefault();
+        if (!replaceData.reason) return showToast('Please provide a reason', 'error');
+        setSaving(true);
+        try {
+            const res = await engineerAPI.requestReplacement(id, {
+                staffType: replaceData.staffType,
+                currentStaffId: replaceData.currentStaffId,
+                reason: replaceData.reason
+            });
+            if (res.success) {
+                showToast('Replacement request sent to PM');
+                setShowReplaceModal(false);
+                setReplaceData({ staffType: '', currentStaffId: '', currentStaffName: '', reason: '' });
+                load(); // Reload activity
+            }
+        } catch (e) { showToast('Failed to send request', 'error'); }
+        finally { setSaving(false); }
+    };
+
     const myTasks  = tasks.filter(t => t.assignedTo?._id === user?._id || t.assignedTo === user?._id);
     const allTasks = tasks;
+    const basePath = user?.role === 'Project Engineer' ? '/engineer' : '/site';
 
     if (loading) return <div className="eng-dashboard"><div className="eng-loading">Loading project…</div></div>;
     if (!project) return <div className="eng-dashboard"><div className="eng-empty"><p>Project not found</p></div></div>;
@@ -78,7 +101,7 @@ const ProjectDetail = ({ user }) => {
             {/* Back + Title */}
             <div className="eng-page-header">
                 <div>
-                    <button className="eng-back-btn" onClick={() => navigate('/engineer/projects')}>
+                    <button className="eng-back-btn" onClick={() => navigate(`${basePath}/projects`)}>
                         <ArrowLeft size={16}/> Back to Projects
                     </button>
                     <h1 className="eng-page-title" style={{ marginTop:10 }}>
@@ -156,14 +179,34 @@ const ProjectDetail = ({ user }) => {
                             </div>
                             <div className="eng-info-rows">
                                 {[
-                                    ['Project Manager',  project.projectManager?.fullName],
-                                    ['Project Engineer', project.projectEngineer?.fullName],
-                                    ['Site Engineer',    project.siteEngineer?.fullName],
-                                    ['Site Supervisor',  project.siteSupervisor?.fullName],
+                                    ['Project Manager',  project.projectManager],
+                                    ['Project Engineer', project.projectEngineer],
+                                    ['Site Engineer',    project.siteEngineer],
+                                    ['Site Supervisor',  project.siteSupervisor],
                                 ].filter(([,v])=>v).map(([k,v])=>(
-                                    <div key={k} className="eng-info-row">
-                                        <span className="eng-info-label">{k}</span>
-                                        <span className="eng-info-value">{v}</span>
+                                    <div key={k} className="eng-info-row" style={{ alignItems: 'center' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <span className="eng-info-label">{k}</span>
+                                            <span className="eng-info-value">{v.fullName}</span>
+                                        </div>
+                                        {((user?.role === 'Project Engineer' && (k === 'Site Engineer' || k === 'Site Supervisor')) || 
+                                          (user?.role === 'Site Engineer' && k === 'Site Supervisor')) && (
+                                            <button 
+                                                className="eng-replace-btn"
+                                                title="Request Replacement"
+                                                onClick={() => {
+                                                    setReplaceData({
+                                                        staffType: k,
+                                                        currentStaffId: v._id,
+                                                        currentStaffName: v.fullName,
+                                                        reason: ''
+                                                    });
+                                                    setShowReplaceModal(true);
+                                                }}
+                                            >
+                                                <UserX size={14}/>
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -198,7 +241,7 @@ const ProjectDetail = ({ user }) => {
                                         const st = getStatusStyle(t.status);
                                         const isMine = t.assignedTo?._id === user?._id;
                                         return (
-                                            <tr key={t._id} style={{ cursor:'pointer' }} onClick={()=>navigate(`/engineer/tasks/${t._id}`)}>
+                                            <tr key={t._id} style={{ cursor:'pointer' }} onClick={()=>navigate(`${basePath}/tasks/${t._id}`)}>
                                                 <td>
                                                     <div className="eng-td-title">{t.title}</div>
                                                     {t.isSubtask && <div className="eng-td-sub">↳ Subtask</div>}
@@ -296,6 +339,38 @@ const ProjectDetail = ({ user }) => {
                                 <button type="button" className="eng-btn-ghost" onClick={()=>setShowSubtaskModal(false)}>Cancel</button>
                                 <button type="submit" className="eng-btn-primary" disabled={saving}>
                                     {saving?<><Loader2 size={14} className="eng-spin"/> Saving…</>:'Create Subtask'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Staff Replacement Modal */}
+            {showReplaceModal && (
+                <div className="eng-modal-overlay">
+                    <div className="eng-modal">
+                        <div className="eng-modal-header">
+                            <h3>Request Staff Replacement</h3>
+                            <button className="eng-modal-close" onClick={()=>setShowReplaceModal(false)}><X size={18}/></button>
+                        </div>
+                        <p className="eng-modal-sub">Requesting replacement for <strong>{replaceData.currentStaffName}</strong> ({replaceData.staffType})</p>
+                        <form onSubmit={handleReplaceRequest} className="eng-modal-form">
+                            <div className="eng-form-group">
+                                <label>Reason for Replacement *</label>
+                                <textarea 
+                                    className="eng-input" 
+                                    rows={4} 
+                                    placeholder="Please provide a detailed reason for the replacement request..."
+                                    value={replaceData.reason} 
+                                    onChange={e=>setReplaceData({...replaceData, reason:e.target.value})}
+                                    required
+                                />
+                            </div>
+                            <div className="eng-modal-footer">
+                                <button type="button" className="eng-btn-ghost" onClick={()=>setShowReplaceModal(false)}>Cancel</button>
+                                <button type="submit" className="eng-btn-primary" disabled={saving} style={{ background: '#ef4444' }}>
+                                    {saving?<><Loader2 size={14} className="eng-spin"/> Sending…</>:'Submit Request'}
                                 </button>
                             </div>
                         </form>

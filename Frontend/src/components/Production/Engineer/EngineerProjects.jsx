@@ -11,10 +11,14 @@ const getStatusStyle = (s) => ({
     'Completed':  { color:'#5b21b6', bg:'#ede9fe', dot:'#8b5cf6' },
 }[s] || { color:'#374151', bg:'#f3f4f6', dot:'#9ca3af' });
 
+const STATUS_FILTERS = ['All', 'Planning', 'Active', 'On Hold', 'Completed'];
+
 const EngineerProjects = ({ user }) => {
     const navigate  = useNavigate();
     const [projects, setProjects] = useState([]);
     const [loading,  setLoading]  = useState(true);
+    const [filters,  setFilters]  = useState({ status: 'All', search: '' });
+    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => { load(); }, []);
 
@@ -33,14 +37,61 @@ const EngineerProjects = ({ user }) => {
         return 'Site Supervisor';
     };
 
+    const basePath = user?.role === 'Project Engineer' ? '/engineer' : '/site';
+
+    const filtered = projects.filter(p => {
+        if (filters.status !== 'All' && p.status !== filters.status) return false;
+        if (filters.search && !p.projectName.toLowerCase().includes(filters.search.toLowerCase())) return false;
+        return true;
+    });
+
+    const activeFilterCount = (filters.status !== 'All' ? 1 : 0) + (filters.search ? 1 : 0);
+
     return (
         <div className="eng-tasks-page">
             <div className="eng-page-header">
                 <div>
                     <h1 className="eng-page-title"><FolderOpen size={22}/>My Projects</h1>
-                    <p className="eng-page-sub">{projects.length} project{projects.length !== 1 ? 's' : ''} assigned to you</p>
+                    <p className="eng-page-sub">{filtered.length} of {projects.length} project{projects.length !== 1 ? 's' : ''}</p>
                 </div>
+
+                <button 
+                    className={`eng-filter-toggle ${showFilters ? 'active' : ''}`}
+                    onClick={() => setShowFilters(!showFilters)}
+                >
+                    <Target size={16} /> 
+                    Filters
+                    {activeFilterCount > 0 && <span className="eng-filter-badge">{activeFilterCount}</span>}
+                </button>
             </div>
+
+            {showFilters && (
+                <div className="eng-filters-panel">
+                    <div className="eng-filter-group">
+                        <span className="eng-filter-label">Search</span>
+                        <input 
+                            className="eng-filter-input" 
+                            placeholder="Search by project name..." 
+                            value={filters.search}
+                            onChange={e => setFilters(p => ({ ...p, search: e.target.value }))}
+                        />
+                    </div>
+                    <div className="eng-filter-group">
+                        <span className="eng-filter-label">Status</span>
+                        <div className="eng-filter-options">
+                            {STATUS_FILTERS.map(o => (
+                                <button 
+                                    key={o} 
+                                    className={`eng-filter-chip ${filters.status===o?'active':''}`} 
+                                    onClick={() => setFilters(p => ({ ...p, status: o }))}
+                                >
+                                    {o}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {loading ? (
                 <div className="eng-loading">Loading projects…</div>
@@ -54,11 +105,11 @@ const EngineerProjects = ({ user }) => {
                 </div>
             ) : (
                 <div className="eng-projects-grid">
-                    {projects.map(p => {
+                    {filtered.map(p => {
                         const st = getStatusStyle(p.status);
                         return (
                             <div key={p._id} className="eng-project-card eng-project-card-clickable"
-                                onClick={() => navigate(`/engineer/projects/${p._id}`)}>
+                                onClick={() => navigate(`${basePath}/projects/${p._id}`)}>
                                 <div className="eng-project-card-header">
                                     <div className="eng-project-icon"><FolderOpen size={20}/></div>
                                     <span className="eng-badge" style={{ color:st.color, background:st.bg, marginLeft:'auto', display:'flex', alignItems:'center', gap:5 }}>

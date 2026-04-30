@@ -690,6 +690,17 @@ export const productionAPI = {
     acceptHandoff: (id, data) => apiCall(`/production-management/projects/${id}/accept-handoff`, {
         method: 'PUT',
         body: JSON.stringify(data)
+    }),
+
+    // Staff Replacement
+    createReplacementRequest: (projectId, data) => apiCall(`/production-management/projects/${projectId}/replacement-request`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+    getReplacementRequests: () => apiCall('/production-management/staff-replacement/requests'),
+    actionReplacementRequest: (requestId, data) => apiCall(`/production-management/staff-replacement/requests/${requestId}/action`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
     })
 };
 
@@ -789,6 +800,10 @@ export const engineerAPI = {
     getProjectTasks: (id) => apiCall(`/production-management/tasks/project/${id}`),
     getActivity:     (id) => apiCall(`/production-management/projects/${id}/activity`),
     getSiteTeam:     () => apiCall('/production-management/team/site'),
+    requestReplacement: (projectId, data) => apiCall(`/production-management/projects/${projectId}/replacement-request`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+    })
 };
 
 export const productionManagerAPI = {
@@ -802,6 +817,11 @@ export const productionManagerAPI = {
     getDashboardDeadlines: () => apiCall('/production-management/dashboard/deadlines'),
     getDashboardBudget: () => apiCall('/production-management/dashboard/budget'),
     getTeamOverview: () => apiCall('/production-management/team/all'),
+    // Analytics
+    getDashboardCharts: () => apiCall('/production-management/dashboard/charts'),
+    getBudgetAnalytics: () => apiCall('/production-management/dashboard/budget-analytics'),
+    getKPIMetrics: () => apiCall('/production-management/dashboard/kpi'),
+    getGanttData: (projectId = 'all') => apiCall(`/production-management/gantt/${projectId}`),
 };
 
 export const kanbanAPI = {

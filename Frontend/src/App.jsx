@@ -187,6 +187,8 @@ function App() {
 
               {/* Site Portal Routes (Site Engineer & Site Supervisor) */}
               <Route path="site/dashboard" element={<SiteDashboard user={user} />} />
+              <Route path="site/projects" element={<EngineerProjects user={user} />} />
+              <Route path="site/projects/:id" element={<ProjectDetail user={user} />} />
               <Route path="site/tasks" element={<SiteTasks user={user} />} />
               <Route path="site/reports" element={<SiteReports user={user} />} />
               <Route path="site/leave" element={<SiteLeave user={user} />} />

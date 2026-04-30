@@ -67,6 +67,29 @@ const ProductionTaskSchema = new mongoose.Schema({
     isSubtask: {
         type: Boolean,
         default: false
+    },
+    progress: {
+        type: Number,
+        min: 0,
+        max: 100,
+        default: 0
+    },
+    estimatedHours: {
+        type: Number,
+        default: 0
+    },
+    actualHours: {
+        type: Number,
+        default: 0
+    },
+    attachments: [{
+        name: String,
+        url: String,
+        uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        uploadedAt: { type: Date, default: Date.now }
+    }],
+    startDate: {
+        type: Date
     }
 }, {
     timestamps: true

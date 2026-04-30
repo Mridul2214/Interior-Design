@@ -148,6 +148,7 @@ const SiteTasks = ({ user }) => {
     const [tasks,    setTasks]    = useState([]);
     const [loading,  setLoading]  = useState(true);
     const [filters,  setFilters]  = useState({ status:'All', priority:'All' });
+    const [showFilters, setShowFilters] = useState(false);
     const [selected, setSelected] = useState(null);
 
     useEffect(()=>{ load(); },[]);
@@ -164,6 +165,8 @@ const SiteTasks = ({ user }) => {
 
     const setFilter = (k,v) => setFilters(p=>({...p,[k]:v}));
 
+    const activeFilterCount = (filters.status !== 'All' ? 1 : 0) + (filters.priority !== 'All' ? 1 : 0);
+
     const filtered = tasks.filter(t=>{
         if(filters.status!=='All' && t.status!==filters.status) return false;
         if(filters.priority!=='All' && t.priority!==filters.priority) return false;
@@ -178,24 +181,56 @@ const SiteTasks = ({ user }) => {
 
     return (
         <div className="site-page">
-            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20,flexWrap:'wrap',gap:12}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24,flexWrap:'wrap',gap:12}}>
                 <div>
                     <h1 style={{fontSize:20,fontWeight:700,color:'#0f172a',margin:0,display:'flex',alignItems:'center',gap:10}}>
                         <CheckSquare size={20} style={{color:'#10b981'}}/>My Tasks
                     </h1>
                     <p style={{fontSize:13,color:'#64748b',margin:'5px 0 0'}}>{filtered.length} of {tasks.length} tasks</p>
                 </div>
+                
+                <button 
+                    className={`site-filter-toggle ${showFilters ? 'active' : ''}`}
+                    onClick={() => setShowFilters(!showFilters)}
+                >
+                    <Target size={16} /> 
+                    Filters
+                    {activeFilterCount > 0 && <span className="site-filter-badge">{activeFilterCount}</span>}
+                </button>
             </div>
-            <div className="site-filters">
-                <div className="site-filter-row">
-                    <span className="site-filter-label">Status</span>
-                    {STATUS_FILTERS.map(o=><button key={o} className={`site-filter-btn${filters.status===o?' active':''}`} onClick={()=>setFilter('status',o)}>{o}</button>)}
+
+            {showFilters && (
+                <div className="site-filters-panel">
+                    <div className="site-filter-group">
+                        <span className="site-filter-label">Status</span>
+                        <div className="site-filter-options">
+                            {STATUS_FILTERS.map(o=>(
+                                <button 
+                                    key={o} 
+                                    className={`site-filter-chip ${filters.status===o?'active':''}`} 
+                                    onClick={()=>setFilter('status',o)}
+                                >
+                                    {o}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="site-filter-group">
+                        <span className="site-filter-label">Priority</span>
+                        <div className="site-filter-options">
+                            {PRIORITY_FILTERS.map(o=>(
+                                <button 
+                                    key={o} 
+                                    className={`site-filter-chip ${filters.priority===o?'active':''}`} 
+                                    onClick={()=>setFilter('priority',o)}
+                                >
+                                    {o}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-                <div className="site-filter-row">
-                    <span className="site-filter-label">Priority</span>
-                    {PRIORITY_FILTERS.map(o=><button key={o} className={`site-filter-btn${filters.priority===o?' active':''}`} onClick={()=>setFilter('priority',o)}>{o}</button>)}
-                </div>
-            </div>
+            )}
             {loading ? <div className="site-loading">Loading…</div> :
              filtered.length===0 ? (
                 <div className="site-card"><div className="site-empty" style={{padding:52}}><Target size={40}/><p>No tasks found</p></div></div>

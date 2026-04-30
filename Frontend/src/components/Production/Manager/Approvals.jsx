@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Clock, FileText, MessageSquare, ExternalLink, Plus, Filter, X } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, FileText, MessageSquare, ExternalLink, Plus, Filter, X, Users, UserX } from 'lucide-react';
 import '../css/ProductionManagement.css';
-import { approvalAPI } from '../../../config/api';
+import { approvalAPI, productionAPI } from '../../../config/api';
 
 const TYPE_LABELS = {
     'Material': 'Material Request',
@@ -12,9 +12,11 @@ const TYPE_LABELS = {
 
 const Approvals = () => {
     const [approvals, setApprovals] = useState([]);
+    const [staffRequests, setStaffRequests] = useState([]);
+    const [activeTab, setActiveTab] = useState('general'); // 'general' or 'staff'
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [filterStatus, setFilterStatus] = useState('pending'); // 'all', 'pending', 'approved', 'rejected'
+    const [filterStatus, setFilterStatus] = useState('Pending'); // Match casing for staff requests
     const [isModalOpen, setIsModalOpen] = useState(false);
     
     const [newRequest, setNewRequest] = useState({
@@ -28,11 +30,16 @@ const Approvals = () => {
     const fetchApprovals = async () => {
         try {
             setLoading(true);
-            const res = await approvalAPI.getApprovals();
-            if (res.success) {
-                setApprovals(res.data);
-            } else {
-                setError(res.message);
+            const [genRes, staffRes] = await Promise.all([
+                approvalAPI.getApprovals(),
+                productionAPI.getReplacementRequests()
+            ]);
+            
+            if (genRes.success) setApprovals(genRes.data);
+            if (staffRes.success) setStaffRequests(staffRes.data);
+            
+            if (!genRes.success && !staffRes.success) {
+                setError("Failed to fetch data");
             }
         } catch (err) {
             setError(err.message);
@@ -45,12 +52,13 @@ const Approvals = () => {
         fetchApprovals();
     }, []);
 
-    const filteredApprovals = approvals.filter(item => {
+    const filteredApprovals = (activeTab === 'general' ? approvals : staffRequests).filter(item => {
         if (filterStatus === 'all') return true;
-        return item.status === filterStatus;
+        // Normalize casing for comparison
+        return item.status.toLowerCase() === filterStatus.toLowerCase();
     });
 
-    const pendingCount = approvals.filter(item => item.status === 'pending').length;
+    const pendingCount = (activeTab === 'general' ? approvals : staffRequests).filter(item => item.status.toLowerCase() === 'pending').length;
 
     const handleCreateRequest = async (e) => {
         e.preventDefault();
@@ -85,6 +93,21 @@ const Approvals = () => {
         }
     };
 
+    const handleActionStaffRequest = async (id, status) => {
+        const remarks = prompt("Enter remarks (optional):");
+        try {
+            const res = await productionAPI.actionReplacementRequest(id, { status, adminRemarks: remarks });
+            if (res.success) {
+                fetchStaffRequests(); // Wait, I should just use fetchApprovals()
+                fetchApprovals();
+            } else {
+                alert("Error: " + res.message);
+            }
+        } catch (err) {
+            alert("Error: " + err.message);
+        }
+    };
+
     const formatCurrency = (value) => {
         if (!value) return null;
         return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value);
@@ -94,7 +117,7 @@ const Approvals = () => {
         <div className="pm-dashboard">
             <div className="pm-welcome-header" style={{ padding: '1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div className="pm-welcome-text">
-                    <h1 style={{ fontSize: '1.5rem' }}>Approvals</h1>
+                    <h1 style={{ fontSize: '1.5rem' }}>Approvals & Requests</h1>
                     <p className="pm-welcome-date">Review and authorize production requests</p>
                 </div>
                 <div style={{ zIndex: 1, display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -106,27 +129,55 @@ const Approvals = () => {
                             style={{ background: 'transparent', border: 'none', outline: 'none', color: '#334155', fontWeight: 500 }}
                         >
                             <option value="all">All Statuses</option>
-                            <option value="pending">Pending</option>
-                            <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
                         </select>
                     </div>
                     <div className="pm-summary-pill" style={{ background: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#ef4444', fontWeight: 600 }}>
                         <span className="pm-pill-dot danger"></span>
                         {pendingCount} Pending
                     </div>
-                    <button onClick={() => setIsModalOpen(true)} className="pm-quick-action-btn" style={{ padding: '0.5rem 1rem', flexDirection: 'row', gap: '0.5rem', background: '#3b82f6', color: 'white', borderColor: '#2563eb' }}>
-                        <Plus size={16} /> New Request
-                    </button>
+                    {activeTab === 'general' && (
+                        <button onClick={() => setIsModalOpen(true)} className="pm-quick-action-btn" style={{ padding: '0.5rem 1rem', flexDirection: 'row', gap: '0.5rem', background: '#3b82f6', color: 'white', borderColor: '#2563eb' }}>
+                            <Plus size={16} /> New Request
+                        </button>
+                    )}
                 </div>
+            </div>
+
+            {/* Sub-tabs */}
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', padding: '0 1.5rem' }}>
+                <button 
+                    onClick={() => setActiveTab('general')}
+                    style={{
+                        padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer',
+                        background: activeTab === 'general' ? '#0f172a' : 'white',
+                        color: activeTab === 'general' ? 'white' : '#64748b',
+                        display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                    }}
+                >
+                    <FileText size={18} /> General Approvals
+                </button>
+                <button 
+                    onClick={() => setActiveTab('staff')}
+                    style={{
+                        padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer',
+                        background: activeTab === 'staff' ? '#0f172a' : 'white',
+                        color: activeTab === 'staff' ? 'white' : '#64748b',
+                        display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                    }}
+                >
+                    <Users size={18} /> Staff Replacements
+                </button>
             </div>
 
             {error && <div style={{ color: 'red', marginBottom: '1rem', padding: '1rem', background: '#fee2e2', borderRadius: '8px' }}>{error}</div>}
 
             <div className="pm-card" style={{ padding: 0, overflow: 'hidden' }}>
                 {loading ? (
-                    <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>Loading approvals...</div>
-                ) : (
+                    <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>Loading...</div>
+                ) : activeTab === 'general' ? (
                     <table className="pm-table">
                         <thead>
                             <tr>
@@ -168,8 +219,8 @@ const Approvals = () => {
                                     <td>
                                         <span style={{
                                             padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase',
-                                            background: item.status === 'approved' ? '#dcfce7' : item.status === 'rejected' ? '#fee2e2' : '#fef3c7',
-                                            color: item.status === 'approved' ? '#16a34a' : item.status === 'rejected' ? '#ef4444' : '#d97706'
+                                            background: item.status.toLowerCase() === 'approved' ? '#dcfce7' : item.status.toLowerCase() === 'rejected' ? '#fee2e2' : '#fef3c7',
+                                            color: item.status.toLowerCase() === 'approved' ? '#16a34a' : item.status.toLowerCase() === 'rejected' ? '#ef4444' : '#d97706'
                                         }}>
                                             {item.status}
                                         </span>
@@ -179,7 +230,7 @@ const Approvals = () => {
                                             <button className="pm-icon-btn" title="View Details" style={{ color: '#3b82f6', background: '#eff6ff' }}>
                                                 <ExternalLink size={16} />
                                             </button>
-                                            {item.status === 'pending' && (
+                                            {item.status.toLowerCase() === 'pending' && (
                                                 <>
                                                     <button onClick={() => handleUpdateStatus(item._id, 'rejected')} className="pm-icon-btn" title="Reject" style={{ color: '#ef4444', background: '#fee2e2' }}>
                                                         <XCircle size={16} />
@@ -193,13 +244,73 @@ const Approvals = () => {
                                     </td>
                                 </tr>
                             ))}
-                            {filteredApprovals.length === 0 && (
-                                <tr>
-                                    <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>No approvals found for this filter.</td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
+                ) : (
+                    <table className="pm-table">
+                        <thead>
+                            <tr>
+                                <th>Replacement For</th>
+                                <th>Project</th>
+                                <th>Reason</th>
+                                <th>Requested By</th>
+                                <th>Status</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredApprovals.map(item => (
+                                <tr key={item._id} className="pm-table-row">
+                                    <td>
+                                        <div style={{ fontWeight: 600, color: '#0f172a', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <UserX size={16} color="#ef4444" />
+                                            {item.currentStaffId?.fullName}
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Role: {item.staffType}</div>
+                                    </td>
+                                    <td>
+                                        <div style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 500 }}>{item.projectId?.projectName}</div>
+                                    </td>
+                                    <td>
+                                        <div style={{ fontSize: '0.85rem', color: '#475569', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.reason}>
+                                            {item.reason}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style={{ fontSize: '0.85rem', color: '#334155' }}>{item.requestedBy?.fullName}</div>
+                                        <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{new Date(item.createdAt).toLocaleDateString()}</div>
+                                    </td>
+                                    <td>
+                                        <span style={{
+                                            padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase',
+                                            background: item.status.toLowerCase() === 'approved' ? '#dcfce7' : item.status.toLowerCase() === 'rejected' ? '#fee2e2' : '#fef3c7',
+                                            color: item.status.toLowerCase() === 'approved' ? '#16a34a' : item.status.toLowerCase() === 'rejected' ? '#ef4444' : '#d97706'
+                                        }}>
+                                            {item.status}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                            {item.status.toLowerCase() === 'pending' && (
+                                                <>
+                                                    <button onClick={() => handleActionStaffRequest(item._id, 'Rejected')} className="pm-icon-btn" title="Reject" style={{ color: '#ef4444', background: '#fee2e2' }}>
+                                                        <XCircle size={16} />
+                                                    </button>
+                                                    <button onClick={() => handleActionStaffRequest(item._id, 'Approved')} className="pm-icon-btn" title="Approve" style={{ color: '#10b981', background: '#dcfce7' }}>
+                                                        <CheckCircle size={16} />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+                
+                {filteredApprovals.length === 0 && !loading && (
+                    <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>No requests found for this filter.</div>
                 )}
             </div>
 

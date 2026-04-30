@@ -63,6 +63,42 @@ const ProductionProjectSchema = new mongoose.Schema({
         max: 100,
         default: 0
     },
+    budget: {
+        type: Number,
+        default: 0
+    },
+    spent: {
+        type: Number,
+        default: 0
+    },
+    estimatedCost: {
+        type: Number,
+        default: 0
+    },
+    riskLevel: {
+        type: String,
+        enum: ['Low', 'Medium', 'High', 'Critical'],
+        default: 'Low'
+    },
+    priority: {
+        type: String,
+        enum: ['Low', 'Medium', 'High', 'Critical'],
+        default: 'Medium'
+    },
+    location: {
+        type: String,
+        trim: true
+    },
+    siteAddress: {
+        type: String,
+        trim: true
+    },
+    milestones: [{
+        title: { type: String, required: true },
+        dueDate: Date,
+        completed: { type: Boolean, default: false },
+        completedAt: Date
+    }],
     attachments: [{
         name: String,
         url: String,
