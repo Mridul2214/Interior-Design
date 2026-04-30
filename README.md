@@ -104,3 +104,10 @@ graph TD
    npm install
    npm run dev
    ```
+
+## Pending Phases (Production Management)
+- **Phase 2:** SE Safety & Attendance Module
+- **Phase 3:** PE Engineering Modules
+- **Phase 4:** SS Enhancement
+- **Phase 5:** Leave Management Chain
+- **Phase 6:** Reports & Export
