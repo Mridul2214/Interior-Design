@@ -38,9 +38,9 @@ graph TD
     J -->|Reject| H
     
     %% Production Pipeline
-    J -->|Approve| K[Procurement Manager<br/>Hands off to Production]
-    K --> L[Production Manager<br/>Assigns Factory/Site Tasks]
-    L --> M[Production Team<br/>Execution & Updates]
+    J -->|Approve & Assign PM| K[Project Manager<br/>Receives Handoff]
+    K --> L[Project Manager<br/>Assigns Team & Activates]
+    L --> M[Production Team<br/>PE, SE, SS Execution]
 
     classDef admin fill:#4f46e5,stroke:#312e81,stroke-width:2px,color:#fff;
     classDef manager fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff;
@@ -69,12 +69,15 @@ graph TD
 
 - **Procurement Staff:** Receives the assigned `Material Request`. They are responsible for gathering vendor pricing, selecting vendors, and adding the required materials to the "Sourcing Bucket". Once complete, they click **Submit to Manager for Review**.
 - **Procurement Manager:** Receives the request in their "Needs Your Review" queue. They verify the vendor selection and budget. Once satisfied, they click **Approve & Send to Admin**.
-- **Super Admin (Approval Hub):** The finalized procurement list appears in the `Procurement Pipeline` tab. The Admin reviews the final costs and clicks **Approve Procurement**.
-- **Procurement Manager (Handoff):** Once Admin gives final approval, the Procurement Manager is notified to execute the final handoff to Production.
+- **Super Admin (Approval Hub):** The finalized procurement list appears in the `Procurement Pipeline` tab. The Admin reviews the final costs and selects a **Project Manager** to handle the production phase. Clicking **Approve Procurement** triggers the handoff.
 
 ### 4. Production Pipeline
-- **Production Manager:** Receives the approved materials and designs as a new Production Task. They assign it to the factory floor (Supervisors/Site Engineers).
-- **Execution:** Production team updates daily progress until the final installation is complete.
+- **Project Manager:** Receives the approved project in their "Project Handoff" queue. They are responsible for assigning the core production team:
+    - **Project Engineer (PE)**
+    - **Site Engineer (SE)**
+    - **Site Supervisor (SS)**
+- **Team Assignment:** Once the PM assigns the team and accepts the handoff, the project moves from "Planning" to "Active".
+- **Execution:** The assigned Project Engineer, Site Engineer, and Supervisor receive notifications and start managing site tasks and daily progress.
 
 ## User Roles & Access
 
@@ -83,7 +86,8 @@ graph TD
 - **Design Staff**: Executes design tasks.
 - **Procurement Manager**: Manages vendor relationships, reviews sourcing, and handles production handoffs.
 - **Procurement Staff**: Sources materials and vendor quotes.
-- **Production Manager**: Oversees manufacturing and site execution.
+- **Project Manager**: Oversees the entire production phase, assigns site teams, and manages project activation.
+- **Project Engineer / Site Engineer / Supervisor**: Execute and monitor site progress.
 
 ## Local Development Setup
 
