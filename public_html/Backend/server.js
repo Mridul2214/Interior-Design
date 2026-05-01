@@ -105,10 +105,10 @@ app.use('/api/site-visits', siteVisitRoutes);
 app.use('/api/settings', settingsRoutes);
 
 // Serve React build
-app.use(express.static(path.join(__dirname, "../frontend/build")));
+app.use(express.static(path.join(__dirname, "../Frontend/dist")));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/build/index.html"));
+  res.sendFile(path.join(__dirname, "../Frontend/dist/index.html"));
 });
 
 app.use(errorHandler);
