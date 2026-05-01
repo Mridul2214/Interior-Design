@@ -104,11 +104,11 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/site-visits', siteVisitRoutes);
 app.use('/api/settings', settingsRoutes);
 
-app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Route not found'
-    });
+// Serve React build
+app.use(express.static(path.join(__dirname, "../frontend/build")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/build/index.html"));
 });
 
 app.use(errorHandler);
