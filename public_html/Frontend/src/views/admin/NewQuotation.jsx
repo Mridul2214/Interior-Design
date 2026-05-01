@@ -834,7 +834,7 @@ const NewQuotation = ({ isEdit, isStaff }) => {
                                             <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '1.5rem' }}>
                                                 <div onClick={() => document.getElementById(`file-${item.id}`).click()} className="image-upload-dashed" style={{ height: '120px', marginBottom: 0 }}>
                                                     {item.image ? (
-                                                        <img src={`http://localhost:5000${item.image}`} alt="P" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} />
+                                                        <img src={`${item.image}`} alt="P" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} />
                                                     ) : (
                                                         <>
                                                             <Upload size={20} />

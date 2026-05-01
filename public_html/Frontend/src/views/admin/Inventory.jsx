@@ -22,7 +22,7 @@ const getImageUrl = (url) => {
     if (!url) return null;
     if (url.startsWith('http')) return url;
     // Serve from backend uploads directory
-    return `http://localhost:5000${url.startsWith('/') ? '' : '/'}${url}`;
+    return `${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
 const Inventory = () => {

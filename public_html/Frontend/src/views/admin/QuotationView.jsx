@@ -211,7 +211,7 @@ const QuotationView = ({ isStaff }) => {
                                                 <td className="col-idx"></td>
                                                 <td colSpan="4">
                                                     <div className="item-preview-img">
-                                                        <img src={`http://localhost:5000${item.image}`} alt="Preview" />
+                                                        <img src={`${item.image}`} alt="Preview" />
                                                     </div>
                                                 </td>
                                             </tr>
