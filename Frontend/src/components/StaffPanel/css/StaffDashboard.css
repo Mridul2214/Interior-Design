@@ -307,23 +307,22 @@
 
 .task-item {
     background: white;
-    border-radius: 20px;
-    padding: 1.25rem;
+    border-radius: 16px;
+    padding: 14px 16px 14px 24px; /* left pad accounts for the 5px status bar */
     display: flex;
     align-items: center;
-    gap: 1.25rem;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
-    border: 1px solid rgba(226, 232, 240, 0.5);
+    gap: 12px;
+    border: 1px solid #e2e8f0;
     position: relative;
-    overflow: hidden;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    min-width: 0;
 }
 
 .task-item:hover {
     border-color: #6366f1;
-    transform: translateX(4px);
-    background: #fcfdfe;
+    transform: translateX(3px);
+    box-shadow: 0 4px 16px rgba(99,102,241,0.08);
 }
 
 .status-line {
@@ -356,19 +355,27 @@
 
 .task-info {
     flex: 1;
+    min-width: 0; /* critical: allows children to truncate */
+    overflow: hidden;
 }
 
 .task-info h3 {
-    font-size: 1.05rem;
+    font-size: 0.9rem;
     font-weight: 700;
     color: #0f172a;
-    margin-bottom: 4px;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .task-info p {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: #64748b;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .deadline {

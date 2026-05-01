@@ -102,10 +102,6 @@ const StaffTasks = () => {
     return (
         <div className="st-tasks-container">
             <div className="st-tasks-wrapper">
-                <div className="st-tasks-header">
-                    <h2>My Assigned Tasks</h2>
-                    <p className="st-tasks-subtitle">Track and update your daily progress</p>
-                </div>
 
                 <div className="st-stats-grid">
                     {Object.entries(stats).map(([label, value]) => (

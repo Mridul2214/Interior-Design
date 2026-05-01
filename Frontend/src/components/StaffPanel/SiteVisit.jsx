@@ -151,11 +151,6 @@ const SiteVisit = () => {
 
     return (
         <div className="site-visit">
-            <header className="page-header">
-                <h1>Log Site Visit</h1>
-                <p>Upload site photos and progress updates.</p>
-            </header>
-
             <form onSubmit={handleUpload} className="visit-form">
                 <div className="form-section card">
                     <div className="form-group site-visit-select">

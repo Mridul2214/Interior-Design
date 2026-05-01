@@ -47,14 +47,6 @@ const StaffQuotations = () => {
     return (
         <div className="sq-quotations-container">
             <div className="sq-quotations-wrapper">
-                <div className="sq-header">
-                    <h2>Project Quotations</h2>
-                    <Link to="/staff/quotations/new" className="sq-btn-add">
-                        <Plus size={18} />
-                        <span>New Quotation</span>
-                    </Link>
-                </div>
-
                 <div className="sq-controls">
                     <div className="sq-search-wrapper">
                         <Search className="sq-search-icon" size={18} />
@@ -66,6 +58,10 @@ const StaffQuotations = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <Link to="/staff/quotations/new" className="sq-btn-add">
+                        <Plus size={18} />
+                        <span>New Quotation</span>
+                    </Link>
                 </div>
 
                 <div className="sq-list-card">

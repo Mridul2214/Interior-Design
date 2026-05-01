@@ -65,10 +65,13 @@
 
 .sc-controls {
     background: white;
-    padding: 1.25rem;
+    padding: 1rem 1.25rem;
     border-radius: 20px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .sc-search-wrapper {

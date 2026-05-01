@@ -86,14 +86,6 @@ const StaffClients = () => {
     return (
         <div className="sc-clients-container">
             <div className="sc-clients-wrapper">
-                <div className="sc-header">
-                    <h2>Client Directory</h2>
-                    <button className="sc-btn-add" onClick={() => setShowModal(true)}>
-                        <Plus size={18} />
-                        <span>Add Client</span>
-                    </button>
-                </div>
-
                 <div className="sc-controls">
                     <div className="sc-search-wrapper">
                         <Search className="sc-search-icon" size={18} />
@@ -105,6 +97,10 @@ const StaffClients = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
+                    <button className="sc-btn-add" onClick={() => setShowModal(true)}>
+                        <Plus size={18} />
+                        <span>Add Client</span>
+                    </button>
                 </div>
 
                 <div className="sc-list-card">

@@ -237,16 +237,16 @@ const StaffDashboard = ({ user }) => {
                         <div key={task._id} className="task-item" onClick={() => navigate('/staff/tasks')}>
                             <div className={`status-line ${task.priority.toLowerCase()}`}></div>
                             <div className="task-info">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <h3>{task.title}</h3>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                                    <h3 style={{ margin: 0, flex: '1 1 0', minWidth: 0 }}>{task.title}</h3>
                                     {new Date(task.updatedAt) > new Date(Date.now() - 24 * 60 * 60 * 1000) && (
-                                        <span className="badge-new" style={{ background: '#e0e7ff', color: '#4338ca', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>NEW</span>
+                                        <span className="badge-new" style={{ flexShrink: 0, background: '#e0e7ff', color: '#4338ca', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>NEW</span>
                                     )}
                                 </div>
-                                <p>{task.client?.name || 'N/A'} • <span className="deadline">{new Date(task.dueDate).toLocaleDateString()}</span></p>
+                                <p style={{ margin: 0 }}>{task.client?.name || 'N/A'} · <span className="deadline">{new Date(task.dueDate).toLocaleDateString()}</span></p>
                             </div>
-                            <button className="task-check">
-                                <ChevronRight size={20} />
+                            <button className="task-check" style={{ flexShrink: 0 }}>
+                                <ChevronRight size={18} />
                             </button>
                         </div>
                     )) : (
