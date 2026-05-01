@@ -100,7 +100,7 @@
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     border: 1px solid #f1f5f9;
     position: relative;
-    overflow: hidden;
+    /* overflow: hidden removed to allow CustomSelect dropdown to spill out */
 }
 
 .pm-welcome-header::after {
@@ -112,6 +112,8 @@
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.03));
     transform: skewX(-45deg);
+    border-top-right-radius: 16px;
+    border-bottom-right-radius: 16px;
 }
 
 .pm-welcome-text h1 {
@@ -714,45 +716,63 @@
     gap: 1rem;
 }
 
+/* ─── pm-quick-action-btn → shadcn/ui primary button ─── */
 .pm-quick-action-btn {
-    display: flex;
-    flex-direction: column;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
-    padding: 1.5rem 1rem;
-    background: #f8fafc;
-    border: 1px solid #f1f5f9;
-    border-radius: 12px;
+    gap: 7px;
+    height: 38px;
+    padding: 0 16px;
+    background: #0f172a;
+    color: #ffffff;
+    border: 1px solid #0f172a;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: inherit;
     cursor: pointer;
-    transition: all 0.2s;
+    transition:
+        background 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.1s ease;
+    white-space: nowrap;
+    outline: none;
+    letter-spacing: -0.01em;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12);
 }
 
-.pm-quick-action-btn:hover {
-    background: white;
-    border-color: #e2e8f0;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+.pm-quick-action-btn:hover:not(:disabled) {
+    background: #1e293b;
+    border-color: #1e293b;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.25);
+    transform: translateY(-1px);
 }
 
+.pm-quick-action-btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.pm-quick-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Icon inside action button */
 .pm-qa-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s;
-}
-
-.pm-quick-action-btn:hover .pm-qa-icon {
-    transform: scale(1.1);
+    color: inherit;
 }
 
 .pm-quick-action-btn span {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #334155;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: inherit;
 }
 
 /* ── Responsive Design ────────────────────────────────────────── */

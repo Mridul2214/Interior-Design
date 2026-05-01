@@ -103,14 +103,7 @@ const ProjectHandoff = () => {
 
     return (
         <div className="pm-dashboard">
-            <div className="pm-welcome-header" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
-                <div className="pm-welcome-text">
-                    <h1 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <ArrowRight color="#3b82f6" /> Project Handoff
-                    </h1>
-                    <p className="pm-welcome-date">Review new projects assigned to you and allocate your production team.</p>
-                </div>
-            </div>
+
 
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>Loading new projects...</div>

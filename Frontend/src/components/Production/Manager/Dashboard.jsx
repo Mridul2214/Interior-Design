@@ -129,25 +129,7 @@ const Dashboard = () => {
     return (
         <div className="production-management pm-dashboard">
             {/* ── Welcome Header ─────────────────────────────────── */}
-            <div className="pm-welcome-header">
-                <div className="pm-welcome-text">
-                    <h1>Production Management</h1>
-                    <p className="pm-welcome-date">
-                        <Calendar size={15} />
-                        {dateStr}
-                    </p>
-                </div>
-                <div className="pm-welcome-summary">
-                    <div className="pm-summary-pill">
-                        <span className="pm-pill-dot active"></span>
-                        {data.activeProjects} active projects
-                    </div>
-                    <div className="pm-summary-pill">
-                        <span className="pm-pill-dot warning"></span>
-                        {data.pendingApprovals} pending approvals
-                    </div>
-                </div>
-            </div>
+            {/* ── Tab Navigation ──────────────────────────────────── */}
 
             {/* ── Tab Navigation ──────────────────────────────────── */}
             <div className="pm-tabs">

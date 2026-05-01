@@ -22,8 +22,19 @@ const TaskDetail = ({ user }) => {
     const [toast,      setToast]      = useState(null);
     const [showNote,   setShowNote]   = useState(false);
     const [note,       setNote]       = useState('');
+    
+    // Subtask states
+    const [showSubtaskModal, setShowSubtaskModal] = useState(false);
+    const [subtaskSaving, setSubtaskSaving] = useState(false);
+    const [siteTeam, setSiteTeam] = useState([]);
+    const [subform, setSubform] = useState({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '' });
 
-    useEffect(() => { load(); }, [id]);
+    useEffect(() => { 
+        load(); 
+        if (user?.role === 'Project Engineer') {
+            engineerAPI.getSiteTeam().then(res => { if (res.success) setSiteTeam(res.data); });
+        }
+    }, [id]);
 
     const load = async () => {
         try {
@@ -34,6 +45,21 @@ const TaskDetail = ({ user }) => {
     };
 
     const showToast = (msg, type='success') => { setToast({msg,type}); setTimeout(()=>setToast(null),3000); };
+
+    const handleCreateSubtask = async (e) => {
+        e.preventDefault();
+        setSubtaskSaving(true);
+        try {
+            const res = await engineerAPI.createSubtask({ ...subform, parentTaskId: id, projectId: task.projectId?._id || task.projectId });
+            if (res.success) {
+                setTask(prev => ({ ...prev, subtasks: [...(prev.subtasks || []), res.data] }));
+                setShowSubtaskModal(false);
+                setSubform({ title: '', description: '', assignedTo: '', priority: 'Medium', dueDate: '' });
+                showToast('Subtask created successfully');
+            }
+        } catch (e) { showToast('Failed to create subtask', 'error'); }
+        finally { setSubtaskSaving(false); }
+    };
 
     const handleStatusChange = async (newStatus) => {
         setStatusSaving(true);
@@ -145,14 +171,21 @@ const TaskDetail = ({ user }) => {
                     )}
 
                     {/* Subtasks */}
-                    {task.subtasks?.length > 0 && (
+                    {(task.subtasks?.length > 0 || isMine) && (
                         <div className="eng-section-card" style={{ marginBottom:20 }}>
                             <div className="eng-section-header">
-                                <div className="eng-section-title"><Plus size={16}/>Subtasks</div>
-                                <span className="eng-task-count">{task.subtasks.length}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <div className="eng-section-title"><Plus size={16}/>Subtasks</div>
+                                    <span className="eng-task-count">{task.subtasks?.length||0}</span>
+                                </div>
+                                {isMine && user?.role === 'Project Engineer' && (
+                                    <button className="eng-status-btn" onClick={() => setShowSubtaskModal(true)} style={{ background: '#f8fafc', color: '#0f172a' }}>
+                                        + Add Subtask
+                                    </button>
+                                )}
                             </div>
                             <div className="eng-task-list">
-                                {task.subtasks.map(st => {
+                                {task.subtasks?.map(st => {
                                     const sst = getStatusStyle(st.status);
                                     return (
                                         <div key={st._id} className="eng-task-row eng-task-row-clickable"
@@ -166,6 +199,7 @@ const TaskDetail = ({ user }) => {
                                         </div>
                                     );
                                 })}
+                                {!task.subtasks?.length && <div style={{ padding:'20px 24px', color:'#94a3b8', fontSize:13 }}>No subtasks created.</div>}
                             </div>
                         </div>
                     )}
@@ -252,6 +286,58 @@ const TaskDetail = ({ user }) => {
                     )}
                 </div>
             </div>
+
+            {/* Create Subtask Modal */}
+            {showSubtaskModal && (
+                <div className="eng-modal-overlay">
+                    <div className="eng-modal-content">
+                        <div className="eng-modal-header">
+                            <h2 style={{ margin:0, fontSize:18 }}>Add Subtask</h2>
+                            <button onClick={()=>setShowSubtaskModal(false)} className="eng-icon-btn"><X size={20}/></button>
+                        </div>
+                        <form onSubmit={handleCreateSubtask} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            <div>
+                                <label className="eng-label">Title</label>
+                                <input className="eng-input" required value={subform.title} onChange={e=>setSubform({...subform,title:e.target.value})} placeholder="E.g. Install false ceiling in Lobby"/>
+                            </div>
+                            <div>
+                                <label className="eng-label">Description</label>
+                                <textarea className="eng-input" rows={3} value={subform.description} onChange={e=>setSubform({...subform,description:e.target.value})} placeholder="Details..."/>
+                            </div>
+                            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+                                <div>
+                                    <label className="eng-label">Assign To</label>
+                                    <select className="eng-input" required value={subform.assignedTo} onChange={e=>setSubform({...subform,assignedTo:e.target.value})}>
+                                        <option value="">Select Site Engineer...</option>
+                                        {siteTeam.map(t=>(
+                                            <option key={t._id} value={t._id}>{t.fullName} ({t.role})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="eng-label">Priority</label>
+                                    <select className="eng-input" value={subform.priority} onChange={e=>setSubform({...subform,priority:e.target.value})}>
+                                        <option value="Low">Low</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="High">High</option>
+                                        <option value="Urgent">Urgent</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="eng-label">Due Date</label>
+                                <input type="date" className="eng-input" required value={subform.dueDate} onChange={e=>setSubform({...subform,dueDate:e.target.value})} />
+                            </div>
+                            <div style={{ display:'flex', justifyContent:'flex-end', gap:12, marginTop: 16 }}>
+                                <button type="button" className="eng-btn-secondary" onClick={()=>setShowSubtaskModal(false)}>Cancel</button>
+                                <button type="submit" className="eng-btn-primary" disabled={subtaskSaving}>
+                                    {subtaskSaving ? <Loader2 size={16} className="eng-spin"/> : null} Add Subtask
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

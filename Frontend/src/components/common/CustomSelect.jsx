@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Search, Check } from 'lucide-react';
 import './css/CustomSelect.css';
 
 const CustomSelect = ({
@@ -11,9 +11,9 @@ const CustomSelect = ({
     disabled = false,
     name,
     required = false,
-    searchable = true,
+    searchable = false,
     error = false,
-    variant = 'default' // 'default' or 'inline'
+    variant = 'default' // 'default' | 'inline' | 'filter'
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -25,15 +25,15 @@ const CustomSelect = ({
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
+                setSearchTerm('');
             }
         };
-
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const handleToggle = () => {
-        if (!disabled) setIsOpen(!isOpen);
+        if (!disabled) setIsOpen(o => !o);
     };
 
     const handleSelect = (optionValue) => {
@@ -42,20 +42,21 @@ const CustomSelect = ({
         setSearchTerm('');
     };
 
-    const filteredOptions = options.filter(opt =>
-        opt.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredOptions = searchable
+        ? options.filter(opt => opt.label.toLowerCase().includes(searchTerm.toLowerCase()))
+        : options;
 
     const getInlineStyles = () => {
+        if (variant === 'filter') return { backgroundColor: '#ffffff', color: '#0f172a', borderColor: '#e2e8f0' };
         if (variant !== 'inline') return {};
-
-        // Dynamic color coding for status if using inline
-        if (value === 'Completed') return { backgroundColor: '#f0fdf4', color: '#16a34a', borderColor: '#dcfce7' };
+        if (value === 'Completed')   return { backgroundColor: '#f0fdf4', color: '#16a34a', borderColor: '#dcfce7' };
         if (value === 'In Progress') return { backgroundColor: '#eff6ff', color: '#3b82f6', borderColor: '#dbeafe' };
-        if (value === 'To Do') return { backgroundColor: '#fff7ed', color: '#f97316', borderColor: '#ffedd5' };
-        if (value === 'Blocked') return { backgroundColor: '#fef2f2', color: '#ef4444', borderColor: '#fee2e2' };
+        if (value === 'To Do')       return { backgroundColor: '#fff7ed', color: '#f97316', borderColor: '#ffedd5' };
+        if (value === 'Blocked')     return { backgroundColor: '#fef2f2', color: '#ef4444', borderColor: '#fee2e2' };
         return {};
     };
+
+    const iconSize = variant === 'inline' ? 13 : variant === 'filter' ? 14 : 16;
 
     return (
         <div className={`custom-select-container ${variant} ${disabled ? 'disabled' : ''}`} ref={dropdownRef}>
@@ -72,13 +73,18 @@ const CustomSelect = ({
             >
                 <div className="trigger-content">
                     {selectedOption ? (
-                        <span className="selected-value" style={variant === 'inline' ? { color: 'inherit' } : {}}>{selectedOption.label}</span>
+                        <span className="selected-value" style={variant === 'inline' ? { color: 'inherit' } : {}}>
+                            {selectedOption.label}
+                        </span>
                     ) : (
                         <span className="placeholder">{placeholder}</span>
                     )}
                 </div>
                 <div className="trigger-icons">
-                    {isOpen ? <ChevronUp size={variant === 'inline' ? 14 : 18} /> : <ChevronDown size={variant === 'inline' ? 14 : 18} />}
+                    {isOpen
+                        ? <ChevronUp size={iconSize} />
+                        : <ChevronDown size={iconSize} />
+                    }
                 </div>
             </div>
 
@@ -108,7 +114,7 @@ const CustomSelect = ({
                                 >
                                     {option.label}
                                     {option.value === value && (
-                                        <div className="selected-indicator" />
+                                        <Check size={14} style={{ color: '#0f172a', flexShrink: 0 }} />
                                     )}
                                 </li>
                             ))

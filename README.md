@@ -105,9 +105,12 @@ graph TD
    npm run dev
    ```
 
+### ✅ Completed Phases
+1. **Phase 1**: Layout, Navigation, Role-based Routing
+2. **Phase 2**: Production Dashboard (PM overview, task metrics, priority handling)
+3. **Phase 3**: Site Portal Enhancements (SE task execution, daily reports, attendance UI)
+4. **Phase 4**: Site Supervisor Enhancements (Material/Equipment logging, backend syncing)
+5. **Phase 5**: Leave Management Chain (Backend models, API endpoints, multi-tier approval dashboards for PE/PM)
+
 ## Pending Phases (Production Management)
-- **Phase 2:** SE Safety & Attendance Module
-- **Phase 3:** PE Engineering Modules
-- **Phase 4:** SS Enhancement
-- **Phase 5:** Leave Management Chain
 - **Phase 6:** Reports & Export

@@ -79,6 +79,20 @@ export const authAPI = {
     }
 };
 
+// Leave APIs
+export const leaveAPI = {
+    submitLeave: (data) => apiCall('/leaves', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+    getMyLeaves: () => apiCall('/leaves/my-leaves'),
+    getPendingLeaves: () => apiCall('/leaves/pending'),
+    updateLeaveStatus: (id, statusData) => apiCall(`/leaves/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify(statusData)
+    })
+};
+
 // Client APIs
 export const clientAPI = {
     getAll: (params = {}) => {
@@ -701,7 +715,8 @@ export const productionAPI = {
     actionReplacementRequest: (requestId, data) => apiCall(`/production-management/staff-replacement/requests/${requestId}/action`, {
         method: 'PUT',
         body: JSON.stringify(data)
-    })
+    }),
+    getProductionReports: () => apiCall('/production-management/reports')
 };
 
 // Accounts APIs
@@ -822,6 +837,40 @@ export const productionManagerAPI = {
     getBudgetAnalytics: () => apiCall('/production-management/dashboard/budget-analytics'),
     getKPIMetrics: () => apiCall('/production-management/dashboard/kpi'),
     getGanttData: (projectId = 'all') => apiCall(`/production-management/gantt/${projectId}`),
+};
+
+export const siteManagementAPI = {
+    // Attendance
+    submitAttendance: (data) => apiCall('/production-management/site/attendance', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+    getProjectAttendance: (projectId) => apiCall(`/production-management/site/attendance/${projectId}`),
+    
+    // Safety
+    reportSafetyIssue: (data) => apiCall('/production-management/site/safety', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+    getProjectSafetyLogs: (projectId) => apiCall(`/production-management/site/safety/${projectId}`),
+    updateSafetyLogStatus: (logId, data) => apiCall(`/production-management/site/safety/${logId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+    }),
+    
+    // Daily Reports
+    submitDailyReport: (data) => apiCall('/production-management/site/reports', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+    getProjectReports: (projectId) => apiCall(`/production-management/site/reports/${projectId}`),
+
+    // Supervisor Reports
+    submitSupervisorReport: (data) => apiCall('/production-management/site/supervisor-reports', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+    getSupervisorReports: (projectId) => apiCall(`/production-management/site/supervisor-reports/${projectId}`)
 };
 
 export const kanbanAPI = {

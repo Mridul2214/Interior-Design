@@ -1,0 +1,292 @@
+/* ─── DatePicker Trigger ────────────────────────────────────────────── */
+
+.dp-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.dp-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    height: 40px;
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #0f172a;
+    text-align: left;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+    font-family: inherit;
+}
+
+.dp-trigger:hover {
+    border-color: #cbd5e1;
+    background: #fafafa;
+}
+
+.dp-trigger.open {
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2);
+    background: #ffffff;
+}
+
+.dp-trigger.dp-disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background: #f8fafc;
+}
+
+.dp-cal-icon {
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.dp-label {
+    flex: 1;
+    color: #0f172a;
+    font-size: 0.875rem;
+}
+
+.dp-placeholder {
+    flex: 1;
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+
+.dp-clear {
+    display: flex;
+    align-items: center;
+    color: #94a3b8;
+    margin-left: auto;
+    border-radius: 4px;
+    padding: 2px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.dp-clear:hover {
+    color: #475569;
+    background: #f1f5f9;
+}
+
+/* ─── Popover container ─────────────────────────────────────────────── */
+
+.dp-popover {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 9999;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.07),
+        0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    animation: dp-fade-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    min-width: 280px;
+}
+
+@keyframes dp-fade-in {
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* ─── react-day-picker overrides (shadcn/ui style) ─────────────────── */
+
+.dp-popover .rdp,
+.dp-popover .rdp-root {
+    --rdp-accent-color: #0f172a;
+    --rdp-accent-background-color: #0f172a;
+    --rdp-selected-border: none;
+    margin: 0;
+    padding: 14px;
+    font-family: inherit;
+    font-size: 0.875rem;
+}
+
+/* Caption / header */
+.dp-popover .rdp-month_caption,
+.dp-popover .rdp-caption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2px;
+    margin-bottom: 10px;
+}
+
+.dp-popover .rdp-caption_label,
+.dp-popover .rdp-month_caption .rdp-caption_label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* Nav buttons */
+.dp-popover .rdp-nav {
+    display: flex;
+    gap: 4px;
+}
+
+.dp-popover .rdp-button_previous,
+.dp-popover .rdp-button_next,
+.dp-popover .rdp-nav_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.dp-popover .rdp-button_previous:hover,
+.dp-popover .rdp-button_next:hover,
+.dp-popover .rdp-nav_button:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+/* Weekday headers */
+.dp-popover .rdp-weekdays,
+.dp-popover .rdp-head_row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.dp-popover .rdp-weekday,
+.dp-popover .rdp-head_cell {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    padding: 4px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Day grid */
+.dp-popover .rdp-weeks,
+.dp-popover .rdp-tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dp-popover .rdp-week,
+.dp-popover .rdp-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+/* Individual day cells */
+.dp-popover .rdp-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dp-popover .rdp-day_button,
+.dp-popover .rdp-button {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: #374151;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s ease, color 0.1s ease;
+    font-family: inherit;
+    padding: 0;
+}
+
+.dp-popover .rdp-day_button:hover,
+.dp-popover .rdp-button:hover:not(:disabled) {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+/* Today */
+.dp-popover .rdp-today .rdp-day_button,
+.dp-popover .rdp-day--today .rdp-day_button {
+    font-weight: 700;
+    color: #3b82f6;
+}
+
+/* Selected */
+.dp-popover .rdp-selected .rdp-day_button,
+.dp-popover .rdp-day--selected .rdp-day_button {
+    background: #0f172a !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.dp-popover .rdp-selected .rdp-day_button:hover,
+.dp-popover .rdp-day--selected .rdp-day_button:hover {
+    background: #1e293b !important;
+}
+
+/* Outside month days */
+.dp-popover .rdp-outside .rdp-day_button,
+.dp-popover .rdp-day--outside .rdp-day_button {
+    color: #cbd5e1;
+}
+
+/* Disabled days */
+.dp-popover .rdp-disabled .rdp-day_button,
+.dp-popover .rdp-day--disabled .rdp-day_button {
+    color: #e2e8f0;
+    cursor: not-allowed;
+}
+
+/* Footer row (Today / Clear) */
+.dp-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 14px 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.dp-footer-btn {
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 4px 10px;
+    transition: background 0.15s ease;
+}
+
+.dp-footer-btn.clear {
+    color: #64748b;
+}
+
+.dp-footer-btn.clear:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.dp-footer-btn.today {
+    color: #3b82f6;
+}
+
+.dp-footer-btn.today:hover {
+    background: #eff6ff;
+}

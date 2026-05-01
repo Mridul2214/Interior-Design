@@ -26,13 +26,17 @@ import ProductionTasksBoard from './components/Production/Manager/TasksBoard';
 import ProductionTeamOverview from './components/Production/Manager/TeamOverview';
 import ProductionApprovals from './components/Production/Manager/Approvals';
 import ProjectHandoff from './components/Production/Manager/ProjectHandoff';
+import ProductionReports from './components/Production/Manager/ProductionReports';
+
 
 import EngineerDashboard from './components/Production/Engineer/EngineerDashboard';
 import EngineerTasks from './components/Production/Engineer/EngineerTasks';
 import EngineerProjects from './components/Production/Engineer/EngineerProjects';
 import ProjectDetail from './components/Production/Engineer/ProjectDetail';
 import TaskDetail from './components/Production/Engineer/TaskDetail';
+import EngineerReports from './components/Production/Engineer/EngineerReports';
 import LeaveRequest from './components/Production/Engineer/LeaveRequest';
+import EngineerApprovals from './components/Production/Engineer/EngineerApprovals';
 
 import SiteDashboard from './components/Production/Site/SiteDashboard';
 import SiteTasks from './components/Production/Site/SiteTasks';
@@ -176,6 +180,7 @@ function App() {
               <Route path="production-management/tasks" element={<ProductionTasksBoard user={user} />} />
               <Route path="production-management/team" element={<ProductionTeamOverview />} />
               <Route path="production-management/approvals" element={<ProductionApprovals />} />
+              <Route path="production-management/reports" element={<ProductionReports />} />
 
               {/* Engineer Routes (Project Engineer only) */}
               <Route path="engineer/dashboard" element={<EngineerDashboard user={user} />} />
@@ -183,7 +188,9 @@ function App() {
               <Route path="engineer/projects/:id" element={<ProjectDetail user={user} />} />
               <Route path="engineer/tasks" element={<EngineerTasks user={user} />} />
               <Route path="engineer/tasks/:id" element={<TaskDetail user={user} />} />
+              <Route path="engineer/reports" element={<EngineerReports />} />
               <Route path="engineer/leave" element={<LeaveRequest user={user} />} />
+              <Route path="engineer/approvals" element={<EngineerApprovals />} />
 
               {/* Site Portal Routes (Site Engineer & Site Supervisor) */}
               <Route path="site/dashboard" element={<SiteDashboard user={user} />} />

@@ -477,24 +477,48 @@ exports.getEngineerDashboard = async (req, res) => {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
+        // Fetch assigned projects (as site engineer, project engineer, or supervisor)
+        const projects = await ProductionProject.find({
+            $or: [
+                { projectEngineer: uid },
+                { siteEngineer:    uid },
+                { siteSupervisor:  uid }
+            ]
+        })
+        .populate('projectManager',  'fullName')
+        .populate('projectEngineer', 'fullName')
+        .populate('siteEngineer',    'fullName')
+        .populate('siteSupervisor',  'fullName')
+        .sort({ createdAt: -1 });
+
+        // Determine this user's role per project
+        const myProjects = projects.map(p => {
+            let myRole = 'Team Member';
+            if (p.projectEngineer?._id?.toString() === uid) myRole = 'Project Engineer';
+            else if (p.siteEngineer?._id?.toString() === uid) myRole = 'Site Engineer';
+            else if (p.siteSupervisor?._id?.toString() === uid) myRole = 'Site Supervisor';
+            return { ...p.toObject(), myRole };
+        });
+
         const tasks = await ProductionTask.find({ assignedTo: uid })
             .populate('projectId', 'projectName')
             .populate('assignedBy', 'fullName')
             .sort({ createdAt: -1 });
 
-        const pending    = tasks.filter(t => t.status === 'Pending').length;
-        const inProgress = tasks.filter(t => t.status === 'In Progress').length;
-        const completed  = tasks.filter(t => t.status === 'Completed').length;
-        const approved   = tasks.filter(t => t.status === 'Approved').length;
-        const overdue    = tasks.filter(t => t.dueDate && new Date(t.dueDate) < today && !['Completed','Approved'].includes(t.status));
+        const pending    = tasks.filter(t => ['Pending', 'PENDING', 'To Do', 'TO DO'].includes(t.status)).length;
+        const inProgress = tasks.filter(t => ['In Progress', 'IN PROGRESS', 'ACTIVE'].includes(t.status)).length;
+        const completed  = tasks.filter(t => ['Completed', 'COMPLETED', 'Approved', 'APPROVED'].includes(t.status)).length;
+        const approved   = tasks.filter(t => ['Approved', 'APPROVED'].includes(t.status)).length;
+        const overdue    = tasks.filter(t => t.dueDate && new Date(t.dueDate) < today && !['Completed','Approved','COMPLETED','APPROVED'].includes(t.status));
         const dueToday   = tasks.filter(t => t.dueDate && new Date(t.dueDate) >= today && new Date(t.dueDate) < tomorrow);
-        const highPriority = tasks.filter(t => ['High','Urgent'].includes(t.priority) && !['Completed','Approved'].includes(t.status));
+        const highPriority = tasks.filter(t => ['High','Urgent','HIGH','URGENT'].includes(t.priority) && !['Completed','Approved','COMPLETED','APPROVED'].includes(t.status));
         const recent     = tasks.slice(0, 5);
 
         res.status(200).json({
             success: true,
             data: {
                 stats: { total: tasks.length, pending, inProgress, completed, approved },
+                projects: myProjects,
                 overdue,
                 dueToday,
                 highPriority,
@@ -505,6 +529,7 @@ exports.getEngineerDashboard = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
 
 // Get engineer's tasks (filtered)
 exports.getEngineerTasks = async (req, res) => {
@@ -1093,6 +1118,78 @@ exports.getGanttData = async (req, res) => {
         }));
 
         res.status(200).json({ success: true, data: ganttItems });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// =======================
+// PHASE 6: REPORTS & EXPORT
+// =======================
+
+exports.getProductionReports = async (req, res) => {
+    try {
+        const LeaveRequest = require('../models/LeaveRequest');
+        const ApprovalRequest = require('../models/Approval');
+
+        // Total Projects metrics
+        const totalProjects = await ProductionProject.countDocuments();
+        const activeProjects = await ProductionProject.countDocuments({ status: { $in: ['Not Started', 'In Progress', 'Delayed', 'Active', 'ACTIVE', 'ON HOLD', 'On Hold'] } });
+        const completedProjects = await ProductionProject.countDocuments({ status: { $in: ['Completed', 'COMPLETED'] } });
+        const delayedProjects = await ProductionProject.countDocuments({ status: { $in: ['Delayed', 'DELAYED'] } });
+
+        // Total Tasks metrics
+        const totalTasks = await ProductionTask.countDocuments();
+        const completedTasks = await ProductionTask.countDocuments({ status: { $in: ['Completed', 'Approved'] } });
+        const pendingTasks = await ProductionTask.countDocuments({ status: { $in: ['To Do', 'In Progress'] } });
+        const overdueTasks = await ProductionTask.find({ 
+            status: { $nin: ['Completed', 'Approved'] },
+            dueDate: { $lt: new Date() }
+        }).countDocuments();
+
+        // Material Requests
+        const totalMaterials = await ApprovalRequest.countDocuments({ requestType: 'Material' });
+        const pendingMaterials = await ApprovalRequest.countDocuments({ requestType: 'Material', status: 'pending' });
+
+        // Leaves (For PM's scope: PE leaves + SE/SS leaves under them)
+        // Keep it simple for reports: all pending leaves in the department.
+        const pendingLeaves = await LeaveRequest.countDocuments({ status: 'Pending' });
+
+        // Get a breakdown of tasks by project
+        const tasksByProjectRaw = await ProductionTask.aggregate([
+            {
+                $group: {
+                    _id: '$projectId',
+                    total: { $sum: 1 },
+                    completed: { $sum: { $cond: [{ $in: ['$status', ['Completed', 'Approved']] }, 1, 0] } }
+                }
+            }
+        ]);
+
+        const projectIds = tasksByProjectRaw.map(t => t._id);
+        const projectsData = await ProductionProject.find({ _id: { $in: projectIds } }).select('projectName status');
+        
+        const tasksByProject = tasksByProjectRaw.map(t => {
+            const proj = projectsData.find(p => p._id.toString() === t._id.toString());
+            return {
+                projectName: proj ? proj.projectName : 'Unknown',
+                status: proj ? proj.status : 'Unknown',
+                totalTasks: t.total,
+                completedTasks: t.completed,
+                completionRate: t.total > 0 ? Math.round((t.completed / t.total) * 100) : 0
+            };
+        });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                projects: { total: totalProjects, active: activeProjects, completed: completedProjects, delayed: delayedProjects },
+                tasks: { total: totalTasks, completed: completedTasks, pending: pendingTasks, overdue: overdueTasks },
+                materials: { total: totalMaterials, pending: pendingMaterials },
+                leaves: { pending: pendingLeaves },
+                projectBreakdown: tasksByProject
+            }
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

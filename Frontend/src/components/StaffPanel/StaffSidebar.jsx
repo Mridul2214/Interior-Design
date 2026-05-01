@@ -28,49 +28,47 @@ const StaffSidebar = ({ user, onLogout, isOpen, toggleSidebar }) => {
     const dashboardType = useRoleDashboard(user?.role);
 
     const getMenuItems = () => {
-        const baseItems = [
-            { name: 'Dashboard', icon: LayoutDashboard, path: '/staff/dashboard' },
-        ];
-
         const departmentItems = {
             Design: [
-                { name: 'Design Tasks', icon: Palette, path: '/staff/dashboard' },
-                { name: 'My Tasks', icon: CheckSquare, path: '/staff/tasks' },
-                { name: 'Site Visits', icon: Camera, path: '/staff/site-visits' },
-                { name: 'Clients', icon: Users, path: '/staff/clients' },
-                { name: 'Quotations', icon: FileText, path: '/staff/quotations' },
+                { name: 'Dashboard',     icon: LayoutDashboard, path: '/staff/dashboard' },
+                { name: 'My Tasks',      icon: CheckSquare,     path: '/staff/tasks' },
+                { name: 'Site Visits',   icon: Camera,          path: '/staff/site-visits' },
+                { name: 'Clients',       icon: Users,           path: '/staff/clients' },
+                { name: 'Quotations',    icon: FileText,        path: '/staff/quotations' },
             ],
             Procurement: [
-                { name: 'Procurement', icon: Truck, path: '/staff/dashboard' },
-                { name: 'My Tasks', icon: CheckSquare, path: '/staff/tasks' },
-                { name: 'Clients', icon: Users, path: '/staff/clients' },
+                { name: 'Dashboard',     icon: LayoutDashboard, path: '/staff/dashboard' },
+                { name: 'My Tasks',      icon: CheckSquare,     path: '/staff/tasks' },
+                { name: 'Clients',       icon: Users,           path: '/staff/clients' },
             ],
             Production: [
-                { name: 'Production Tasks', icon: Wrench, path: '/staff/dashboard' },
-                { name: 'My Tasks', icon: CheckSquare, path: '/staff/tasks' },
-                { name: 'Site Visits', icon: Camera, path: '/staff/site-visits' },
-                { name: 'Clients', icon: Users, path: '/staff/clients' },
+                { name: 'Dashboard',     icon: LayoutDashboard, path: '/staff/dashboard' },
+                { name: 'My Tasks',      icon: CheckSquare,     path: '/staff/tasks' },
+                { name: 'Site Visits',   icon: Camera,          path: '/staff/site-visits' },
+                { name: 'Clients',       icon: Users,           path: '/staff/clients' },
             ],
             Accounts: [
-                { name: 'Finance Tasks', icon: DollarSign, path: '/staff/dashboard' },
-                { name: 'My Tasks', icon: CheckSquare, path: '/staff/tasks' },
-                { name: 'Clients', icon: Users, path: '/staff/clients' },
+                { name: 'Dashboard',     icon: LayoutDashboard, path: '/staff/dashboard' },
+                { name: 'My Tasks',      icon: CheckSquare,     path: '/staff/tasks' },
+                { name: 'Clients',       icon: Users,           path: '/staff/clients' },
             ],
             Sales: [
-                { name: 'Design Approvals', icon: CheckCircle, path: '/staff/dashboard' },
-                { name: 'My Tasks', icon: CheckSquare, path: '/staff/tasks' },
-                { name: 'Clients', icon: Users, path: '/staff/clients' },
-                { name: 'Quotations', icon: FileText, path: '/staff/quotations' },
+                { name: 'Dashboard',     icon: LayoutDashboard, path: '/staff/dashboard' },
+                { name: 'My Tasks',      icon: CheckSquare,     path: '/staff/tasks' },
+                { name: 'Site Visits',   icon: Camera,          path: '/staff/site-visits' },
+                { name: 'Clients',       icon: Users,           path: '/staff/clients' },
+                { name: 'Quotations',    icon: FileText,        path: '/staff/quotations' },
             ],
             Admin: [
-                { name: 'My Tasks', icon: CheckSquare, path: '/staff/tasks' },
-                { name: 'Site Visits', icon: Camera, path: '/staff/site-visits' },
-                { name: 'Clients', icon: Users, path: '/staff/clients' },
-                { name: 'Quotations', icon: FileText, path: '/staff/quotations' },
+                { name: 'Dashboard',     icon: LayoutDashboard, path: '/staff/dashboard' },
+                { name: 'My Tasks',      icon: CheckSquare,     path: '/staff/tasks' },
+                { name: 'Site Visits',   icon: Camera,          path: '/staff/site-visits' },
+                { name: 'Clients',       icon: Users,           path: '/staff/clients' },
+                { name: 'Quotations',    icon: FileText,        path: '/staff/quotations' },
             ]
         };
 
-        return [...baseItems, ...(departmentItems[department] || departmentItems.Admin)];
+        return departmentItems[department] || departmentItems.Admin;
     };
 
     const menuItems = getMenuItems();

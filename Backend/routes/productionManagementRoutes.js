@@ -39,8 +39,22 @@ const {
     getDashboardCharts,
     getBudgetAnalytics,
     getKPIMetrics,
-    getGanttData
+    getGanttData,
+    // Phase 6
+    getProductionReports
 } = require('../controllers/productionManagementController');
+
+const {
+    submitAttendance,
+    getProjectAttendance,
+    reportSafetyIssue,
+    getProjectSafetyLogs,
+    updateSafetyLogStatus,
+    submitDailyReport,
+    getProjectReports,
+    submitSupervisorReport,
+    getSupervisorReports
+} = require('../controllers/siteManagementController');
 
 // All routes require authentication
 router.use(protect);
@@ -102,5 +116,23 @@ router.get('/projects/:id/activity', getProjectActivity);
 router.post('/projects/:projectId/replacement-request', authorize('Project Engineer'), createReplacementRequest);
 router.get('/staff-replacement/requests', authorize('Project Manager', 'Admin', 'Super Admin'), getReplacementRequests);
 router.put('/staff-replacement/requests/:requestId/action', authorize('Project Manager', 'Admin', 'Super Admin'), actionReplacementRequest);
+
+// =======================
+// SITE MANAGEMENT (SE/SS)
+// =======================
+router.post('/site/attendance', authorize('Site Engineer', 'Site Supervisor', 'Project Manager', 'Project Engineer'), submitAttendance);
+router.get('/site/attendance/:projectId', getProjectAttendance);
+
+router.post('/site/safety', authorize('Site Engineer', 'Site Supervisor', 'Project Manager', 'Project Engineer'), reportSafetyIssue);
+router.get('/site/safety/:projectId', getProjectSafetyLogs);
+router.patch('/site/safety/:logId', authorize('Site Engineer', 'Site Supervisor', 'Project Manager', 'Project Engineer'), updateSafetyLogStatus);
+
+router.post('/site/reports', authorize('Site Engineer', 'Site Supervisor', 'Project Manager', 'Project Engineer'), submitDailyReport);
+router.get('/site/reports/:projectId', getProjectReports);
+
+router.post('/site/supervisor-reports', authorize('Site Supervisor', 'Project Manager', 'Project Engineer'), submitSupervisorReport);
+router.get('/site/supervisor-reports/:projectId', getSupervisorReports);
+
+router.get('/reports', authorize('Project Manager', 'Admin'), getProductionReports);
 
 module.exports = router;

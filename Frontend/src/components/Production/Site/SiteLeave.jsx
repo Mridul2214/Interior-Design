@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { differenceInCalendarDays, format } from 'date-fns';
 import { CalendarOff, Send, CheckCircle2, Clock, XCircle, Loader2 } from 'lucide-react';
 import DateRangePicker from '../Engineer/DateRangePicker';
+import { leaveAPI } from '../../../config/api';
 import './Site.css';
 
 const LEAVE_TYPES = ['Sick Leave', 'Casual Leave', 'Emergency Leave', 'Annual Leave', 'Work From Home'];
@@ -17,6 +18,19 @@ const SiteLeave = ({ user }) => {
     const [submitted,  setSubmitted]  = useState(false);
     const [history,    setHistory]    = useState([]);
     const [errors,     setErrors]     = useState({});
+
+    React.useEffect(() => {
+        fetchHistory();
+    }, []);
+
+    const fetchHistory = async () => {
+        try {
+            const res = await leaveAPI.getMyLeaves();
+            if (res.success) setHistory(res.data);
+        } catch (error) {
+            console.error('Failed to fetch leave history', error);
+        }
+    };
 
     const validate = () => {
         const e = {};
@@ -37,22 +51,27 @@ const SiteLeave = ({ user }) => {
         const errs = validate();
         if (Object.keys(errs).length) { setErrors(errs); return; }
         setSubmitting(true);
-        await new Promise(r => setTimeout(r, 900));
-        setHistory(prev => [{
-            id: Date.now(),
-            leaveType: form.leaveType,
-            fromDate:  form.dateRange.from,
-            toDate:    form.dateRange.to || form.dateRange.from,
-            days:      calcDays(),
-            reason:    form.reason,
-            status:    'Pending',
-            appliedOn: new Date(),
-        }, ...prev]);
-        setForm({ leaveType:'', dateRange:{ from:null, to:null }, reason:'' });
-        setErrors({});
-        setSubmitting(false);
-        setSubmitted(true);
-        setTimeout(() => setSubmitted(false), 4000);
+        try {
+            const payload = {
+                leaveType: form.leaveType,
+                fromDate: form.dateRange.from,
+                toDate: form.dateRange.to || form.dateRange.from,
+                days: calcDays(),
+                reason: form.reason
+            };
+            const res = await leaveAPI.submitLeave(payload);
+            if (res.success) {
+                setHistory(prev => [res.data, ...prev]);
+                setForm({ leaveType:'', dateRange:{ from:null, to:null }, reason:'' });
+                setErrors({});
+                setSubmitted(true);
+                setTimeout(() => setSubmitted(false), 4000);
+            }
+        } catch (error) {
+            console.error('Failed to submit leave', error);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const days = calcDays();
@@ -143,7 +162,7 @@ const SiteLeave = ({ user }) => {
                             {history.map(h=>{
                                 const st=STATUS_STYLE[h.status]||STATUS_STYLE.Pending;
                                 return (
-                                    <div key={h.id} className="site-leave-card">
+                                    <div key={h._id || h.id} className="site-leave-card">
                                         <div className="site-leave-card-top">
                                             <span className="site-leave-type-chip">{h.leaveType}</span>
                                             <span className="site-badge" style={{color:st.color,background:st.bg,display:'flex',alignItems:'center',gap:4}}>
@@ -152,12 +171,17 @@ const SiteLeave = ({ user }) => {
                                         </div>
                                         <div className="site-leave-dates">
                                             <CalendarOff size={12}/>
-                                            {format(h.fromDate,'dd MMM yyyy')}
-                                            {h.toDate&&h.toDate!==h.fromDate&&<> → {format(h.toDate,'dd MMM yyyy')}</>}
+                                            {format(new Date(h.fromDate),'dd MMM yyyy')}
+                                            {h.toDate&&h.toDate!==h.fromDate&&<> → {format(new Date(h.toDate),'dd MMM yyyy')}</>}
                                             <span className="site-leave-days">· {h.days} day{h.days>1?'s':''}</span>
                                         </div>
                                         <p className="site-leave-reason">{h.reason}</p>
-                                        <span className="site-leave-applied">Applied: {format(h.appliedOn,'dd MMM yyyy')}</span>
+                                        {h.managerComments && (
+                                            <div style={{ marginTop: 8, fontSize: 12, padding: 8, background: '#f8fafc', borderRadius: 4, border: '1px solid #e2e8f0' }}>
+                                                <strong>Manager Note:</strong> {h.managerComments}
+                                            </div>
+                                        )}
+                                        <span className="site-leave-applied">Applied: {format(new Date(h.createdAt || h.appliedOn || Date.now()),'dd MMM yyyy')}</span>
                                     </div>
                                 );
                             })}

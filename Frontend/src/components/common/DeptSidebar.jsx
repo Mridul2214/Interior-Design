@@ -93,6 +93,7 @@ const NAV_CONFIG = {
             { name: 'Tasks',     icon: CheckSquare,     path: '/production-management/tasks' },
             { name: 'Team',      icon: Users,           path: '/production-management/team' },
             { name: 'Approvals', icon: ClipboardCheck,  path: '/production-management/approvals' },
+            { name: 'Reports',   icon: FileText,        path: '/production-management/reports' },
         ],
     },
 
@@ -104,6 +105,8 @@ const NAV_CONFIG = {
             { name: 'Dashboard',     icon: LayoutDashboard, path: '/engineer/dashboard' },
             { name: 'Projects',      icon: FolderOpen,      path: '/engineer/projects' },
             { name: 'My Tasks',      icon: CheckSquare,     path: '/engineer/tasks' },
+            { name: 'Site Reports',  icon: FileText,        path: '/engineer/reports' },
+            { name: 'Approvals',     icon: ClipboardCheck,  path: '/engineer/approvals' },
             { name: 'Leave Request', icon: CalendarOff,     path: '/engineer/leave' },
         ],
     },

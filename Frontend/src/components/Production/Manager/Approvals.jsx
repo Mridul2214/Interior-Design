@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, Clock, FileText, MessageSquare, ExternalLink, Plus, Filter, X, Users, UserX } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, FileText, MessageSquare, ExternalLink, Plus, Filter, X, Users, UserX, ChevronDown } from 'lucide-react';
 import '../css/ProductionManagement.css';
 import { approvalAPI, productionAPI } from '../../../config/api';
+import LeaveApprovals from '../Shared/LeaveApprovals';
+import CustomSelect from '../../common/CustomSelect';
 
 const TYPE_LABELS = {
     'Material': 'Material Request',
@@ -16,8 +18,9 @@ const Approvals = () => {
     const [activeTab, setActiveTab] = useState('general'); // 'general' or 'staff'
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [filterStatus, setFilterStatus] = useState('Pending'); // Match casing for staff requests
+    const [filterStatus, setFilterStatus] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [filtersOpen, setFiltersOpen] = useState(false);
     
     const [newRequest, setNewRequest] = useState({
         requestTitle: '',
@@ -115,34 +118,58 @@ const Approvals = () => {
 
     return (
         <div className="pm-dashboard">
-            <div className="pm-welcome-header" style={{ padding: '1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div className="pm-welcome-text">
-                    <h1 style={{ fontSize: '1.5rem' }}>Approvals & Requests</h1>
-                    <p className="pm-welcome-date">Review and authorize production requests</p>
-                </div>
-                <div style={{ zIndex: 1, display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8fafc', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                        <Filter size={16} color="#64748b" />
-                        <select 
-                            value={filterStatus} 
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            style={{ background: 'transparent', border: 'none', outline: 'none', color: '#334155', fontWeight: 500 }}
-                        >
-                            <option value="all">All Statuses</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
-                    </div>
-                    <div className="pm-summary-pill" style={{ background: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#ef4444', fontWeight: 600 }}>
-                        <span className="pm-pill-dot danger"></span>
-                        {pendingCount} Pending
-                    </div>
-                    {activeTab === 'general' && (
-                        <button onClick={() => setIsModalOpen(true)} className="pm-quick-action-btn" style={{ padding: '0.5rem 1rem', flexDirection: 'row', gap: '0.5rem', background: '#3b82f6', color: 'white', borderColor: '#2563eb' }}>
-                            <Plus size={16} /> New Request
-                        </button>
+            {/* Toolbar */}
+            <div style={{ padding: '0 1.5rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <button
+                        onClick={() => setFiltersOpen(o => !o)}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '6px',
+                            padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0',
+                            background: filtersOpen ? '#0f172a' : 'white',
+                            color: filtersOpen ? 'white' : '#334155',
+                            fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        <Filter size={15} />
+                        Filters
+                        {filterStatus !== 'all' && (
+                            <span style={{ background: '#3b82f6', color: 'white', borderRadius: '99px', fontSize: '0.7rem', fontWeight: 700, padding: '1px 6px', marginLeft: '2px' }}>1</span>
+                        )}
+                        <ChevronDown size={14} style={{ transition: 'transform 0.2s ease', transform: filtersOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+                    </button>
+                    {filterStatus !== 'all' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '99px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+                            {filterStatus}
+                            <button onClick={() => setFilterStatus('all')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#3b82f6' }}><X size={12} /></button>
+                        </div>
                     )}
+                </div>
+                {activeTab === 'general' && (
+                    <button onClick={() => setIsModalOpen(true)} className="pm-quick-action-btn">
+                        <Plus size={15} /> New Request
+                    </button>
+                )}
+            </div>
+
+            {/* Collapsible Filter Panel */}
+            <div style={{ overflow: 'hidden', maxHeight: filtersOpen ? '120px' : '0', transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)', marginBottom: filtersOpen ? '1rem' : '0' }}>
+                <div style={{ margin: '0 1.5rem', padding: '1.25rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, marginRight: '4px' }}>Status:</span>
+                        {['all', 'Pending', 'Approved', 'Rejected'].map(s => (
+                            <button key={s} onClick={() => setFilterStatus(s)} style={{
+                                padding: '4px 14px', borderRadius: '99px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                                border: '1px solid', transition: 'all 0.15s ease',
+                                background: filterStatus === s ? '#0f172a' : 'white',
+                                color: filterStatus === s ? 'white' : '#475569',
+                                borderColor: filterStatus === s ? '#0f172a' : '#e2e8f0'
+                            }}>
+                                {s === 'all' ? 'All Statuses' : s}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -170,12 +197,23 @@ const Approvals = () => {
                 >
                     <Users size={18} /> Staff Replacements
                 </button>
+                <button 
+                    onClick={() => setActiveTab('leaves')}
+                    style={{
+                        padding: '0.75rem 1.5rem', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer',
+                        background: activeTab === 'leaves' ? '#0f172a' : 'white',
+                        color: activeTab === 'leaves' ? 'white' : '#64748b',
+                        display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                    }}
+                >
+                    <Clock size={18} /> Team Leaves
+                </button>
             </div>
 
             {error && <div style={{ color: 'red', marginBottom: '1rem', padding: '1rem', background: '#fee2e2', borderRadius: '8px' }}>{error}</div>}
 
-            <div className="pm-card" style={{ padding: 0, overflow: 'hidden' }}>
-                {loading ? (
+            <div className={activeTab !== 'leaves' ? "pm-card" : ""} style={{ padding: activeTab === 'leaves' ? 0 : undefined, overflow: 'hidden' }}>
+                {loading && activeTab !== 'leaves' ? (
                     <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>Loading...</div>
                 ) : activeTab === 'general' ? (
                     <table className="pm-table">
@@ -246,7 +284,7 @@ const Approvals = () => {
                             ))}
                         </tbody>
                     </table>
-                ) : (
+                ) : activeTab === 'staff' ? (
                     <table className="pm-table">
                         <thead>
                             <tr>
@@ -307,9 +345,13 @@ const Approvals = () => {
                             ))}
                         </tbody>
                     </table>
-                )}
+                ) : activeTab === 'leaves' ? (
+                    <div style={{ padding: '0 1.5rem' }}>
+                        <LeaveApprovals />
+                    </div>
+                ) : null}
                 
-                {filteredApprovals.length === 0 && !loading && (
+                {activeTab !== 'leaves' && filteredApprovals.length === 0 && !loading && (
                     <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>No requests found for this filter.</div>
                 )}
             </div>

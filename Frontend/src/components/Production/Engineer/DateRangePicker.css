@@ -1,112 +1,160 @@
-/* ===========================
-   DateRangePicker – custom styles
-   (overrides react-day-picker defaults)
-   =========================== */
+/* ─── DateRangePicker – shadcn/ui style ─────────────────────────────── */
 
-/* ── Wrapper ── */
 .drp-wrapper {
     position: relative;
     width: 100%;
 }
 
-/* ── Trigger button ── */
+/* Trigger */
 .drp-trigger {
     display: flex;
     align-items: center;
     gap: 8px;
     width: 100%;
     box-sizing: border-box;
-    padding: 9px 12px;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 10px;
-    background: white;
-    font-size: 13px;
+    padding: 0 12px;
+    height: 40px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    font-size: 0.875rem;
     color: #374151;
     cursor: pointer;
     text-align: left;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
     font-family: inherit;
+    outline: none;
 }
-.drp-trigger:hover { border-color: #94a3b8; }
-.drp-trigger.open  { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
-.drp-icon  { color: #94a3b8; flex-shrink: 0; }
-.drp-trigger.open .drp-icon { color: #3b82f6; }
-.drp-label       { flex: 1; color: #1e293b; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.drp-placeholder { flex: 1; color: #94a3b8; }
+
+.drp-trigger:hover { border-color: #cbd5e1; background: #fafafa; }
+
+.drp-trigger.open {
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2);
+    background: #ffffff;
+}
+
+.drp-icon  { color: #64748b; flex-shrink: 0; }
+.drp-label       { flex: 1; color: #0f172a; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.875rem; }
+.drp-placeholder { flex: 1; color: #94a3b8; font-size: 0.875rem; }
+
 .drp-clear {
     display: flex; align-items: center; justify-content: center;
-    width: 20px; height: 20px; border-radius: 50%;
-    background: #f1f5f9; color: #64748b;
-    flex-shrink: 0; transition: background 0.15s;
+    width: 20px; height: 20px; border-radius: 4px;
+    color: #94a3b8;
+    flex-shrink: 0; transition: background 0.15s ease, color 0.15s ease;
 }
-.drp-clear:hover { background: #e2e8f0; color: #374151; }
+.drp-clear:hover { background: #f1f5f9; color: #475569; }
 
-/* ── Popover ── */
+/* Popover */
 .drp-popover {
     position: absolute;
     top: calc(100% + 6px);
     left: 0;
-    z-index: 500;
-    background: white;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 16px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-    padding: 12px;
-    animation: drp-pop 0.15s ease;
+    z-index: 9999;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.07),
+        0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    padding: 14px;
+    animation: drp-pop 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
 }
+
 @keyframes drp-pop {
-    from { opacity: 0; transform: translateY(-6px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)   scale(1);    }
 }
 
 /* ── react-day-picker overrides ── */
-.drp-popover .rdp {
-    --rdp-accent-color: #3b82f6;
-    --rdp-accent-background-color: #eff6ff;
+.drp-popover .rdp,
+.drp-popover .rdp-root {
+    --rdp-accent-color: #0f172a;
+    --rdp-accent-background-color: #0f172a;
     --rdp-selected-border: none;
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    margin: 0;
 }
-/* Nav buttons */
+
+/* Nav */
 .drp-popover .rdp-button_previous,
 .drp-popover .rdp-button_next {
-    border-radius: 8px;
-    color: #64748b;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    padding: 0;
 }
 .drp-popover .rdp-button_previous:hover,
-.drp-popover .rdp-button_next:hover { background: #f1f5f9; color: #1e293b; }
+.drp-popover .rdp-button_next:hover { background: #f1f5f9; border-color: #cbd5e1; }
 
-/* Day cells */
-.drp-popover .rdp-day {
-    border-radius: 8px;
+/* Month caption */
+.drp-popover .rdp-month_caption {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 0.9rem;
 }
-/* Range start / end */
+
+/* Weekday headers */
+.drp-popover .rdp-weekday {
+    color: #94a3b8;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding-bottom: 6px;
+}
+
+/* Day buttons */
+.drp-popover .rdp-day_button {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: #374151;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.1s ease, color 0.1s ease;
+    font-family: inherit;
+    padding: 0;
+}
+.drp-popover .rdp-day_button:hover { background: #f1f5f9; color: #0f172a; }
+
+/* Selected (start / end) */
+.drp-popover .rdp-selected .rdp-day_button,
 .drp-popover .rdp-day_button[aria-selected="true"] {
-    background-color: #3b82f6 !important;
-    color: white !important;
-    border-radius: 8px;
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    border-radius: 8px !important;
 }
-/* Range in-between days */
+
+/* Range in-between */
 .drp-popover .rdp-range_middle .rdp-day_button {
-    background-color: #eff6ff !important;
-    color: #1e293b !important;
-    border-radius: 0;
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-radius: 0 !important;
 }
 .drp-popover .rdp-range_start .rdp-day_button { border-radius: 8px 0 0 8px !important; }
 .drp-popover .rdp-range_end   .rdp-day_button { border-radius: 0 8px 8px 0 !important; }
 
-/* Month caption */
-.drp-popover .rdp-month_caption { font-weight: 700; color: #0f172a; font-size: 14px; }
-
-/* Weekday labels */
-.drp-popover .rdp-weekday { color: #94a3b8; font-weight: 600; font-size: 11px; text-transform: uppercase; }
-
-/* Disabled days */
-.drp-popover .rdp-day[aria-disabled="true"] .rdp-day_button { color: #d1d5db !important; cursor: not-allowed; }
-
-/* Today indicator */
+/* Today */
 .drp-popover .rdp-today:not([aria-selected="true"]) .rdp-day_button {
-    border: 1.5px solid #3b82f6;
-    color: #3b82f6;
     font-weight: 700;
+    color: #3b82f6;
 }
+
+/* Outside / disabled */
+.drp-popover .rdp-outside .rdp-day_button { color: #cbd5e1; }
+.drp-popover .rdp-day[aria-disabled="true"] .rdp-day_button,
+.drp-popover .rdp-disabled .rdp-day_button { color: #e2e8f0 !important; cursor: not-allowed; }

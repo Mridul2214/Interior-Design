@@ -82,13 +82,9 @@ const TeamOverview = () => {
     return (
         <div className="pm-dashboard">
             <div className="pm-welcome-header" style={{ padding: '1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                    <div className="pm-welcome-text">
-                        <h1 style={{ fontSize: '1.5rem' }}>Team Directory</h1>
-                        <p className="pm-welcome-date">Manage production team workload and details</p>
-                    </div>
-                    <button onClick={() => setIsModalOpen(true)} className="pm-quick-action-btn" style={{ padding: '0.75rem 1.25rem', flexDirection: 'row', gap: '0.5rem', background: '#3b82f6', color: 'white', borderColor: '#2563eb' }}>
-                        <Plus size={18} />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', width: '100%' }}>
+                    <button onClick={() => setIsModalOpen(true)} className="pm-quick-action-btn">
+                        <Plus size={15} />
                         <span>Add Member</span>
                     </button>
                 </div>

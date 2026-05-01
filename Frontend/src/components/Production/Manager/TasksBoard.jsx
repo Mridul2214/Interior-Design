@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Target, User, Clock, AlertTriangle, Plus, Filter, LayoutGrid, X } from 'lucide-react';
+import { Target, User, Clock, AlertTriangle, Plus, Filter, LayoutGrid, X, ChevronDown, Search } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import '../css/ProductionManagement.css';
 import { kanbanAPI } from '../../../config/api';
@@ -22,6 +22,9 @@ const TasksBoard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [filterPriority, setFilterPriority] = useState('All');
+    const [searchTerm, setSearchTerm] = useState('');
     const [newTask, setNewTask] = useState({
         title: '',
         projectName: '',
@@ -111,20 +114,76 @@ const TasksBoard = () => {
         return { color: colors[p] || '#94a3b8', bg: bgs[p] || '#f1f5f9' };
     };
 
+    const PRIORITY_OPTIONS = ['All', 'Low', 'Medium', 'High', 'Urgent'];
+    const activeFilterCount = (filterPriority !== 'All' ? 1 : 0) + (searchTerm ? 1 : 0);
+
+    // Apply front-end filters to the tasks
+    const filterTask = (task) => {
+        if (filterPriority !== 'All' && task.priority !== filterPriority) return false;
+        if (searchTerm && !task.title.toLowerCase().includes(searchTerm.toLowerCase()) && !task.projectName?.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+        return true;
+    };
+
     return (
         <div className="pm-dashboard">
-            <div className="pm-welcome-header" style={{ padding: '1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div className="pm-welcome-text">
-                    <h1 style={{ fontSize: '1.5rem' }}>Tasks Board</h1>
-                    <p className="pm-welcome-date">Kanban view of all production tasks</p>
+            {/* Toolbar */}
+            <div style={{ padding: '0 1.5rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <button
+                        onClick={() => setFiltersOpen(o => !o)}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '6px',
+                            padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0',
+                            background: filtersOpen ? '#0f172a' : 'white',
+                            color: filtersOpen ? 'white' : '#334155',
+                            fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        <Filter size={15} />
+                        Filters
+                        {activeFilterCount > 0 && (
+                            <span style={{ background: '#3b82f6', color: 'white', borderRadius: '99px', fontSize: '0.7rem', fontWeight: 700, padding: '1px 6px', marginLeft: '2px' }}>
+                                {activeFilterCount}
+                            </span>
+                        )}
+                        <ChevronDown size={14} style={{ transition: 'transform 0.2s ease', transform: filtersOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+                    </button>
+                    {filterPriority !== 'All' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '99px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+                            {filterPriority}
+                            <button onClick={() => setFilterPriority('All')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: '#3b82f6' }}><X size={12} /></button>
+                        </div>
+                    )}
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', zIndex: 1 }}>
-                    <button className="pm-quick-action-btn" style={{ padding: '0.5rem 1rem', flexDirection: 'row', gap: '0.5rem', background: '#f8fafc', color: '#334155', borderColor: '#e2e8f0' }}>
-                        <Filter size={16} /> Filters
-                    </button>
-                    <button onClick={() => setIsModalOpen(true)} className="pm-quick-action-btn" style={{ padding: '0.5rem 1rem', flexDirection: 'row', gap: '0.5rem', background: '#3b82f6', color: 'white', borderColor: '#2563eb' }}>
-                        <Plus size={16} /> New Task
-                    </button>
+                <button onClick={() => setIsModalOpen(true)} className="pm-quick-action-btn">
+                    <Plus size={15} /> New Task
+                </button>
+            </div>
+
+            {/* Collapsible Filter Panel */}
+            <div style={{ overflow: 'hidden', maxHeight: filtersOpen ? '160px' : '0', transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)', marginBottom: filtersOpen ? '1rem' : '0' }}>
+                <div style={{ margin: '0 1.5rem', padding: '1.25rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8fafc', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <Search size={15} color="#64748b" />
+                        <input type="text" placeholder="Search tasks..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{ background: 'transparent', border: 'none', outline: 'none', color: '#0f172a', width: '100%', fontSize: '0.875rem' }} />
+                        {searchTerm && <button onClick={() => setSearchTerm('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0 }}><X size={14} /></button>}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, marginRight: '4px' }}>Priority:</span>
+                        {PRIORITY_OPTIONS.map(p => (
+                            <button key={p} onClick={() => setFilterPriority(p)} style={{
+                                padding: '4px 14px', borderRadius: '99px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer',
+                                border: '1px solid', transition: 'all 0.15s ease',
+                                background: filterPriority === p ? '#0f172a' : 'white',
+                                color: filterPriority === p ? 'white' : '#475569',
+                                borderColor: filterPriority === p ? '#0f172a' : '#e2e8f0'
+                            }}>
+                                {p === 'All' ? 'All Priorities' : p}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -148,13 +207,13 @@ const TasksBoard = () => {
                                                 <LayoutGrid size={16} color="#64748b" />
                                                 {COLUMN_TITLES[columnId]}
                                                 <span style={{ background: '#e2e8f0', color: '#475569', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '99px' }}>
-                                                    {tasks[columnId].length}
+                                                    {tasks[columnId].filter(filterTask).length}
                                                 </span>
                                             </h3>
                                         </div>
                                         
                                         <div className="pm-kanban-cards" style={{ minHeight: '100px' }}>
-                                            {tasks[columnId].map((task, index) => {
+                                            {tasks[columnId].filter(filterTask).map((task, index) => {
                                                 const prio = getPriorityColor(task.priority);
                                                 return (
                                                     <Draggable draggableId={task._id} index={index} key={task._id}>

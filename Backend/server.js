@@ -96,6 +96,7 @@ app.use('/api/design', designRoutes);
 app.use('/api/kanban-tasks', require('./routes/kanbanTaskRoutes'));
 app.use('/api/team', require('./routes/teamMemberRoutes'));
 app.use('/api/approvals', require('./routes/approvalRoutes'));
+app.use('/api/leaves', require('./routes/leaveRoutes'));
 
 app.use('/api/ai', aiRoutes);
 app.use('/api/upload', uploadRoutes);

@@ -147,10 +147,12 @@ const Header = ({ user }) => {
 
         // Production Management Routes
         if (path.startsWith('/production-management/dashboard')) return { title: 'Production Dashboard', subtitle: 'Overview of your production operations' };
-        if (path.startsWith('/production-management/projects')) return { title: 'Projects', subtitle: 'Manage production projects' };
-        if (path.startsWith('/production-management/tasks')) return { title: 'Tasks Board', subtitle: 'Track production tasks' };
-        if (path.startsWith('/production-management/team')) return { title: 'Team Overview', subtitle: 'Manage production team' };
-        if (path.startsWith('/production-management/approvals')) return { title: 'Pending Approvals', subtitle: 'Review submitted tasks' };
+        if (path.startsWith('/production-management/projects')) return { title: 'Projects Overview', subtitle: 'Manage and monitor all production projects' };
+        if (path.startsWith('/production-management/tasks')) return { title: 'Tasks Board', subtitle: 'Track and assign production tasks' };
+        if (path.startsWith('/production-management/team')) return { title: 'Team Directory', subtitle: 'Manage your production team members' };
+        if (path.startsWith('/production-management/approvals')) return { title: 'Approvals & Requests', subtitle: 'Review and manage material or milestone requests' };
+        if (path.startsWith('/production-management/handoff')) return { title: 'Project Handoff', subtitle: 'Review new projects assigned to you and allocate your production team' };
+        if (path.startsWith('/production-management/reports')) return { title: 'Reports & Export', subtitle: 'Analytics and aggregated data for all production projects' };
 
         // Engineer Portal Routes
         if (path === '/engineer/dashboard')          return { title: 'Dashboard',       subtitle: 'Overview of your assigned tasks and activity' };
